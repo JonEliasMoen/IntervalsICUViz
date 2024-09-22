@@ -50,7 +50,7 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <RootLayoutNav></RootLayoutNav>;1
+      <RootLayoutNav></RootLayoutNav>
     </QueryClientProvider>
   );
 }
