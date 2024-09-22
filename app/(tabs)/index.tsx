@@ -13,14 +13,18 @@ interface wellness {
   sleepSecs: number;
   atl: number; // acute
   ctl: number; // chronic
+  hrv: number;
   rampRate: number;
   restingHR: number;
+  weight: number;
   sportInfo: sportInfo[];
   [key: string]: any; // This allows for any other unknown properties
 }
 export function getWellness(n: number) {
-  let isodate = new Date(Date.now() - n).toISOString().slice(0, 10);
-  const { data: data } = useQuery(["wellness"], () =>
+  let date = new Date();
+  date.setDate(date.getDate() - n);
+  let isodate = date.toISOString().slice(0, 10);
+  const { data: data } = useQuery(["wellness", isodate], () =>
     fetchToJson<wellness>(
       "https://intervals.icu/api/v1/athlete/i174646/wellness/" + isodate,
       {
@@ -40,9 +44,20 @@ export function hourToString(h: number) {
   whole.setSeconds(h * 60 * 60);
   return whole.toTimeString().slice(0, 5);
 }
-
+export function wattPer(t: "Run" | "Ride", data: wellness | undefined) {
+  let weight = data?.weight;
+  let eftp = data?.sportInfo.find((s) => s.type == t)?.eftp ?? 0;
+  return eftp / (weight == undefined ? 73.0 : weight);
+}
+export function weekHealth() {
+  let hrv: number[] = [];
+  for (let i = 0; i < 8; i++) {
+    let data = getWellness(i);
+    hrv.push(data == undefined ? 90 : data.hrv);
+  }
+  console.log(hrv);
+}
 export default function TabOneScreen() {
-  const layout = { title: "My cool chart!" };
   const data = getWellness(0);
   const dataYesterday = getWellness(1);
   console.log(data);
@@ -56,8 +71,9 @@ export default function TabOneScreen() {
       : 0;
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Tab One</Text>
+      <Text style={styles.title}>Status</Text>
       <ChartComponent
+        title={"Ramprate q"}
         progress={data != undefined ? data.rampRate : 0}
         zones={[
           {
@@ -81,13 +97,14 @@ export default function TabOneScreen() {
           {
             text: "0.9-1",
             startVal: 1.43,
-            endVal: 4.95,
+            endVal: 2,
             color: "#D627284D",
           },
         ]}
-        transform={(n) => (n + 2.5) / (2.5 + 4.95)}
+        transform={(n) => (n + 2.5) / (2.5 + 2)}
       ></ChartComponent>
       <ChartComponent
+        title={"ACWR"}
         progress={data != undefined ? data.atl / data.ctl : 1}
         zones={[
           {
@@ -118,6 +135,7 @@ export default function TabOneScreen() {
         transform={(n) => n / 2.0}
       ></ChartComponent>
       <ChartComponent
+        title={"Sleep"}
         progress={data != undefined ? data.sleepSecs / 3600 : 5}
         indicatorTextTransform={hourToString}
         zones={[
@@ -161,6 +179,7 @@ export default function TabOneScreen() {
         transform={(n) => (n - 4) / 6}
       ></ChartComponent>
       <ChartComponent
+        title={"Form"}
         progress={-form}
         zones={[
           {
@@ -198,6 +217,7 @@ export default function TabOneScreen() {
         indicatorTextTransform={(n) => -n}
       ></ChartComponent>
       <ChartComponent
+        title={"Form %"}
         progress={-formPer}
         zones={[
           {
@@ -234,13 +254,68 @@ export default function TabOneScreen() {
         transform={(n) => (n + 30) / 90}
         indicatorTextTransform={(n) => -n.toPrecision(3).toString() + "%"}
       ></ChartComponent>
-
-      <View
-        style={styles.separator}
-        lightColor="#eee"
-        darkColor="rgba(255,255,255,0.1)"
-      />
-      <EditScreenInfo path="app/(tabs)/index.tsx" />
+      <ChartComponent
+        title={"Running eftp/kg"}
+        progress={data != undefined ? wattPer("Run", data) : 0}
+        zones={[
+          {
+            text: "Very Poor (20%)",
+            startVal: 1.4,
+            endVal: 1.9,
+            color: "rgba(180,31,31,0.3)",
+          },
+          {
+            text: "Poor (30%)",
+            startVal: 1.9,
+            endVal: 2.6,
+            color: "rgba(255,69,0,0.4)",
+          },
+          {
+            text: "Untrained (40%)",
+            startVal: 2.6,
+            endVal: 3.2,
+            color: "rgba(255,165,0,0.5)",
+          },
+          {
+            text: "Fair (50%)",
+            startVal: 3.2,
+            endVal: 3.8,
+            color: "rgba(255,215,0,0.6)",
+          },
+          {
+            text: "Recreational (60%)",
+            startVal: 3.8,
+            endVal: 4.5,
+            color: "rgba(0,128,0,0.6)",
+          },
+          {
+            text: "Regional (70%)",
+            startVal: 4.5,
+            endVal: 5.1,
+            color: "rgba(0,100,0,0.6)",
+          },
+          {
+            text: "National (80%)",
+            startVal: 5.1,
+            endVal: 5.8,
+            color: "rgba(65,105,225,0.7)",
+          },
+          {
+            text: "International (90%)",
+            startVal: 5.8,
+            endVal: 6.4,
+            color: "rgba(30,144,255,0.7)",
+          },
+          {
+            text: "World Class (100%)",
+            startVal: 6.4,
+            endVal: 7,
+            color: "rgba(138,43,226,0.7)",
+          },
+        ]}
+        transform={(n) => (n - 1.4) / (7 - 1.4)}
+        indicatorTextTransform={(n) => n.toPrecision(3).toString() + "W/kg"}
+      ></ChartComponent>
     </View>
   );
 }
