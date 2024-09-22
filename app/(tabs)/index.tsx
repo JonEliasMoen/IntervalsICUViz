@@ -42,9 +42,6 @@ export default function TabOneScreen() {
     dataYesterday != undefined
       ? Math.round(dataYesterday.ctl) - Math.round(dataYesterday.atl)
       : 0;
-
-  console.log("form");
-
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Tab One</Text>
@@ -79,7 +76,7 @@ export default function TabOneScreen() {
         transform={(n) => n / 2.0}
       ></ChartComponent>
       <ChartComponent
-        progress={data != undefined ? 5.5 : 5}
+        progress={data != undefined ? data.sleepSecs / 3600 : 5}
         indicatorTextTransform={hourToString}
         zones={[
           {
@@ -122,7 +119,7 @@ export default function TabOneScreen() {
         transform={(n) => (n - 4) / 6}
       ></ChartComponent>
       <ChartComponent
-        progress={form}
+        progress={-form}
         zones={[
           {
             text: "Transition",
@@ -156,6 +153,7 @@ export default function TabOneScreen() {
           },
         ]}
         transform={(n) => (n + 30) / 90}
+        indicatorTextTransform={(n) => -n}
       ></ChartComponent>
       <View
         style={styles.separator}
