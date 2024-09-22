@@ -65,7 +65,7 @@ export function ChartComponent(props: {
   let titleText = props.title != undefined ? props.title + ": " : "";
   return (
     <View style={styles.container}>
-      <Text style={styles.statusText}>ok</Text>
+      <Text style={styles.statusText}>{titleText + text}</Text>
       <View style={styles.progressBarContainer}>
         {Zones(props.zones, props.transform)}
       </View>
