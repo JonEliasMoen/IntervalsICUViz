@@ -4,11 +4,18 @@ import EditScreenInfo from "@/components/EditScreenInfo";
 import { Text, View } from "@/components/Themed";
 import ChartComponent, { fetchToJson } from "@/components/chatComp";
 import { useQuery } from "@tanstack/react-query";
+interface sportInfo {
+  type: string;
+  eftp: number;
+}
 
 interface wellness {
   sleepSecs: number;
   atl: number; // acute
   ctl: number; // chronic
+  rampRate: number;
+  restingHR: number;
+  sportInfo: sportInfo[];
   [key: string]: any; // This allows for any other unknown properties
 }
 export function getWellness(n: number) {
@@ -38,13 +45,48 @@ export default function TabOneScreen() {
   const layout = { title: "My cool chart!" };
   const data = getWellness(0);
   const dataYesterday = getWellness(1);
+  console.log(data);
   let form =
     dataYesterday != undefined
       ? Math.round(dataYesterday.ctl) - Math.round(dataYesterday.atl)
       : 0;
+  let formPer =
+    dataYesterday != undefined
+      ? (form * 100) / Math.round(dataYesterday.ctl)
+      : 0;
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Tab One</Text>
+      <ChartComponent
+        progress={data != undefined ? data.rampRate : 0}
+        zones={[
+          {
+            text: "0-0.2",
+            startVal: -2.5,
+            endVal: -0.53,
+            color: "#1F77B44D",
+          },
+          {
+            text: "0.2-0.7",
+            startVal: -0.53,
+            endVal: 0.78,
+            color: "#009E0066",
+          },
+          {
+            text: "0.7-0.9",
+            startVal: 0.78,
+            endVal: 1.43,
+            color: "#FFCB0E80",
+          },
+          {
+            text: "0.9-1",
+            startVal: 1.43,
+            endVal: 4.95,
+            color: "#D627284D",
+          },
+        ]}
+        transform={(n) => (n + 2.5) / (2.5 + 4.95)}
+      ></ChartComponent>
       <ChartComponent
         progress={data != undefined ? data.atl / data.ctl : 1}
         zones={[
@@ -155,6 +197,44 @@ export default function TabOneScreen() {
         transform={(n) => (n + 30) / 90}
         indicatorTextTransform={(n) => -n}
       ></ChartComponent>
+      <ChartComponent
+        progress={-formPer}
+        zones={[
+          {
+            text: "Transition",
+            startVal: -30,
+            endVal: -20,
+            color: "#FFCB0E80",
+          },
+          {
+            text: "Fresh",
+            startVal: -20,
+            endVal: -5,
+            color: "#1F77B44D",
+          },
+          {
+            text: "Gray zone",
+            startVal: -5,
+            endVal: 10,
+            color: "rgba(196,196,196,0.66)",
+          },
+          {
+            text: "Optimal",
+            startVal: 10,
+            endVal: 30,
+            color: "#009E0066",
+          },
+          {
+            text: "High Risk",
+            startVal: 30,
+            endVal: 60,
+            color: "#D627284D",
+          },
+        ]}
+        transform={(n) => (n + 30) / 90}
+        indicatorTextTransform={(n) => -n.toPrecision(3).toString() + "%"}
+      ></ChartComponent>
+
       <View
         style={styles.separator}
         lightColor="#eee"
