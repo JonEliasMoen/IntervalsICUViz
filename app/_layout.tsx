@@ -12,8 +12,8 @@ import "react-native-reanimated";
 import { useReactQueryDevTools } from "@dev-plugins/react-query";
 
 import { useColorScheme } from "@/components/useColorScheme";
-import {QueryClientProvider} from "@tanstack/react-query";
-import {QueryClient} from "@tanstack/query-core";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/query-core";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -27,7 +27,13 @@ export const unstable_settings = {
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      cacheTime: 1000 * 60 * 60 * 24, // 24 hours
+    },
+  },
+});
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
@@ -51,8 +57,9 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-    <RootLayoutNav></RootLayoutNav>;1
-</QueryClientProvider>);
+      <RootLayoutNav></RootLayoutNav>;1
+    </QueryClientProvider>
+  );
 }
 
 function RootLayoutNav() {
