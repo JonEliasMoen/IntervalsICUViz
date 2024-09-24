@@ -65,14 +65,29 @@ export function ChartComponent(props: {
   let titleText = props.title != undefined ? props.title + ": " : "";
   return (
     <View style={styles.container}>
+      <Text></Text>
       <Text style={styles.statusText}>{titleText + text}</Text>
       <View style={styles.progressBarContainer}>
         {Zones(props.zones, props.transform)}
       </View>
       <View
-        style={[styles.progressIndicator, { left: `${progress * 100}%` }]}
+        style={[
+          styles.progressIndicator,
+          {
+            position: "relative",
+            left: progress * 2 * 100,
+          },
+        ]}
       />
-      <Text style={[styles.subtext, { left: `${progress * 100}%` }]}>
+      <Text
+        style={[
+          styles.subtext,
+          {
+            position: "relative",
+            left: progress * 2 * 100,
+          },
+        ]}
+      >
         {props.indicatorTextTransform == null
           ? props.progress.toPrecision(3).toString()
           : props.indicatorTextTransform(props.progress)}
@@ -86,6 +101,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 0,
+    margin: 0,
+    paddingRight: 0,
   },
   statusText: {
     fontSize: 16,
@@ -123,7 +140,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff", // Black progress indicator
   },
   progressIndicator: {
-    position: "relative",
+    position: "absolute",
     top: -30,
     width: 5,
     height: 20,
