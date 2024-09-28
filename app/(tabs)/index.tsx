@@ -1,14 +1,21 @@
 import { StyleSheet } from "react-native";
 
-import EditScreenInfo from "@/components/EditScreenInfo";
 import { Text, View } from "@/components/Themed";
 import ChartComponent, { fetchToJson } from "@/components/chatComp";
 import { useQuery } from "@tanstack/react-query";
+
 interface sportInfo {
   type: string;
   eftp: number;
 }
-import { quantile } from "simple-statistics";
+import {
+  max,
+  mean,
+  min,
+  quantile,
+  sampleStandardDeviation,
+  zScore,
+} from "simple-statistics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
 interface wellness {
@@ -58,13 +65,13 @@ export function wattPer(t: "Run" | "Ride", data: wellness | undefined) {
   let eftp = data?.sportInfo.find((s) => s.type == t)?.eftp ?? 0;
   return eftp / (weight == undefined ? 73.0 : weight);
 }
-export function weekHealth() {
+export function weekHealth(apiKey: string | null) {
   let hrv: number[] = [];
-  for (let i = 0; i < 8; i++) {
-    let data = getWellness(i, "");
+  for (let i = 0; i < 7; i++) {
+    let data = getWellness(i, apiKey);
     hrv.push(data == undefined ? 90 : data.hrv);
   }
-  console.log(hrv);
+  return hrv;
 }
 
 export default function TabOneScreen() {
@@ -83,13 +90,46 @@ export default function TabOneScreen() {
     };
     loadApiKey();
   }, []);
+
   const data = getWellness(0, storedKey);
+  const hrv = weekHealth(storedKey);
   let form =
     data != undefined ? Math.round(data.ctl) - Math.round(data.atl) : 0;
   let formPer = data != undefined ? (form * 100) / Math.round(data.ctl) : 0;
+  data != undefined
+    ? console.log(zScore(data.hrv, mean(hrv), sampleStandardDeviation(hrv)))
+    : "";
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Status</Text>
+      <ChartComponent
+        title={"HRV"}
+        progress={data != undefined ? data.hrv : 0}
+        zones={[
+          {
+            text: "Below",
+            startVal: quantile(hrv, 0.05),
+            endVal: quantile(hrv, 0.2),
+            color: "#FFCB0E80",
+          },
+          {
+            text: "Normal",
+            startVal: quantile(hrv, 0.2),
+            endVal: quantile(hrv, 0.7),
+            color: "#009E0066",
+          },
+          {
+            text: "Elevated",
+            startVal: quantile(hrv, 0.7),
+            endVal: quantile(hrv, 0.95),
+            color: "#FFCB0E80",
+          },
+        ]}
+        transform={(n) =>
+          (n - quantile(hrv, 0.05)) /
+          (quantile(hrv, 0.95) - quantile(hrv, 0.05))
+        }
+      ></ChartComponent>
       <ChartComponent
         title={"Ramprate q"}
         progress={data != undefined ? data.rampRate : 0}
@@ -332,6 +372,56 @@ export default function TabOneScreen() {
           },
         ]}
         transform={(n) => (n - 1.4) / (7 - 1.4)}
+        indicatorTextTransform={(n) => n.toPrecision(3).toString() + "W/kg"}
+      ></ChartComponent>
+      <ChartComponent
+        title={"Ride eftp/kg"}
+        progress={data != undefined ? wattPer("Ride", data) : 0}
+        zones={[
+          {
+            text: "Untrained",
+            startVal: 1.78,
+            endVal: 2.3,
+            color: "rgba(255,165,0,0.5)",
+          },
+          {
+            text: "Fair",
+            startVal: 2.3,
+            endVal: 2.92,
+            color: "rgba(255,215,0,0.6)",
+          },
+          {
+            text: "Moderate",
+            startVal: 2.93,
+            endVal: 3.46,
+            color: "rgba(0,128,0,0.6)",
+          },
+          {
+            text: "Good",
+            startVal: 3.46,
+            endVal: 4.08,
+            color: "rgba(0,100,0,0.6)",
+          },
+          {
+            text: "Very Good",
+            startVal: 4.08,
+            endVal: 4.61,
+            color: "rgba(65,105,225,0.7)",
+          },
+          {
+            text: "Excellent",
+            startVal: 4.61,
+            endVal: 5.14,
+            color: "rgba(30,144,255,0.7)",
+          },
+          {
+            text: "Exceptional",
+            startVal: 5.14,
+            endVal: 5.69,
+            color: "rgba(138,43,226,0.7)",
+          },
+        ]}
+        transform={(n) => (n - 1.78) / (5.69 - 1.78)}
         indicatorTextTransform={(n) => n.toPrecision(3).toString() + "W/kg"}
       ></ChartComponent>
     </View>

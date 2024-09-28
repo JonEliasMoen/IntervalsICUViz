@@ -39,7 +39,8 @@ export default function TabTwoScreen() {
       <Text style={{ maxWidth: 300 }}>
         Go to intervals.icu and login, then go to settings and create a api key.
         Paste the api key here. The Api key is stored locally, revoke in
-        intervals or uninstall app.
+        intervals, uninstall app, or change value here to remove access. Do not
+        share the api key and treat it as a password.l
       </Text>
       <Text style={styles.title}>Api key</Text>
       <TextInput
