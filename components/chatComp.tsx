@@ -60,7 +60,6 @@ export function ChartComponent(props: {
         value > props.transform(zone.startVal) &&
         value <= props.transform(zone.endVal),
     )?.text ?? "";
-  console.log(props.progress);
   let progress = value - 0.5;
   let titleText = props.title != undefined ? props.title + ": " : "";
   return (

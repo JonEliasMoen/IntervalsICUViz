@@ -8,7 +8,9 @@ interface sportInfo {
   type: string;
   eftp: number;
 }
-
+import { quantile } from "simple-statistics";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useEffect, useState } from "react";
 interface wellness {
   sleepSecs: number;
   atl: number; // acute
@@ -20,20 +22,27 @@ interface wellness {
   sportInfo: sportInfo[];
   [key: string]: any; // This allows for any other unknown properties
 }
-export function getWellness(n: number) {
+export function getWellness(n: number, apiKey: string | null) {
   let date = new Date();
+  console.log(apiKey);
   date.setDate(date.getDate() - n);
   let isodate = date.toISOString().slice(0, 10);
-  const { data: data } = useQuery(["wellness", isodate], () =>
-    fetchToJson<wellness>(
-      "https://intervals.icu/api/v1/athlete/i174646/wellness/" + isodate,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Basic QVBJX0tFWTo1dTVtbWk2M2Z3NHJ5ZXh0c3dya3h0NzF0`,
+
+  const { data: data } = useQuery(
+    ["wellness", isodate],
+    () =>
+      fetchToJson<wellness>(
+        "https://intervals.icu/api/v1/athlete/i174646/wellness/" + isodate,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Basic ${apiKey}`,
+          },
         },
-      },
-    ),
+      ),
+    {
+      enabled: !!apiKey,
+    },
   );
   return data;
 }
@@ -52,23 +61,32 @@ export function wattPer(t: "Run" | "Ride", data: wellness | undefined) {
 export function weekHealth() {
   let hrv: number[] = [];
   for (let i = 0; i < 8; i++) {
-    let data = getWellness(i);
+    let data = getWellness(i, "");
     hrv.push(data == undefined ? 90 : data.hrv);
   }
   console.log(hrv);
 }
+
 export default function TabOneScreen() {
-  const data = getWellness(0);
-  const dataYesterday = getWellness(1);
-  console.log(data);
+  const [storedKey, setStoredKey] = useState("");
+
+  useEffect(() => {
+    const loadApiKey = async () => {
+      try {
+        const value = await AsyncStorage.getItem("@api_key");
+        if (value !== null) {
+          setStoredKey(btoa("API_KEY:" + value));
+        }
+      } catch (e) {
+        console.log("Error reading API key:", e);
+      }
+    };
+    loadApiKey();
+  }, []);
+  const data = getWellness(0, storedKey);
   let form =
-    dataYesterday != undefined
-      ? Math.round(dataYesterday.ctl) - Math.round(dataYesterday.atl)
-      : 0;
-  let formPer =
-    dataYesterday != undefined
-      ? (form * 100) / Math.round(dataYesterday.ctl)
-      : 0;
+    data != undefined ? Math.round(data.ctl) - Math.round(data.atl) : 0;
+  let formPer = data != undefined ? (form * 100) / Math.round(data.ctl) : 0;
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Status</Text>
