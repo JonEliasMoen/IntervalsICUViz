@@ -1,4 +1,4 @@
-import { Button, StyleSheet, TextInput } from "react-native";
+import { StyleSheet, TextInput } from "react-native";
 import { Text, View } from "@/components/Themed";
 import React, { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -26,9 +26,10 @@ export default function TabTwoScreen() {
 
   const handleSave = () => {
     try {
-      AsyncStorage.setItem("@api_key", apiKey);
-      setStoredKey(apiKey);
-      setApiKey(".".repeat(apiKey.length)); // Clear the input after saving
+      if (apiKey != ".".repeat(apiKey.length)) {
+        AsyncStorage.setItem("@api_key", apiKey);
+        setApiKey(apiKey); // Clear the input after saving
+      }
     } catch (e) {
       console.log("Error saving API key:", e);
     }
@@ -40,7 +41,7 @@ export default function TabTwoScreen() {
         Go to intervals.icu and login, then go to settings and create a api key.
         Paste the api key here. The Api key is stored locally, revoke in
         intervals, uninstall app, or change value here to remove access. Do not
-        share the api key and treat it as a password.l
+        share the api key and treat it as a password.
       </Text>
       <Text style={styles.title}>Api key</Text>
       <TextInput

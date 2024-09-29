@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { ScrollView, StyleSheet } from "react-native";
 
 import { Text, View } from "@/components/Themed";
 import ChartComponent, { fetchToJson } from "@/components/chatComp";
@@ -8,14 +8,6 @@ interface sportInfo {
   type: string;
   eftp: number;
 }
-import {
-  max,
-  mean,
-  min,
-  quantile,
-  sampleStandardDeviation,
-  zScore,
-} from "simple-statistics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
 interface wellness {
@@ -53,6 +45,34 @@ export function getWellness(n: number, apiKey: string | null) {
   );
   return data;
 }
+export function quantile(data: number[], q: number): number {
+  if (q < 0 || q > 1) {
+    throw new Error("Quantile value must be between 0 and 1");
+  }
+
+  // Sort the data in ascending order
+  const sortedData = [...data].sort((a, b) => a - b);
+  const n = sortedData.length;
+
+  // If the array is empty, return NaN
+  if (n === 0) {
+    return NaN;
+  }
+
+  // Compute the position of the quantile
+  const pos = (n - 1) * q;
+  const lower = Math.floor(pos);
+  const upper = Math.ceil(pos);
+
+  // If the position is an integer, return the value directly
+  if (lower === upper) {
+    return sortedData[lower];
+  }
+
+  // Interpolate between the lower and upper positions
+  const weight = pos - lower;
+  return sortedData[lower] * (1 - weight) + sortedData[upper] * weight;
+}
 
 export function hourToString(h: number) {
   // gets time as HH:SS from hours as decimal
@@ -67,7 +87,7 @@ export function wattPer(t: "Run" | "Ride", data: wellness | undefined) {
 }
 export function weekHealth(apiKey: string | null) {
   let hrv: number[] = [];
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 8; i++) {
     let data = getWellness(i, apiKey);
     hrv.push(data == undefined ? 90 : data.hrv);
   }
@@ -96,11 +116,9 @@ export default function TabOneScreen() {
   let form =
     data != undefined ? Math.round(data.ctl) - Math.round(data.atl) : 0;
   let formPer = data != undefined ? (form * 100) / Math.round(data.ctl) : 0;
-  data != undefined
-    ? console.log(zScore(data.hrv, mean(hrv), sampleStandardDeviation(hrv)))
-    : "";
+
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <Text style={styles.title}>Status</Text>
       <ChartComponent
         title={"HRV"}
@@ -424,11 +442,14 @@ export default function TabOneScreen() {
         transform={(n) => (n - 1.78) / (5.69 - 1.78)}
         indicatorTextTransform={(n) => n.toPrecision(3).toString() + "W/kg"}
       ></ChartComponent>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollViewContent: {
+    paddingBottom: 20, // To ensure scrolling area has enough space at the bottom
+  },
   container: {
     flex: 1,
     alignItems: "center",
@@ -439,6 +460,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
+    textAlign: "center",
     fontWeight: "bold",
   },
   separator: {
