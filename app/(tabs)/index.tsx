@@ -123,6 +123,7 @@ export default function TabOneScreen() {
       <Text style={styles.title}>Status</Text>
       <ChartComponent
         title={"HRV"}
+        display={() => quantile(hrv, 0.95) - quantile(hrv, 0.05) == 0}
         progress={data != null ? data.hrv : 0}
         zones={[
           {
@@ -215,6 +216,7 @@ export default function TabOneScreen() {
       ></ChartComponent>
       <ChartComponent
         title={"Sleep"}
+        display={() => data == null || data.sleepSecs == 0}
         progress={data != null ? data.sleepSecs / 3600 : 5}
         indicatorTextTransform={hourToString}
         zones={[

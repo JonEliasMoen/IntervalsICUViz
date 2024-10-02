@@ -3,7 +3,7 @@ import { Text, View } from "@/components/Themed";
 import React, { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useQueryClient } from "@tanstack/react-query";
-
+import { Button } from "react-native";
 export default function TabTwoScreen() {
   const [apiKey, setApiKey] = useState("");
   const [storedKey, setStoredKey] = useState("");
@@ -48,16 +48,17 @@ export default function TabTwoScreen() {
       </Text>
       <Text style={styles.title}>Api key</Text>
       <TextInput
-        style={(styles.input, { width: 200, borderWidth: 1 })}
+        style={(styles.input, { width: 200, borderWidth: 1, marginBottom: 10 })}
         value={apiKey}
         onChangeText={setApiKey}
         onBlur={handleSave}
         placeholder="Pase api key here"
         secureTextEntry={true}
       />
-      <Pressable onPress={() => queryClient.invalidateQueries(["wellness"])}>
-        Press to refetch data
-      </Pressable>
+      <Button
+        title="Refetch data"
+        onPress={() => queryClient.invalidateQueries(["wellness"])}
+      ></Button>
     </View>
   );
 }

@@ -48,6 +48,7 @@ export function Zones(zones: zone[], valTrans: (n: number) => number) {
 
 export function ChartComponent(props: {
   title?: string;
+  display?: () => boolean;
   progress: number;
   zones: zone[];
   transform: (n: number) => number;
@@ -61,10 +62,12 @@ export function ChartComponent(props: {
         value <= props.transform(zone.endVal),
     )?.text ?? "";
   let progress = value - 0.5;
+  let display = props.display != null ? props.display() : true;
+  console.log(props.title);
+  console.log(display);
   let titleText = props.title != undefined ? props.title + ": " : "";
   return (
-    <View style={styles.container}>
-      <Text></Text>
+    <View style={[styles.container, display ? {} : { display: "none" }]}>
       <Text style={styles.statusText}>{titleText + text}</Text>
       <View style={styles.progressBarContainer}>
         {Zones(props.zones, props.transform)}
