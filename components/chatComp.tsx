@@ -88,7 +88,9 @@ export function ChartComponent(props: {
         ]}
       >
         {props.indicatorTextTransform == null
-          ? props.progress.toPrecision(3).toString()
+          ? props.progress != null
+            ? props.progress.toFixed(2).toString()
+            : props.progress
           : props.indicatorTextTransform(props.progress)}
       </Text>
     </View>

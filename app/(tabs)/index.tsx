@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet } from "react-native";
+import { Button, ScrollView, StyleSheet } from "react-native";
 
 import { Text, View } from "@/components/Themed";
 import ChartComponent, { fetchToJson } from "@/components/chatComp";
@@ -89,7 +89,7 @@ export function weekHealth(apiKey: string | null) {
   let hrv: number[] = [];
   for (let i = 0; i < 8; i++) {
     let data = getWellness(i, apiKey);
-    hrv.push(data == undefined ? 90 : data.hrv);
+    hrv.push(data == null ? 90 : data.hrv);
   }
   return hrv;
 }
@@ -113,16 +113,17 @@ export default function TabOneScreen() {
 
   const data = getWellness(0, storedKey);
   const hrv = weekHealth(storedKey);
-  let form =
-    data != undefined ? Math.round(data.ctl) - Math.round(data.atl) : 0;
-  let formPer = data != undefined ? (form * 100) / Math.round(data.ctl) : 0;
-
+  let form = data != undefined ? Math.round(data.ctl - data.atl) : 0;
+  let formPer =
+    data != undefined
+      ? Math.round(((data.ctl - data.atl) * 100) / data.ctl)
+      : 0;
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <Text style={styles.title}>Status</Text>
       <ChartComponent
         title={"HRV"}
-        progress={data != undefined ? data.hrv : 0}
+        progress={data != null ? data.hrv : 0}
         zones={[
           {
             text: "Below",
@@ -144,13 +145,15 @@ export default function TabOneScreen() {
           },
         ]}
         transform={(n) =>
-          (n - quantile(hrv, 0.05)) /
-          (quantile(hrv, 0.95) - quantile(hrv, 0.05))
+          quantile(hrv, 0.95) - quantile(hrv, 0.05) != 0
+            ? (n - quantile(hrv, 0.05)) /
+              (quantile(hrv, 0.95) - quantile(hrv, 0.05))
+            : 0
         }
       ></ChartComponent>
       <ChartComponent
         title={"Ramprate q"}
-        progress={data != undefined ? data.rampRate : 0}
+        progress={data != null ? data.rampRate : 0}
         zones={[
           {
             text: "0-0.2",
@@ -181,7 +184,7 @@ export default function TabOneScreen() {
       ></ChartComponent>
       <ChartComponent
         title={"ACWR"}
-        progress={data != undefined ? data.atl / data.ctl : 1}
+        progress={data != null ? data.atl / data.ctl : 1}
         zones={[
           {
             text: "Low",
@@ -212,7 +215,7 @@ export default function TabOneScreen() {
       ></ChartComponent>
       <ChartComponent
         title={"Sleep"}
-        progress={data != undefined ? data.sleepSecs / 3600 : 5}
+        progress={data != null ? data.sleepSecs / 3600 : 5}
         indicatorTextTransform={hourToString}
         zones={[
           {
@@ -294,7 +297,7 @@ export default function TabOneScreen() {
       ></ChartComponent>
       <ChartComponent
         title={"Form %"}
-        progress={-formPer}
+        progress={formPer != null ? -formPer : 0}
         zones={[
           {
             text: "Transition",
@@ -328,11 +331,13 @@ export default function TabOneScreen() {
           },
         ]}
         transform={(n) => (n + 30) / 90}
-        indicatorTextTransform={(n) => -n.toPrecision(3).toString() + "%"}
+        indicatorTextTransform={(n) =>
+          n != null ? -n.toPrecision(3).toString() + "%" : ""
+        }
       ></ChartComponent>
       <ChartComponent
         title={"Running eftp/kg"}
-        progress={data != undefined ? wattPer("Run", data) : 0}
+        progress={data != null ? wattPer("Run", data) : 0}
         zones={[
           {
             text: "Very Poor (20%)",
@@ -390,11 +395,13 @@ export default function TabOneScreen() {
           },
         ]}
         transform={(n) => (n - 1.4) / (7 - 1.4)}
-        indicatorTextTransform={(n) => n.toPrecision(3).toString() + "W/kg"}
+        indicatorTextTransform={(n) =>
+          n != null ? n.toPrecision(3).toString() + "W/kg" : ""
+        }
       ></ChartComponent>
       <ChartComponent
         title={"Ride eftp/kg"}
-        progress={data != undefined ? wattPer("Ride", data) : 0}
+        progress={data != null ? wattPer("Ride", data) : 0}
         zones={[
           {
             text: "Untrained",
@@ -440,7 +447,9 @@ export default function TabOneScreen() {
           },
         ]}
         transform={(n) => (n - 1.78) / (5.69 - 1.78)}
-        indicatorTextTransform={(n) => n.toPrecision(3).toString() + "W/kg"}
+        indicatorTextTransform={(n) =>
+          n != null ? n.toPrecision(3).toString() + "W/kg" : ""
+        }
       ></ChartComponent>
     </ScrollView>
   );
@@ -449,6 +458,7 @@ export default function TabOneScreen() {
 const styles = StyleSheet.create({
   scrollViewContent: {
     paddingBottom: 20, // To ensure scrolling area has enough space at the bottom
+    backgroundColor: "white",
   },
   container: {
     flex: 1,
