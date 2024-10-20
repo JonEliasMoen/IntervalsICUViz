@@ -1,9 +1,9 @@
-import { Pressable, StyleSheet, TextInput } from "react-native";
+import { Button, StyleSheet, TextInput } from "react-native";
 import { Text, View } from "@/components/Themed";
 import React, { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useQueryClient } from "@tanstack/react-query";
-import { Button } from "react-native";
+
 export default function TabTwoScreen() {
   const [apiKey, setApiKey] = useState("");
   const [storedKey, setStoredKey] = useState("");
@@ -12,8 +12,6 @@ export default function TabTwoScreen() {
     const loadApiKey = async () => {
       try {
         const value = await AsyncStorage.getItem("@api_key");
-        console.log(value);
-
         if (value !== null) {
           setStoredKey(value);
           setApiKey(".".repeat(value.length));
@@ -47,18 +45,21 @@ export default function TabTwoScreen() {
         used if unavailable
       </Text>
       <Text style={styles.title}>Api key</Text>
-      <TextInput
-        style={(styles.input, { width: 200, borderWidth: 1, marginBottom: 10 })}
-        value={apiKey}
-        onChangeText={setApiKey}
-        onBlur={handleSave}
-        placeholder="Pase api key here"
-        secureTextEntry={true}
-      />
-      <Button
-        title="Refetch data"
-        onPress={() => queryClient.invalidateQueries(["wellness"])}
-      ></Button>
+      <form>
+        <TextInput
+          style={
+            (styles.input, { width: 200, borderWidth: 1, marginBottom: 10 })
+          }
+          value={apiKey}
+          onChangeText={setApiKey}
+          clearTextOnFocus={true}
+          onEndEditing={handleSave}
+          onBlur={() => console.log("blur")}
+          placeholder="Pase api key here"
+          secureTextEntry={true}
+        />
+        <Button onPress={handleSave}></Button>
+      </form>
     </View>
   );
 }

@@ -6,6 +6,7 @@ export function fetchToJson<T>(
   setErrorMessage?: (msg: string) => void,
   operation?: string,
 ): Promise<T> {
+  console.log("fetchiing");
   return fetch(url, params).then((res) => {
     if (res.ok) {
       if (res.status === 204) {
@@ -63,8 +64,6 @@ export function ChartComponent(props: {
     )?.text ?? "";
   let progress = value - 0.5;
   let display = props.display != null ? props.display() : true;
-  console.log(props.title);
-  console.log(display);
   let titleText = props.title != undefined ? props.title + ": " : "";
   return (
     <View style={[styles.container, display ? {} : { display: "none" }]}>

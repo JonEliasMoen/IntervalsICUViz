@@ -10,6 +10,8 @@ interface sportInfo {
 }
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
+import { mean, standardDeviation } from "simple-statistics";
+import quantile from "@stdlib/stats-base-dists-normal-quantile";
 interface wellness {
   sleepSecs: number;
   atl: number; // acute
@@ -45,34 +47,6 @@ export function getWellness(n: number, apiKey: string | null) {
   );
   return data;
 }
-export function quantile(data: number[], q: number): number {
-  if (q < 0 || q > 1) {
-    throw new Error("Quantile value must be between 0 and 1");
-  }
-
-  // Sort the data in ascending order
-  const sortedData = [...data].sort((a, b) => a - b);
-  const n = sortedData.length;
-
-  // If the array is empty, return NaN
-  if (n === 0) {
-    return NaN;
-  }
-
-  // Compute the position of the quantile
-  const pos = (n - 1) * q;
-  const lower = Math.floor(pos);
-  const upper = Math.ceil(pos);
-
-  // If the position is an integer, return the value directly
-  if (lower === upper) {
-    return sortedData[lower];
-  }
-
-  // Interpolate between the lower and upper positions
-  const weight = pos - lower;
-  return sortedData[lower] * (1 - weight) + sortedData[upper] * weight;
-}
 
 export function hourToString(h: number) {
   // gets time as HH:SS from hours as decimal
@@ -87,9 +61,10 @@ export function wattPer(t: "Run" | "Ride", data: wellness | undefined) {
 }
 export function weekHealth(apiKey: string | null) {
   let hrv: number[] = [];
-  for (let i = 0; i < 8; i++) {
+  let size = 8;
+  for (let i = 0; i < size; i++) {
     let data = getWellness(i, apiKey);
-    hrv.push(data == null ? 90 : data.hrv);
+    hrv.push(data == null ? 90 : data.hrv == null ? hrv[i - 1] : data.hrv);
   }
   return hrv;
 }
@@ -118,38 +93,47 @@ export default function TabOneScreen() {
     data != undefined
       ? Math.round(((data.ctl - data.atl) * 100) / data.ctl)
       : 0;
+  let hmean = mean(hrv);
+  let hstd = standardDeviation(hrv);
+  let hq = (q: number) => {
+    return quantile(q, hmean, hstd);
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <Text style={styles.title}>Status</Text>
       <ChartComponent
         title={"HRV"}
-        display={() => quantile(hrv, 0.95) - quantile(hrv, 0.05) == 0}
+        display={() => hmean != null}
         progress={data != null ? data.hrv : 0}
         zones={[
           {
+            text: "Low",
+            startVal: hq(0.05),
+            endVal: hq(0.1),
+            color: "rgb(255,0,0)",
+          },
+          {
             text: "Below",
-            startVal: quantile(hrv, 0.05),
-            endVal: quantile(hrv, 0.2),
+            startVal: hq(0.1),
+            endVal: hq(0.2),
             color: "#FFCB0E80",
           },
           {
             text: "Normal",
-            startVal: quantile(hrv, 0.2),
-            endVal: quantile(hrv, 0.7),
+            startVal: hq(0.2),
+            endVal: hq(0.85),
             color: "#009E0066",
           },
           {
             text: "Elevated",
-            startVal: quantile(hrv, 0.7),
-            endVal: quantile(hrv, 0.95),
+            startVal: hq(0.85),
+            endVal: hq(0.95),
             color: "#FFCB0E80",
           },
         ]}
         transform={(n) =>
-          quantile(hrv, 0.95) - quantile(hrv, 0.05) != 0
-            ? (n - quantile(hrv, 0.05)) /
-              (quantile(hrv, 0.95) - quantile(hrv, 0.05))
-            : 0
+          hq(0.95) - hq(0.05) != 0 ? (n - hq(0.05)) / (hq(0.95) - hq(0.05)) : 0
         }
       ></ChartComponent>
       <ChartComponent
