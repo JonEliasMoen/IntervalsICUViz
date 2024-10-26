@@ -9,9 +9,10 @@ interface sportInfo {
   eftp: number;
 }
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { mean, standardDeviation } from "simple-statistics";
 import quantile from "@stdlib/stats-base-dists-normal-quantile";
+import { CartesianChart, Line } from "victory-native";
 interface wellness {
   sleepSecs: number;
   atl: number; // acute
@@ -23,17 +24,54 @@ interface wellness {
   sportInfo: sportInfo[];
   [key: string]: any; // This allows for any other unknown properties
 }
-export function getWellness(n: number, apiKey: string | null) {
+export function isoDateOffset(n: number) {
   let date = new Date();
-  console.log(apiKey);
   date.setDate(date.getDate() - n);
-  let isodate = date.toISOString().slice(0, 10);
+  return date.toISOString().slice(0, 10);
+}
+/*
+export function weekHealth(apiKey: string | null) {
+  let hrv: number[] = [];
+  let size = 8;
+  for (let i = 0; i < size; i++) {
+    let data = getWellness(i, apiKey);
+    hrv.push(data == null ? 90 : data.hrv == null ? hrv[i - 1] : data.hrv);
+  }
+  return hrv;
+}
+export function getWellness(n: number, apiKey: string | null) {
+  console.log(apiKey);
+  let isodate = isoDateOffset(n);
 
   const { data: data } = useQuery(
     ["wellness", isodate],
     () =>
       fetchToJson<wellness>(
         "https://intervals.icu/api/v1/athlete/i174646/wellness/" + isodate,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Basic ${apiKey}`,
+          },
+        },
+      ),
+    {
+      enabled: !!apiKey,
+    },
+  );
+  return data;
+}
+ */
+export function getWellnessRange(n: number, n2: number, apiKey: string | null) {
+  console.log(apiKey);
+  let isodate1 = isoDateOffset(n);
+  let isodate2 = isoDateOffset(n2);
+
+  const { data: data } = useQuery(
+    ["wellness", isodate2, isodate1],
+    () =>
+      fetchToJson<wellness[]>(
+        `https://intervals.icu/api/v1/athlete/i174646/wellness?oldest=${isodate2}&newest=${isodate1}`,
         {
           method: "GET",
           headers: {
@@ -59,15 +97,6 @@ export function wattPer(t: "Run" | "Ride", data: wellness | undefined) {
   let eftp = data?.sportInfo.find((s) => s.type == t)?.eftp ?? 0;
   return eftp / (weight == undefined ? 73.0 : weight);
 }
-export function weekHealth(apiKey: string | null) {
-  let hrv: number[] = [];
-  let size = 8;
-  for (let i = 0; i < size; i++) {
-    let data = getWellness(i, apiKey);
-    hrv.push(data == null ? 90 : data.hrv == null ? hrv[i - 1] : data.hrv);
-  }
-  return hrv;
-}
 
 export default function TabOneScreen() {
   const [storedKey, setStoredKey] = useState("");
@@ -85,9 +114,9 @@ export default function TabOneScreen() {
     };
     loadApiKey();
   }, []);
-
-  const data = getWellness(0, storedKey);
-  const hrv = weekHealth(storedKey);
+  const dataWeek = getWellnessRange(0, 8, storedKey) ?? [];
+  const data = dataWeek != undefined ? dataWeek.at(-1) : undefined;
+  const hrv = dataWeek.map((t) => t.hrv ?? 90);
   let form = data != undefined ? Math.round(data.ctl - data.atl) : 0;
   let formPer =
     data != undefined

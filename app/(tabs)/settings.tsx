@@ -58,7 +58,7 @@ export default function TabTwoScreen() {
           placeholder="Pase api key here"
           secureTextEntry={true}
         />
-        <Button onPress={handleSave}></Button>
+        <Button title={"ok"} onPress={handleSave}></Button>
       </form>
     </View>
   );
