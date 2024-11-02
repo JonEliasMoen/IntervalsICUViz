@@ -12,7 +12,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
 import { mean, standardDeviation } from "simple-statistics";
 import quantile from "@stdlib/stats-base-dists-normal-quantile";
-import { CartesianChart, Line } from "victory-native";
+import { hourToString, isoDateOffset } from "@/app/(tabs)/utils/utils";
 interface wellness {
   sleepSecs: number;
   atl: number; // acute
@@ -24,11 +24,7 @@ interface wellness {
   sportInfo: sportInfo[];
   [key: string]: any; // This allows for any other unknown properties
 }
-export function isoDateOffset(n: number) {
-  let date = new Date();
-  date.setDate(date.getDate() - n);
-  return date.toISOString().slice(0, 10);
-}
+
 /*
 export function weekHealth(apiKey: string | null) {
   let hrv: number[] = [];
@@ -86,12 +82,6 @@ export function getWellnessRange(n: number, n2: number, apiKey: string | null) {
   return data;
 }
 
-export function hourToString(h: number) {
-  // gets time as HH:SS from hours as decimal
-  let whole = new Date(1970, 0, 1);
-  whole.setSeconds(h * 60 * 60);
-  return whole.toTimeString().slice(0, 5);
-}
 export function wattPer(t: "Run" | "Ride", data: wellness | undefined) {
   let weight = data?.weight;
   let eftp = data?.sportInfo.find((s) => s.type == t)?.eftp ?? 0;
@@ -115,8 +105,11 @@ export default function TabOneScreen() {
     loadApiKey();
   }, []);
   const dataWeek = getWellnessRange(0, 8, storedKey) ?? [];
-  const data = dataWeek != undefined ? dataWeek.at(-1) : undefined;
-  const hrv = dataWeek.map((t) => t.hrv ?? 90);
+  const data = dataWeek.at(-1);
+  let hrv = dataWeek.map((t) => t.hrv ?? 90);
+  if (hrv.length == 0) {
+    hrv = [90, 100];
+  }
   let form = data != undefined ? Math.round(data.ctl - data.atl) : 0;
   let formPer =
     data != undefined

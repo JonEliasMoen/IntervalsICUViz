@@ -1,9 +1,8 @@
-import { Button, ScrollView, StyleSheet } from "react-native";
-
-import { Text, View } from "@/components/Themed";
+import { ScrollView, StyleSheet } from "react-native";
 import ChartComponent, { fetchToJson } from "@/components/chatComp";
 import { useQuery } from "@tanstack/react-query";
-import { hourToString } from "@/app/(tabs)/index";
+import { hourToString, isoDateOffset } from "@/app/(tabs)/utils/utils";
+import { SnowDepthLocation } from "@/app/(tabs)/SnowDepthLocation";
 
 interface WeatherData {
   copyright: string;
@@ -49,13 +48,32 @@ interface SolarMidnight {
 }
 
 export function getSunData() {
-  const { data: data } = useQuery(["sun", new Date().toString()], () =>
+  const date = isoDateOffset(0);
+  const { data: data } = useQuery(["sun", date], () =>
     fetchToJson<WeatherData>(
-      "https://api.met.no/weatherapi/sunrise/3.0/sun?lat=59.933333&lon=10.716667&date=2024-10-12&offset=+02:00",
+      `https://api.met.no/weatherapi/sunrise/3.0/sun?lat=59.933333&lon=10.716667&date=${date}&offset=+02:00`,
       {
         method: "GET",
       },
     ),
+  );
+  return data;
+}
+interface SnowResp {
+  Data: number[];
+  [key: string]: any;
+}
+export function getSnowDepth(x: String, y: String) {
+  const date = isoDateOffset(0);
+  const url =
+    "https://corsproxy.io/?" +
+    encodeURIComponent(
+      `https://gts.nve.no/api/GridTimeSeries/${x}/${y}/${date}/${date}/sd.json`,
+    );
+  const { data: data } = useQuery(["snow", date], () =>
+    fetchToJson<SnowResp>(url, {
+      method: "GET",
+    }),
   );
   return data;
 }
@@ -68,16 +86,23 @@ function secondsSinceStartOfDay(date: Date): number {
   // @ts-ignore
   return (date - startOfDay) / 1000;
 }
+function daysSince(date: Date) {
+  var date1 = new Date(2024, 9, 23);
+  var date2 = new Date();
+  console.log(date2);
+  console.log(date1);
+  var diff = Math.abs(date1.getTime() - date2.getTime());
+  return Math.ceil(diff / (1000 * 3600 * 24));
+}
 
 export default function WeatherScreen() {
   let sunrise = getSunData()?.properties.sunrise.time;
   let sunset = getSunData()?.properties.sunset.time;
-  let sunriseSec = secondsSinceStartOfDay(
-    new Date(sunrise != null ? sunrise : ""),
-  );
-  let sunsetSec = secondsSinceStartOfDay(
-    new Date(sunset != null ? sunset : ""),
-  );
+  let sunriseSec = secondsSinceStartOfDay(new Date(sunrise ?? "09:00"));
+  let sunsetSec = secondsSinceStartOfDay(new Date(sunset ?? "20:00"));
+
+  console.log(daysSince(new Date("2024-10-26")));
+  console.log(getSnowDepth("268636", "7023562"));
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <ChartComponent
@@ -105,6 +130,11 @@ export default function WeatherScreen() {
         indicatorTextTransform={(n) => hourToString(n / 3600)}
         transform={(n) => n / 86400}
       ></ChartComponent>
+      <SnowDepthLocation
+        name={"Vassfjellet"}
+        x={"268636"}
+        y={"7023562"}
+      ></SnowDepthLocation>
     </ScrollView>
   );
 }
