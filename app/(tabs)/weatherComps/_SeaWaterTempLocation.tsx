@@ -64,7 +64,7 @@ export function getWaterTemp() {
   return data;
 }
 
-export function _SeaWaterTempLocation() {
+export function SeaWaterTempLocation() {
   const data = getWaterTemp();
 
   const today = data?.properties.timeseries.filter((n) =>
@@ -83,7 +83,6 @@ export function _SeaWaterTempLocation() {
   );
 
   const temp = Math.min(...temps);
-  const tempm = Math.max(...temps);
 
   const wave = Math.min(...waveHeight);
   const wavem = Math.max(...waveHeight);
@@ -93,7 +92,7 @@ export function _SeaWaterTempLocation() {
   const waveStr = ` ${wave}-${wavem}m`;
   return (
     <ChartComponent
-      progress={[temp, tempm + 10]}
+      progress={temp}
       zones={[
         {
           startVal: 0,

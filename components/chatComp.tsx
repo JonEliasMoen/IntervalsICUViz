@@ -22,7 +22,7 @@ export function fetchToJson<T>(
   });
 }
 
-interface zone {
+export interface zone {
   text: string;
   startVal: number;
   endVal: number;

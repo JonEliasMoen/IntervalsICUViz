@@ -23,7 +23,7 @@ export function getSnowDepth(x: String, y: String) {
   });
   return data;
 }
-export function _SnowDepthLocation(props: {
+export function SnowDepthLocation(props: {
   name: String;
   x: String;
   y: String;
