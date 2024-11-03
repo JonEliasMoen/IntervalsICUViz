@@ -1,4 +1,4 @@
-import { gradientGen, isoDateOffset } from "@/app/(tabs)/utils/utils";
+import { gradientGen, isoDateOffset } from "@/app/(tabs)/utils/_utils";
 import { useQuery } from "@tanstack/react-query";
 import { ChartComponent, fetchToJson } from "@/components/chatComp";
 
@@ -64,7 +64,7 @@ export function getWaterTemp() {
   return data;
 }
 
-export function SeaWaterTempLocation() {
+export function _SeaWaterTempLocation() {
   const data = getWaterTemp();
 
   const today = data?.properties.timeseries.filter((n) =>
@@ -79,10 +79,12 @@ export function SeaWaterTempLocation() {
   ) ?? [8, 3];
 
   const colors = gradientGen([185, 0, 2], [0, 255, 243], 6).map(
-    (n) => `rgb(${n[0]}, ${n[1]}, ${n[2]})`,
+    (n: number[]) => `rgb(${n[0]}, ${n[1]}, ${n[2]})`,
   );
 
   const temp = Math.min(...temps);
+  const tempm = Math.max(...temps);
+
   const wave = Math.min(...waveHeight);
   const wavem = Math.max(...waveHeight);
 
@@ -91,7 +93,7 @@ export function SeaWaterTempLocation() {
   const waveStr = ` ${wave}-${wavem}m`;
   return (
     <ChartComponent
-      progress={temp}
+      progress={[temp, tempm + 10]}
       zones={[
         {
           startVal: 0,

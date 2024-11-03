@@ -46,23 +46,62 @@ export function Zones(zones: zone[], valTrans: (n: number) => number) {
     </>
   );
 }
+export function indicator(
+  value: number,
+  value2: number,
+  index: number,
+  func?: (n: number) => string | number,
+) {
+  return (
+    <>
+      <View
+        id={index.toString()}
+        style={[
+          styles.progressIndicator,
+          {
+            position: "relative",
+            left: value * 2 * 100,
+          },
+        ]}
+      >
+        <Text
+          style={[
+            styles.subtext,
+            {
+              width: 100,
+            },
+          ]}
+        >
+          {func == null
+            ? value2 != null
+              ? value2.toFixed(2).toString()
+              : value2
+            : func(value2)}
+        </Text>
+      </View>
+    </>
+  );
+}
 
 export function ChartComponent(props: {
   title?: string;
   display?: () => boolean;
-  progress: number;
+  progress: number | number[];
   zones: zone[];
   transform: (n: number) => number;
   indicatorTextTransform?: (n: number) => string | number;
 }) {
-  let value = props.transform(props.progress);
+  let pprogress =
+    typeof props.progress == "number" ? [props.progress] : props.progress;
+  let values = pprogress.map((v) => props.transform(v));
+  let value = values[0];
   let text =
     props.zones.find(
       (zone) =>
         value >= props.transform(zone.startVal) &&
         value <= props.transform(zone.endVal),
     )?.text ?? "";
-  let progress = value - 0.5;
+  let progress = values.map((v) => v - 0.5);
   let display = props.display != null ? props.display() : true;
   let titleText = props.title != undefined ? props.title + ": " : "";
   return (
@@ -71,30 +110,11 @@ export function ChartComponent(props: {
       <View style={styles.progressBarContainer}>
         {Zones(props.zones, props.transform)}
       </View>
-      <View
-        style={[
-          styles.progressIndicator,
-          {
-            position: "relative",
-            left: progress * 2 * 100,
-          },
-        ]}
-      />
-      <Text
-        style={[
-          styles.subtext,
-          {
-            position: "relative",
-            left: progress * 2 * 100,
-          },
-        ]}
-      >
-        {props.indicatorTextTransform == null
-          ? props.progress != null
-            ? props.progress.toFixed(2).toString()
-            : props.progress
-          : props.indicatorTextTransform(props.progress)}
-      </Text>
+      <View style={[styles.indicatorContainer]}>
+        {progress.map((v, i) =>
+          indicator(v, pprogress[i], i, props.indicatorTextTransform),
+        )}
+      </View>
     </View>
   );
 }
@@ -112,6 +132,9 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 10, // Adds space between text and bar
   },
+  indicatorContainer: {
+    flexDirection: "row",
+  },
   progressBarContainer: {
     flexDirection: "row",
     width: 200,
@@ -124,21 +147,11 @@ const styles = StyleSheet.create({
   section: {
     height: "100%",
   },
-  redSection: {
-    backgroundColor: "#FF4C4C", // Red section
-  },
-  yellowSection: {
-    backgroundColor: "#FFD700", // Yellow section
-  },
-  greenSection: {
-    backgroundColor: "#76C7C0", // Green section
-  },
-  orangeSection: {
-    backgroundColor: "#FFA500", // Orange section
-  },
   subtext: {
     position: "relative",
-    top: -30,
+    top: 20,
+    left: 35,
+    alignSelf: "center",
     borderColor: "black",
     backgroundColor: "#fff", // Black progress indicator
   },

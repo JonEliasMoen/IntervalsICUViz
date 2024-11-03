@@ -1,4 +1,4 @@
-import { gradientGen, isoDateOffset } from "@/app/(tabs)/utils/utils";
+import { gradientGen, isoDateOffset } from "@/app/(tabs)/utils/_utils";
 import { useQuery } from "@tanstack/react-query";
 import ChartComponent, { fetchToJson } from "@/components/chatComp";
 
@@ -23,7 +23,7 @@ export function getSnowDepth(x: String, y: String) {
   });
   return data;
 }
-export function SnowDepthLocation(props: {
+export function _SnowDepthLocation(props: {
   name: String;
   x: String;
   y: String;
@@ -37,6 +37,7 @@ export function SnowDepthLocation(props: {
   return (
     <ChartComponent
       progress={depth}
+      display={() => depth != 0}
       indicatorTextTransform={(n) => n.toString() + " cm"}
       zones={[
         {

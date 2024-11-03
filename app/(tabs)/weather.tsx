@@ -1,12 +1,9 @@
 import { ScrollView, StyleSheet } from "react-native";
 import ChartComponent, { fetchToJson } from "@/components/chatComp";
 import { useQuery } from "@tanstack/react-query";
-import { hourToString, isoDateOffset } from "@/app/(tabs)/utils/utils";
-import { SnowDepthLocation } from "@/app/(tabs)/SnowDepthLocation";
-import {
-  getWaterTemp,
-  SeaWaterTempLocation,
-} from "@/app/(tabs)/SeaWaterTempLocation";
+import { hourToString, isoDateOffset } from "@/app/(tabs)/utils/_utils";
+import { _SnowDepthLocation } from "@/app/(tabs)/weatherComps/_SnowDepthLocation";
+import { _SeaWaterTempLocation } from "@/app/(tabs)/weatherComps/_SeaWaterTempLocation";
 
 interface WeatherData {
   copyright: string;
@@ -131,22 +128,22 @@ export default function WeatherScreen() {
         indicatorTextTransform={(n) => hourToString(n / 3600)}
         transform={(n) => n / 86400}
       ></ChartComponent>
-      <SnowDepthLocation
+      <_SnowDepthLocation
         name={"Vassfjellet"}
         x={"268636"}
         y={"7023562"}
-      ></SnowDepthLocation>
-      <SnowDepthLocation
+      ></_SnowDepthLocation>
+      <_SnowDepthLocation
         name={"Lohove"}
         x={"572843"}
         y={"7031468"}
-      ></SnowDepthLocation>
-      <SnowDepthLocation
+      ></_SnowDepthLocation>
+      <_SnowDepthLocation
         name={"Skistua"}
         x={"562932"}
         y={"7032696"}
-      ></SnowDepthLocation>
-      <SeaWaterTempLocation></SeaWaterTempLocation>
+      ></_SnowDepthLocation>
+      <_SeaWaterTempLocation></_SeaWaterTempLocation>
     </ScrollView>
   );
 }
