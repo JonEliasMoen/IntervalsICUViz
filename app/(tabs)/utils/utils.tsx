@@ -16,10 +16,17 @@ export function gradientGen(n: number[], n2: number[], step: number) {
   const colors: number[][] = [];
   const delta: number[] = [];
   for (let z = 0; z < n.length; z++) {
-    delta.push(Math.abs(n[z] - n2[z]) / (step - 1));
+    delta.push(Math.round(-n[z] + n2[z]) / step - 1);
+    console.log(n[z]);
   }
-  for (let z = 0; z < step; z++) {
-    colors.push(delta.map((v, index) => v * z + n[index]));
+  console.log(delta);
+  for (let z = 0; z < step + 1; z++) {
+    colors.push(
+      delta.map((v, index) =>
+        Math.min(Math.max(Math.round(v * z + n[index]), 0), 255),
+      ),
+    );
+    console.log();
   }
   return colors;
 }

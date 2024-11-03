@@ -3,6 +3,10 @@ import ChartComponent, { fetchToJson } from "@/components/chatComp";
 import { useQuery } from "@tanstack/react-query";
 import { hourToString, isoDateOffset } from "@/app/(tabs)/utils/utils";
 import { SnowDepthLocation } from "@/app/(tabs)/SnowDepthLocation";
+import {
+  getWaterTemp,
+  SeaWaterTempLocation,
+} from "@/app/(tabs)/SeaWaterTempLocation";
 
 interface WeatherData {
   copyright: string;
@@ -100,9 +104,6 @@ export default function WeatherScreen() {
   let sunset = getSunData()?.properties.sunset.time;
   let sunriseSec = secondsSinceStartOfDay(new Date(sunrise ?? "09:00"));
   let sunsetSec = secondsSinceStartOfDay(new Date(sunset ?? "20:00"));
-
-  console.log(daysSince(new Date("2024-10-26")));
-  console.log(getSnowDepth("268636", "7023562"));
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <ChartComponent
@@ -135,6 +136,17 @@ export default function WeatherScreen() {
         x={"268636"}
         y={"7023562"}
       ></SnowDepthLocation>
+      <SnowDepthLocation
+        name={"Lohove"}
+        x={"572843"}
+        y={"7031468"}
+      ></SnowDepthLocation>
+      <SnowDepthLocation
+        name={"Skistua"}
+        x={"562932"}
+        y={"7032696"}
+      ></SnowDepthLocation>
+      <SeaWaterTempLocation></SeaWaterTempLocation>
     </ScrollView>
   );
 }

@@ -13,11 +13,14 @@ export function getSnowDepth(x: String, y: String) {
     encodeURIComponent(
       `https://gts.nve.no/api/GridTimeSeries/${x}/${y}/${date}/${date}/sd.json`,
     );
-  const { data: data } = useQuery(["snow", date], () =>
-    fetchToJson<SnowResp>(url, {
-      method: "GET",
-    }),
-  );
+  const { data: data } = useQuery({
+    queryKey: ["snow", date, x, y],
+    queryFn: () =>
+      fetchToJson<SnowResp>(url, {
+        method: "GET",
+      }),
+    retry: false,
+  });
   return data;
 }
 export function SnowDepthLocation(props: {
@@ -28,55 +31,58 @@ export function SnowDepthLocation(props: {
   const data = getSnowDepth(props.x, props.y);
   const depth = data?.Data[0] ?? 0;
   const name = props.name;
-  console.log(gradientGen([49, 135, 162], [222, 239, 245], 7));
+  const colors = gradientGen([0, 255, 243], [2, 0, 185], 7).map(
+    (n) => `rgb(${n[0]}, ${n[1]}, ${n[2]})`,
+  );
   return (
     <ChartComponent
       progress={depth}
+      indicatorTextTransform={(n) => n.toString() + " cm"}
       zones={[
         {
           startVal: 0,
           endVal: 5,
           text: name + ": 0-5cm Snow",
-          color: "rgb(0,0,0)",
+          color: colors[0],
         },
         {
           startVal: 5,
           endVal: 25,
           text: name + ": 5-25cm Snow",
-          color: "rgb(0,0,42)",
+          color: colors[1],
         },
         {
           startVal: 25,
           endVal: 50,
           text: name + ": 25-50cm Snow",
-          color: "rgb(0,0,84)",
+          color: colors[2],
         },
         {
           startVal: 50,
           endVal: 100,
           text: name + ": 50-100cm Snow",
-          color: "rgb(0,0,126)",
+          color: colors[3],
         },
         {
           startVal: 100,
           endVal: 150,
           text: name + ": 100-150cm snow",
-          color: "rgb(0,0,168)",
+          color: colors[4],
         },
         {
           startVal: 150,
           endVal: 200,
           text: name + ": 150-200cm snow",
-          color: "rgb(0,0,210)",
+          color: colors[5],
         },
         {
           startVal: 200,
-          endVal: 400,
-          text: name + "20 0-400cm snow",
-          color: "rgb(0,0,255)",
+          endVal: 250,
+          text: name + ": 200-250cm snow",
+          color: colors[6],
         },
       ]}
-      transform={(x) => x / 400}
+      transform={(x) => x / 250}
     ></ChartComponent>
   );
 }

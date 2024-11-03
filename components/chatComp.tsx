@@ -59,7 +59,7 @@ export function ChartComponent(props: {
   let text =
     props.zones.find(
       (zone) =>
-        value > props.transform(zone.startVal) &&
+        value >= props.transform(zone.startVal) &&
         value <= props.transform(zone.endVal),
     )?.text ?? "";
   let progress = value - 0.5;
