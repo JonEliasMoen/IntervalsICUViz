@@ -19,6 +19,9 @@ The app gives a PMC panel which gives performance mangement values such as:
 - npm run start
 - Enter your intervals.icu developer key: https://forum.intervals.icu/t/api-access-to-intervals-icu/609
 
+# Building
+- The app can be built for android with expo and eas cli
+
 # Bugs
 - There is a problem with the button on android. Still working on this in Master branch. Just remove the <Button> from settings.tsx
 - Loading data after user enters 
