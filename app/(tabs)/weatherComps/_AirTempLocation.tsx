@@ -122,7 +122,7 @@ export function getWeather() {
   const date = isoDateOffset(0);
   const { data: data } = useQuery(["weather", date], () =>
     fetchToJson<WeatherFeature>(
-      "https://api.met.no/weatherapi/locationforecast/2.0/complete?lat=59.9333&lon=10.7166",
+      "https://api.met.no/weatherapi/locationforecast/2.0/complete?lat=63.4293&lon=10.393718",
       {
         method: "GET",
       },
@@ -188,7 +188,9 @@ export function AirTempLocation() {
       color: colorsw[i],
     };
   });
-  console.log(zones);
+
+  console.log(rain);
+  console.log(data);
   return (
     <>
       <ChartComponent
