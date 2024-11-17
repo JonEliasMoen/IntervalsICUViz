@@ -1,10 +1,10 @@
 import { ScrollView, StyleSheet } from "react-native";
 import ChartComponent, { fetchToJson } from "@/components/chatComp";
 import { useQuery } from "@tanstack/react-query";
-import { hourToString, isoDateOffset } from "@/app/(tabs)/utils/_utils";
-import { SnowDepthLocation } from "@/app/(tabs)/weatherComps/_SnowDepthLocation";
-import { SeaWaterTempLocation } from "@/app/(tabs)/weatherComps/_SeaWaterTempLocation";
-import { AirTempLocation } from "@/app/(tabs)/weatherComps/_AirTempLocation";
+import { hourToString, isoDateOffset } from "@/components/utils/_utils";
+import { SnowDepthLocation } from "@/components/weatherComps/_SnowDepthLocation";
+import { SeaWaterTempLocation } from "@/components/weatherComps/_SeaWaterTempLocation";
+import { AirTempLocation } from "@/components/weatherComps/_AirTempLocation";
 
 interface WeatherData {
   copyright: string;

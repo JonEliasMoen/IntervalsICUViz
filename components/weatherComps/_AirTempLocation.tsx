@@ -1,4 +1,4 @@
-import { gradientGen, isoDateOffset } from "@/app/(tabs)/utils/_utils";
+import { gradientGen, isoDateOffset } from "@/components/utils/_utils";
 import { useQuery } from "@tanstack/react-query";
 import { ChartComponent, fetchToJson, zone } from "@/components/chatComp";
 import { mean } from "simple-statistics";

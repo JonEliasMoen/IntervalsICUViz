@@ -12,7 +12,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
 import { mean, standardDeviation } from "simple-statistics";
 import quantile from "@stdlib/stats-base-dists-normal-quantile";
-import { hourToString, isoDateOffset } from "@/app/(tabs)/utils/_utils";
+import { hourToString, isoDateOffset } from "@/components/utils/_utils";
 interface wellness {
   sleepSecs: number;
   atl: number; // acute
