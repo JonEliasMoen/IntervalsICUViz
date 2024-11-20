@@ -1,7 +1,9 @@
-import { gradientGen, isoDateOffset } from "@/components/utils/_utils";
+import { isoDateOffset } from "@/components/utils/_utils";
 import { useQuery } from "@tanstack/react-query";
-import { ChartComponent, fetchToJson, zone } from "@/components/chatComp";
+import { ChartComponent, zone } from "@/components/chatComp";
+import { fetchToJson } from "@/components/utils/_utils";
 import { mean } from "simple-statistics";
+import { generateGradient } from "typescript-color-gradient";
 
 interface WeatherFeature {
   type: "Feature";
@@ -118,11 +120,12 @@ interface TemperatureDetails {
     probability_of_precipitation: number;
   };
 }
-export function getWeather() {
+
+export function getWeather(lat: number, long: number) {
   const date = isoDateOffset(0);
   const { data: data } = useQuery(["weather", date], () =>
     fetchToJson<WeatherFeature>(
-      "https://api.met.no/weatherapi/locationforecast/2.0/complete?lat=63.4293&lon=10.393718",
+      `https://api.met.no/weatherapi/locationforecast/2.0/complete?lat=${lat}&lon=${long}`,
       {
         method: "GET",
       },
@@ -142,8 +145,8 @@ function summary(
   return stats(values);
 }
 
-export function AirTempLocation() {
-  const data = getWeather();
+export function AirTempLocation(props: { lat: number; long: number }) {
+  const data = getWeather(props.lat, props.long);
   const today = data?.properties.timeseries.filter((n) =>
     n.time.match(isoDateOffset(0)),
   );
@@ -152,16 +155,9 @@ export function AirTempLocation() {
   const wind2 = summary("wind_speed_of_gust", today);
   const rain = stats(today?.map((n) => getRain(n)));
 
-  const colors = gradientGen([241, 39, 17], [245, 175, 25], 6).map(
-    (n: number[]) => `rgb(${n[0]}, ${n[1]}, ${n[2]})`,
-  );
-  const colorsw = gradientGen([241, 39, 17], [245, 175, 25], 10).map(
-    (n: number[]) => `rgb(${n[0]}, ${n[1]}, ${n[2]})`,
-  );
-  const colorsr = gradientGen([241, 39, 17], [245, 175, 25], 7).map(
-    (n: number[]) => `rgb(${n[0]}, ${n[1]}, ${n[2]})`,
-  );
-  console.log(temp);
+  const colorsw = generateGradient(["#F12711", "#F5AF19"], 10);
+  const colors = generateGradient(["#02c7fc", "#ff0404"], 6);
+
   const zones: zone[] = [0, 5, 10, 15, 20, 25].map((v, i) => {
     return {
       startVal: v,
@@ -194,23 +190,23 @@ export function AirTempLocation() {
   return (
     <>
       <ChartComponent
-        progress={temp}
+        progress={temp[1]}
         zones={zones}
         transform={(v) => v / 25}
       ></ChartComponent>
       <ChartComponent
-        progress={wind}
+        progress={wind[1]}
         zones={zonesw}
         transform={(v) => v / 24}
       ></ChartComponent>
       <ChartComponent
-        progress={wind2}
+        progress={wind2[1]}
         zones={zonesw}
         transform={(v) => v / 24}
       ></ChartComponent>
       <ChartComponent
         display={() => rain[2] != 0}
-        progress={rain}
+        progress={rain[1]}
         zones={zonesr}
         transform={(n) => n / 34}
       ></ChartComponent>

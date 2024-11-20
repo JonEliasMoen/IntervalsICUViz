@@ -1,11 +1,12 @@
 import { ScrollView, StyleSheet } from "react-native";
-import ChartComponent, { fetchToJson } from "@/components/chatComp";
+import ChartComponent from "@/components/chatComp";
+import { fetchToJson, secondsSinceStartOfDay } from "@/components/utils/_utils";
 import { useQuery } from "@tanstack/react-query";
 import { hourToString, isoDateOffset } from "@/components/utils/_utils";
 import { SnowDepthLocation } from "@/components/weatherComps/_SnowDepthLocation";
 import { SeaWaterTempLocation } from "@/components/weatherComps/_SeaWaterTempLocation";
 import { AirTempLocation } from "@/components/weatherComps/_AirTempLocation";
-
+import { TideLocation } from "@/components/weatherComps/_TideLocation";
 interface WeatherData {
   copyright: string;
   licenseURL: string;
@@ -49,11 +50,11 @@ interface SolarMidnight {
   visible: boolean; // e.g., false
 }
 
-export function getSunData() {
+export function getSunData(lat: number, long: number) {
   const date = isoDateOffset(0);
   const { data: data } = useQuery(["sun", date], () =>
     fetchToJson<WeatherData>(
-      `https://api.met.no/weatherapi/sunrise/3.0/sun?lat=59.933333&lon=10.716667&date=${date}&offset=+02:00`,
+      `https://api.met.no/weatherapi/sunrise/3.0/sun?lat=${lat}&lon=${long}&date=${date}&offset=+02:00`,
       {
         method: "GET",
       },
@@ -79,17 +80,9 @@ export function getSnowDepth(x: String, y: String) {
   );
   return data;
 }
-function secondsSinceStartOfDay(date: Date): number {
-  const startOfDay = new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate(),
-  );
-  // @ts-ignore
-  return (date - startOfDay) / 1000;
-}
+
 function daysSince(date: Date) {
-  var date1 = new Date(2024, 9, 23);
+  var date1 = new Date(2024, 11, 18);
   var date2 = new Date();
   console.log(date2);
   console.log(date1);
@@ -98,8 +91,10 @@ function daysSince(date: Date) {
 }
 
 export default function WeatherScreen() {
-  let sunrise = getSunData()?.properties.sunrise.time;
-  let sunset = getSunData()?.properties.sunset.time;
+  let lat = 63.446827;
+  let long = 10.421906;
+  let sunrise = getSunData(lat, long)?.properties.sunrise.time;
+  let sunset = getSunData(lat, long)?.properties.sunset.time;
   let sunriseSec = secondsSinceStartOfDay(new Date(sunrise ?? "09:00"));
   let sunsetSec = secondsSinceStartOfDay(new Date(sunset ?? "20:00"));
   return (
@@ -129,6 +124,7 @@ export default function WeatherScreen() {
         indicatorTextTransform={(n) => hourToString(n / 3600)}
         transform={(n) => n / 86400}
       ></ChartComponent>
+      <TideLocation lat={lat} long={long}></TideLocation>
       <SnowDepthLocation
         name={"Vassfjellet"}
         x={"268636"}
@@ -144,8 +140,8 @@ export default function WeatherScreen() {
         x={"562932"}
         y={"7032696"}
       ></SnowDepthLocation>
-      <SeaWaterTempLocation></SeaWaterTempLocation>
-      <AirTempLocation></AirTempLocation>
+      <SeaWaterTempLocation lat={lat} long={long}></SeaWaterTempLocation>
+      <AirTempLocation lat={lat} long={long}></AirTempLocation>
     </ScrollView>
   );
 }

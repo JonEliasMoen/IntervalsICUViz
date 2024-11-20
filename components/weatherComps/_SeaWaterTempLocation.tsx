@@ -1,7 +1,8 @@
-import { gradientGen, isoDateOffset } from "@/components/utils/_utils";
+import { isoDateOffset } from "@/components/utils/_utils";
 import { useQuery } from "@tanstack/react-query";
-import { ChartComponent, fetchToJson } from "@/components/chatComp";
-
+import { ChartComponent } from "@/components/chatComp";
+import { fetchToJson } from "@/components/utils/_utils";
+import { generateGradient } from "typescript-color-gradient";
 interface Feature {
   type: "Feature";
   geometry: Geometry;
@@ -51,11 +52,11 @@ interface Details {
   sea_water_temperature: number;
   sea_water_to_direction: number;
 }
-export function getWaterTemp() {
+export function getWaterTemp(lat: number, long: number) {
   const date = isoDateOffset(0);
   const { data: data } = useQuery(["watertemp", date], () =>
     fetchToJson<Feature>(
-      "https://api.met.no/weatherapi/oceanforecast/2.0/complete?lat=63.434897&lon=10.513998",
+      `https://api.met.no/weatherapi/oceanforecast/2.0/complete?lat=${lat}&lon=${long}`,
       {
         method: "GET",
       },
@@ -64,8 +65,8 @@ export function getWaterTemp() {
   return data;
 }
 
-export function SeaWaterTempLocation() {
-  const data = getWaterTemp();
+export function SeaWaterTempLocation(props: { lat: number; long: number }) {
+  const data = getWaterTemp(props.lat, props.long);
 
   const today = data?.properties.timeseries.filter((n) =>
     n.time.match(isoDateOffset(0)),
@@ -78,9 +79,7 @@ export function SeaWaterTempLocation() {
     (v) => v.data.instant.details.sea_surface_wave_height,
   ) ?? [8, 3];
 
-  const colors = gradientGen([185, 0, 2], [0, 255, 243], 6).map(
-    (n: number[]) => `rgb(${n[0]}, ${n[1]}, ${n[2]})`,
-  );
+  const colors = generateGradient(["#00fff3", "#b90002"], 6);
 
   const temp = Math.min(...temps);
 

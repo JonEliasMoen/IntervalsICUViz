@@ -1,26 +1,5 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-export function fetchToJson<T>(
-  url: string,
-  params?: object,
-  setErrorMessage?: (msg: string) => void,
-  operation?: string,
-): Promise<T> {
-  console.log("fetchiing");
-  return fetch(url, params).then((res) => {
-    if (res.ok) {
-      if (res.status === 204) {
-        return null;
-      } else {
-        return res.json();
-      }
-    } else if (res.status === 404) {
-      return null;
-    } else {
-      return Promise.reject(null);
-    }
-  });
-}
 
 export interface zone {
   text: string;
@@ -56,6 +35,7 @@ export function indicator(
     <>
       <View
         id={index.toString()}
+        key={index.toString()}
         style={[
           styles.progressIndicator,
           {
@@ -86,22 +66,19 @@ export function indicator(
 export function ChartComponent(props: {
   title?: string;
   display?: () => boolean;
-  progress: number | number[];
+  progress: number;
   zones: zone[];
   transform: (n: number) => number;
   indicatorTextTransform?: (n: number) => string | number;
 }) {
-  let pprogress =
-    typeof props.progress == "number" ? [props.progress] : props.progress;
-  let values = pprogress.map((v) => props.transform(v));
-  let value = values[0];
+  let value = props.transform(props.progress);
   let text =
     props.zones.find(
       (zone) =>
         value >= props.transform(zone.startVal) &&
         value <= props.transform(zone.endVal),
     )?.text ?? "";
-  let progress = values.map((v) => v - 0.5);
+  let progress = value - 0.5;
   let display = props.display != null ? props.display() : true;
   let titleText = props.title != undefined ? props.title + ": " : "";
   return (
@@ -110,11 +87,30 @@ export function ChartComponent(props: {
       <View style={styles.progressBarContainer}>
         {Zones(props.zones, props.transform)}
       </View>
-      <View style={[styles.indicatorContainer]}>
-        {progress.map((v, i) =>
-          indicator(v, pprogress[i], i, props.indicatorTextTransform),
-        )}
-      </View>
+      <View
+        style={[
+          styles.progressIndicator,
+          {
+            position: "relative",
+            left: progress * 2 * 100,
+          },
+        ]}
+      />
+      <Text
+        style={[
+          styles.subtext,
+          {
+            position: "relative",
+            left: progress * 2 * 100,
+          },
+        ]}
+      >
+        {props.indicatorTextTransform == null
+          ? props.progress != null
+            ? props.progress.toFixed(2).toString()
+            : props.progress
+          : props.indicatorTextTransform(props.progress)}
+      </Text>
     </View>
   );
 }
@@ -132,9 +128,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 10, // Adds space between text and bar
   },
-  indicatorContainer: {
-    flexDirection: "row",
-  },
   progressBarContainer: {
     flexDirection: "row",
     width: 200,
@@ -147,11 +140,21 @@ const styles = StyleSheet.create({
   section: {
     height: "100%",
   },
+  redSection: {
+    backgroundColor: "#FF4C4C", // Red section
+  },
+  yellowSection: {
+    backgroundColor: "#FFD700", // Yellow section
+  },
+  greenSection: {
+    backgroundColor: "#76C7C0", // Green section
+  },
+  orangeSection: {
+    backgroundColor: "#FFA500", // Orange section
+  },
   subtext: {
     position: "relative",
-    top: 20,
-    left: 35,
-    alignSelf: "center",
+    top: -30,
     borderColor: "black",
     backgroundColor: "#fff", // Black progress indicator
   },

@@ -39,6 +39,7 @@
     "react-native-screens": "3.31.1",
     "react-native-web": "~0.19.10",
     "simple-statistics": "^7.8.5",
+    "typescript-color-gradient": "^4.0.0",
     "victory-native": "^41.6.2"
   },
   "devDependencies": {

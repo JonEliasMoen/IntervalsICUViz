@@ -1,6 +1,8 @@
-import { gradientGen, isoDateOffset } from "@/components/utils/_utils";
+import { isoDateOffset } from "@/components/utils/_utils";
 import { useQuery } from "@tanstack/react-query";
-import ChartComponent, { fetchToJson } from "@/components/chatComp";
+import ChartComponent from "@/components/chatComp";
+import { fetchToJson } from "@/components/utils/_utils";
+import { generateGradient } from "typescript-color-gradient";
 
 interface SnowResp {
   Data: number[];
@@ -31,9 +33,7 @@ export function SnowDepthLocation(props: {
   const data = getSnowDepth(props.x, props.y);
   const depth = data?.Data[0] ?? 0;
   const name = props.name;
-  const colors = gradientGen([0, 255, 243], [2, 0, 185], 7).map(
-    (n) => `rgb(${n[0]}, ${n[1]}, ${n[2]})`,
-  );
+  const colors = generateGradient(["#00FFF3", "#0200B9"], 7);
   return (
     <ChartComponent
       progress={depth}

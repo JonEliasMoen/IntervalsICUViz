@@ -1,7 +1,8 @@
 import { Button, ScrollView, StyleSheet } from "react-native";
 
 import { Text, View } from "@/components/Themed";
-import ChartComponent, { fetchToJson } from "@/components/chatComp";
+import ChartComponent from "@/components/chatComp";
+import { fetchToJson } from "@/components/utils/_utils";
 import { useQuery } from "@tanstack/react-query";
 
 interface sportInfo {
