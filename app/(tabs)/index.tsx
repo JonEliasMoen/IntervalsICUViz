@@ -26,39 +26,6 @@ interface wellness {
   [key: string]: any; // This allows for any other unknown properties
 }
 
-/*
-export function weekHealth(apiKey: string | null) {
-  let hrv: number[] = [];
-  let size = 8;
-  for (let i = 0; i < size; i++) {
-    let data = getWellness(i, apiKey);
-    hrv.push(data == null ? 90 : data.hrv == null ? hrv[i - 1] : data.hrv);
-  }
-  return hrv;
-}
-export function getWellness(n: number, apiKey: string | null) {
-  console.log(apiKey);
-  let isodate = isoDateOffset(n);
-
-  const { data: data } = useQuery(
-    ["wellness", isodate],
-    () =>
-      fetchToJson<wellness>(
-        "https://intervals.icu/api/v1/athlete/i174646/wellness/" + isodate,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Basic ${apiKey}`,
-          },
-        },
-      ),
-    {
-      enabled: !!apiKey,
-    },
-  );
-  return data;
-}
- */
 export function getWellnessRange(n: number, n2: number, apiKey: string | null) {
   console.log(apiKey);
   let isodate1 = isoDateOffset(n);
@@ -107,7 +74,15 @@ export default function TabOneScreen() {
   }, []);
   const dataWeek = getWellnessRange(0, 8, storedKey) ?? [];
   const data = dataWeek.at(-1);
-  let hrv = dataWeek.map((t) => t.hrv ?? 90);
+  const sleep =
+    dataWeek
+      .filter((s) => s.sleepSecs != 0 || s.sleepSecs != null)
+      .map((s) => s.sleepSecs)
+      .at(-1) ?? 0;
+  console.log(sleep);
+  let hrv = dataWeek
+    .filter((s) => s.hrv != 0 || s.hrv != null)
+    .map((t) => t.hrv ?? 90);
   if (hrv.length == 0) {
     hrv = [90, 100];
   }
@@ -160,7 +135,7 @@ export default function TabOneScreen() {
         }
       ></ChartComponent>
       <ChartComponent
-        title={"Ramprate q"}
+        title={`Ramprate(${data?.ctl.toFixed()}/${data?.atl.toFixed()}) q`}
         progress={data != null ? data.rampRate : 0}
         zones={[
           {
@@ -223,8 +198,8 @@ export default function TabOneScreen() {
       ></ChartComponent>
       <ChartComponent
         title={"Sleep"}
-        display={() => data == null || data.sleepSecs == 0}
-        progress={data != null ? data.sleepSecs / 3600 : 5}
+        display={() => sleep != null || sleep != 0}
+        progress={sleep != null ? sleep / 3600 : 5}
         indicatorTextTransform={hourToString}
         zones={[
           {

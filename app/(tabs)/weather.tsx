@@ -81,15 +81,6 @@ export function getSnowDepth(x: String, y: String) {
   return data;
 }
 
-function daysSince(date: Date) {
-  var date1 = new Date(2024, 11, 18);
-  var date2 = new Date();
-  console.log(date2);
-  console.log(date1);
-  var diff = Math.abs(date1.getTime() - date2.getTime());
-  return Math.ceil(diff / (1000 * 3600 * 24));
-}
-
 export default function WeatherScreen() {
   let lat = 63.446827;
   let long = 10.421906;

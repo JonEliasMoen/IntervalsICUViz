@@ -258,10 +258,9 @@ function getTideReal(data: WaterLevelForecast): forecast {
 }
 
 export function TideLocation(props: { lat: number; long: number }) {
-  let today;
   let raw = getTide(props.lat, props.long);
   if (raw == undefined) {
-    return <p>fetching tide</p>;
+    return <></>;
   }
   let data = getTideReal(parseForecast(raw));
   let values = Array.from(new Set(data?.y)).sort((a, b) => a - b);
