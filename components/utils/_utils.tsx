@@ -2,11 +2,13 @@ export function today() {
   let d = new Date();
   return d.getDate();
 }
+
 export function isoDateOffset(n: number) {
   let date = new Date();
   date.setDate(date.getDate() - n);
   return date.toISOString().slice(0, 10);
 }
+
 export function secondsSinceStartOfDay(date: Date): number {
   const startOfDay = new Date(
     date.getFullYear(),
@@ -16,6 +18,7 @@ export function secondsSinceStartOfDay(date: Date): number {
   // @ts-ignore
   return (date - startOfDay) / 1000;
 }
+
 export function secondsToHHMM(seconds: number): string {
   if (seconds < 0) throw new Error("Seconds cannot be negative");
 
@@ -25,12 +28,17 @@ export function secondsToHHMM(seconds: number): string {
   return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
 }
 
+export function corsify(url: string): string {
+  return "https://corsproxy.io/?" + encodeURIComponent(url);
+}
+
 export function hourToString(h: number) {
   // gets time as HH:SS from hours as decimal
   let whole = new Date(1970, 0, 1);
   whole.setSeconds(h * 60 * 60);
   return whole.toTimeString().slice(0, 5);
 }
+
 export function fetchToJson<T>(
   url: string,
   params?: object,
@@ -52,6 +60,7 @@ export function fetchToJson<T>(
     }
   });
 }
+
 export function fetchToTxt(
   url: string,
   params?: object,

@@ -1,12 +1,17 @@
 import { ScrollView, StyleSheet } from "react-native";
 import ChartComponent from "@/components/chatComp";
-import { fetchToJson, secondsSinceStartOfDay } from "@/components/utils/_utils";
+import {
+  corsify,
+  fetchToJson,
+  secondsSinceStartOfDay,
+} from "@/components/utils/_utils";
 import { useQuery } from "@tanstack/react-query";
 import { hourToString, isoDateOffset } from "@/components/utils/_utils";
 import { SnowDepthLocation } from "@/components/weatherComps/_SnowDepthLocation";
 import { SeaWaterTempLocation } from "@/components/weatherComps/_SeaWaterTempLocation";
 import { AirTempLocation } from "@/components/weatherComps/_AirTempLocation";
 import { TideLocation } from "@/components/weatherComps/_TideLocation";
+
 interface WeatherData {
   copyright: string;
   licenseURL: string;
@@ -54,25 +59,31 @@ export function getSunData(lat: number, long: number) {
   const date = isoDateOffset(0);
   const { data: data } = useQuery(["sun", date], () =>
     fetchToJson<WeatherData>(
-      `https://api.met.no/weatherapi/sunrise/3.0/sun?lat=${lat}&lon=${long}&date=${date}&offset=+02:00`,
+      corsify(
+        `https://api.met.no/weatherapi/sunrise/3.0/sun?lat=${lat}&lon=${long}&date=${date}&offset=+02:00`,
+      ),
       {
         method: "GET",
+        headers: {
+          "User-Agent": "YrWeather & Intervals",
+        },
       },
     ),
   );
   return data;
 }
+
 interface SnowResp {
   Data: number[];
+
   [key: string]: any;
 }
+
 export function getSnowDepth(x: String, y: String) {
   const date = isoDateOffset(0);
-  const url =
-    "https://corsproxy.io/?" +
-    encodeURIComponent(
-      `https://gts.nve.no/api/GridTimeSeries/${x}/${y}/${date}/${date}/sd.json`,
-    );
+  const url = corsify(
+    `https://gts.nve.no/api/GridTimeSeries/${x}/${y}/${date}/${date}/sd.json`,
+  );
   const { data: data } = useQuery(["snow", date], () =>
     fetchToJson<SnowResp>(url, {
       method: "GET",

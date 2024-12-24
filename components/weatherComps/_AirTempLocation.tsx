@@ -1,4 +1,4 @@
-import { isoDateOffset } from "@/components/utils/_utils";
+import { corsify, isoDateOffset } from "@/components/utils/_utils";
 import { useQuery } from "@tanstack/react-query";
 import { ChartComponent, zone } from "@/components/chatComp";
 import { fetchToJson } from "@/components/utils/_utils";
@@ -44,6 +44,7 @@ interface WeatherFeature {
     timeseries: TimeSeriesEntry[];
   };
 }
+
 interface InstantDetails {
   air_pressure_at_sea_level: number;
   air_temperature: number;
@@ -63,6 +64,7 @@ interface InstantDetails {
   wind_speed_percentile_10: number;
   wind_speed_percentile_90: number;
 }
+
 interface PrecipationDetails {
   precipitation_amount: number;
   precipitation_amount_max: number;
@@ -82,6 +84,7 @@ interface TimeSeriesEntry {
     next_6_hours?: TemperatureDetails;
   };
 }
+
 function getRain(t: TimeSeriesEntry) {
   return (
     t.data.next_1_hours?.details.precipitation_amount ??
@@ -125,18 +128,25 @@ export function getWeather(lat: number, long: number) {
   const date = isoDateOffset(0);
   const { data: data } = useQuery(["weather", date], () =>
     fetchToJson<WeatherFeature>(
-      `https://api.met.no/weatherapi/locationforecast/2.0/complete?lat=${lat}&lon=${long}`,
+      corsify(
+        `https://api.met.no/weatherapi/locationforecast/2.0/complete?lat=${lat}&lon=${long}`,
+      ),
       {
+        headers: {
+          "User-Agent": "YrWeather & Intervals",
+        },
         method: "GET",
       },
     ),
   );
   return data;
 }
+
 function stats(values: number[] | undefined) {
   const data = values ?? [10, 20];
   return [Math.min(...data), mean(data), Math.max(...data)];
 }
+
 function summary(
   param: keyof InstantDetails,
   value: TimeSeriesEntry[] | undefined,
