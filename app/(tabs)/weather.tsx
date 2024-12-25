@@ -134,13 +134,18 @@ export default function WeatherScreen() {
       ></SnowDepthLocation>
       <SnowDepthLocation
         name={"Lohove"}
-        x={"572843"}
-        y={"7031468"}
+        x={"273275"}
+        y={"7038654"}
       ></SnowDepthLocation>
       <SnowDepthLocation
         name={"Skistua"}
-        x={"562932"}
-        y={"7032696"}
+        x={"263575"}
+        y={"7040863"}
+      ></SnowDepthLocation>
+      <SnowDepthLocation
+        name={"Selbuskogen"}
+        x={"304490"}
+        y={"7029240"}
       ></SnowDepthLocation>
       <SeaWaterTempLocation lat={lat} long={long}></SeaWaterTempLocation>
       <AirTempLocation lat={lat} long={long}></AirTempLocation>
