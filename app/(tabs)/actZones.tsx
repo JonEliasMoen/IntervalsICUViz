@@ -13,6 +13,7 @@ interface powerzone {
   id: string;
   secs: number;
 }
+
 interface activity {
   type: string;
   pace_zone_times?: number[];
@@ -20,6 +21,7 @@ interface activity {
   gap_zone_times?: number[];
   icu_zone_times?: powerzone[];
 }
+
 interface pactivity {
   pace_zone_times: number[];
   icu_hr_zone_times: number[];
@@ -48,6 +50,7 @@ export function getActivities(n: number, n2: number, apiKey: string | null) {
   );
   return data;
 }
+
 export function arrayIndexSum(list: number[][], index: number) {
   return list
     .map((s) => s[index])
@@ -60,6 +63,7 @@ export function parseActivites(acts: activity[], attr: keyof activity) {
   // @ts-ignore
   return res.map((s, i) => arrayIndexSum(filact, i));
 }
+
 export function parseActivitesPower(acts: activity[]) {
   let filact = acts
     .map((a) => a.icu_zone_times?.map((s) => s.secs))
@@ -89,6 +93,7 @@ export function parse(
     };
   }
 }
+
 export function collapseZones(zoneTimes: number[]) {
   if (zoneTimes.length >= 6) {
     return [
@@ -104,6 +109,7 @@ export function collapseZones(zoneTimes: number[]) {
     ];
   }
 }
+
 export function toPrecent(zoneTimes: number[] | undefined) {
   return zoneTimes.map(
     (s) =>
@@ -119,12 +125,13 @@ function solve(map: number[], t: number) {
   const targetMap0 = t * map.reduce((sum, value) => sum + value, 0);
   return (targetMap0 - map[0]) / (1 - t) / 60;
 }
+
 function daysSince() {
-  var date1 = new Date(2024, 11, 18);
   var date2 = new Date();
-  var diff = Math.abs(date1.getTime() - date2.getTime());
+  var diff = Math.abs(Date.parse("2024-12-14T19:42:07.791Z") - date2.getTime());
   return Math.ceil(diff / (1000 * 3600 * 24));
 }
+
 export default function ZoneScreen() {
   const [storedKey, setStoredKey] = useState("");
   useEffect(() => {

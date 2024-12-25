@@ -1,4 +1,5 @@
 import {
+  corsify,
   fetchToTxt,
   secondsSinceStartOfDay,
   secondsToHHMM,
@@ -7,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchToJson } from "@/components/utils/_utils";
 import { ChartComponent, zone } from "@/components/chatComp";
 import { generateGradient } from "typescript-color-gradient";
+
 const harbors: string[] = [
   "andenes",
   "bergen",
@@ -92,12 +94,13 @@ type WaterLevelForecast = {
   location: string;
   records: WaterLevelRecord[];
 };
+
 export function getTide(lat: number, long: number) {
   const harbor = findHarbor(lat, long);
   console.log(harbor);
   const { data: data } = useQuery(["tide", harbor], () =>
     fetchToTxt(
-      `https://api.met.no/weatherapi/tidalwater/1.1/?harbor=${harbor}`,
+      corsify(`https://api.met.no/weatherapi/tidalwater/1.1/?harbor=${harbor}`),
       {
         method: "GET",
       },
@@ -105,6 +108,7 @@ export function getTide(lat: number, long: number) {
   );
   return data;
 }
+
 function parseForecast(data: string): WaterLevelForecast {
   const lines = data
     .split("\n")
@@ -193,12 +197,14 @@ function findHarbor(lat: number, long: number) {
   console.log(dist);
   return harbors[dist.findIndex((u) => u == Math.min(...dist)) + 1];
 }
+
 interface forecast {
   x: number[];
   y: number[];
   i: number;
   end: number;
 }
+
 function cutArrayIfOverLimit<T>(array: T[], maxLength: number): T[] {
   return array.length > maxLength ? array.slice(0, maxLength) : array;
 }
@@ -208,6 +214,7 @@ function findClosest(v: number[], i: number) {
   let m = Math.min(...d);
   return d.findIndex((t) => t == m);
 }
+
 function parse(d: forecast) {
   let index = findClosest(d.x, d.i);
   let data = cutArrayIfOverLimit(
@@ -226,6 +233,7 @@ function parse(d: forecast) {
 
   return secondsToHHMM(until) + " until " + text;
 }
+
 function normalizeToPercentageRangeFromArray(
   array: number[],
   value: number,
@@ -244,6 +252,7 @@ function normalizeToPercentageRangeFromArray(
 
   return scaled;
 }
+
 function getTideReal(data: WaterLevelForecast): forecast {
   let today = new Date();
   let dtoday = data.records.filter((t) => t.day == today.getDate());

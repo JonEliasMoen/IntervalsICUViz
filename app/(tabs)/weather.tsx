@@ -65,7 +65,7 @@ export function getSunData(lat: number, long: number) {
       {
         method: "GET",
         headers: {
-          "User-Agent": "YrWeather & Intervals",
+          "User-Agent": "Mozilla",
         },
       },
     ),

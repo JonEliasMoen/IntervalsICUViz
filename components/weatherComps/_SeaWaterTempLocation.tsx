@@ -1,8 +1,9 @@
-import { isoDateOffset } from "@/components/utils/_utils";
+import { corsify, isoDateOffset } from "@/components/utils/_utils";
 import { useQuery } from "@tanstack/react-query";
 import { ChartComponent } from "@/components/chatComp";
 import { fetchToJson } from "@/components/utils/_utils";
 import { generateGradient } from "typescript-color-gradient";
+
 interface Feature {
   type: "Feature";
   geometry: Geometry;
@@ -52,11 +53,14 @@ interface Details {
   sea_water_temperature: number;
   sea_water_to_direction: number;
 }
+
 export function getWaterTemp(lat: number, long: number) {
   const date = isoDateOffset(0);
   const { data: data } = useQuery(["watertemp", date], () =>
     fetchToJson<Feature>(
-      `https://api.met.no/weatherapi/oceanforecast/2.0/complete?lat=${lat}&lon=${long}`,
+      corsify(
+        `https://api.met.no/weatherapi/oceanforecast/2.0/complete?lat=${lat}&lon=${long}`,
+      ),
       {
         method: "GET",
       },

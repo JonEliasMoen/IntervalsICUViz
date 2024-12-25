@@ -29,7 +29,7 @@ export function secondsToHHMM(seconds: number): string {
 }
 
 export function corsify(url: string): string {
-  return "https://corsproxy.io/?" + encodeURIComponent(url);
+  return `https://thingproxy.freeboard.io/fetch/${url}`;
 }
 
 export function hourToString(h: number) {
