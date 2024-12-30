@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { random } from "nanoid";
 
 export interface zone {
   text: string;
@@ -7,12 +8,13 @@ export interface zone {
   endVal: number;
   color: string;
 }
+
 export function Zones(zones: zone[], valTrans: (n: number) => number) {
   return (
     <>
       {zones.map((zone, index) => (
         <View
-          key={index}
+          key={index + random(5).toString()}
           style={[
             styles.section,
             {
@@ -25,6 +27,7 @@ export function Zones(zones: zone[], valTrans: (n: number) => number) {
     </>
   );
 }
+
 export function indicator(
   value: number,
   value2: number,

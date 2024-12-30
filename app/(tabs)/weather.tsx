@@ -73,25 +73,6 @@ export function getSunData(lat: number, long: number) {
   return data;
 }
 
-interface SnowResp {
-  Data: number[];
-
-  [key: string]: any;
-}
-
-export function getSnowDepth(x: String, y: String) {
-  const date = isoDateOffset(0);
-  const url = corsify(
-    `https://gts.nve.no/api/GridTimeSeries/${x}/${y}/${date}/${date}/sd.json`,
-  );
-  const { data: data } = useQuery(["snow", date], () =>
-    fetchToJson<SnowResp>(url, {
-      method: "GET",
-    }),
-  );
-  return data;
-}
-
 export default function WeatherScreen() {
   let lat = 63.446827;
   let long = 10.421906;

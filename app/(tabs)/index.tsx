@@ -5,50 +5,13 @@ import ChartComponent from "@/components/chatComp";
 import { fetchToJson } from "@/components/utils/_utils";
 import { useQuery } from "@tanstack/react-query";
 
-interface sportInfo {
-  type: string;
-  eftp: number;
-}
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { mean, standardDeviation } from "simple-statistics";
 import quantile from "@stdlib/stats-base-dists-normal-quantile";
 import { hourToString, isoDateOffset } from "@/components/utils/_utils";
-interface wellness {
-  sleepSecs: number;
-  atl: number; // acute
-  ctl: number; // chronic
-  hrv: number;
-  rampRate: number;
-  restingHR: number;
-  weight: number;
-  sportInfo: sportInfo[];
-  [key: string]: any; // This allows for any other unknown properties
-}
-
-export function getWellnessRange(n: number, n2: number, apiKey: string | null) {
-  console.log(apiKey);
-  let isodate1 = isoDateOffset(n);
-  let isodate2 = isoDateOffset(n2);
-
-  const { data: data } = useQuery(
-    ["wellness", isodate2, isodate1],
-    () =>
-      fetchToJson<wellness[]>(
-        `https://intervals.icu/api/v1/athlete/i174646/wellness?oldest=${isodate2}&newest=${isodate1}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Basic ${apiKey}`,
-          },
-        },
-      ),
-    {
-      enabled: !!apiKey,
-    },
-  );
-  return data;
-}
+import { useStoredKey } from "@/components/utils/_keyContext";
+import { getWellnessRange, wellness } from "@/components/utils/_commonModel";
 
 export function wattPer(t: "Run" | "Ride", data: wellness | undefined) {
   let weight = data?.weight;
@@ -57,21 +20,7 @@ export function wattPer(t: "Run" | "Ride", data: wellness | undefined) {
 }
 
 export default function TabOneScreen() {
-  const [storedKey, setStoredKey] = useState("");
-
-  useEffect(() => {
-    const loadApiKey = async () => {
-      try {
-        const value = await AsyncStorage.getItem("@api_key");
-        if (value !== null) {
-          setStoredKey(btoa("API_KEY:" + value));
-        }
-      } catch (e) {
-        console.log("Error reading API key:", e);
-      }
-    };
-    loadApiKey();
-  }, []);
+  const { storedKey } = useStoredKey();
   const dataWeek = getWellnessRange(0, 8, storedKey) ?? [];
   const data = dataWeek.at(-1);
   const sleep =
@@ -91,6 +40,7 @@ export default function TabOneScreen() {
     data != undefined
       ? Math.round(((data.ctl - data.atl) * 100) / data.ctl)
       : 0;
+
   let hmean = mean(hrv);
   let hstd = standardDeviation(hrv);
   let hq = (q: number) => {

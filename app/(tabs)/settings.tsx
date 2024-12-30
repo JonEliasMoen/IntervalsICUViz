@@ -3,10 +3,11 @@ import { Text, View } from "@/components/Themed";
 import React, { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useQueryClient } from "@tanstack/react-query";
+import { useStoredKey } from "@/components/utils/_keyContext";
 
 export default function TabTwoScreen() {
   const [apiKey, setApiKey] = useState("");
-  const [storedKey, setStoredKey] = useState("");
+  const { storedKey, setStoredKey } = useStoredKey();
   const queryClient = useQueryClient();
   useEffect(() => {
     const loadApiKey = async () => {

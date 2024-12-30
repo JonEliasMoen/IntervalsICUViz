@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ScrollView, StyleSheet } from "react-native";
+import { ScrollView, StyleSheet, TextInput, View } from "react-native";
 import {
   fetchToJson,
   hourToString,
@@ -8,6 +8,9 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ChartComponent from "@/components/chatComp";
+import MLR from "ml-regression-multivariate-linear";
+import { useStoredKey } from "@/components/utils/_keyContext";
+import { getSettings, getWellnessRange } from "@/components/utils/_commonModel";
 
 interface powerzone {
   id: string;
@@ -20,6 +23,9 @@ interface activity {
   icu_hr_zone_times?: number[];
   gap_zone_times?: number[];
   icu_zone_times?: powerzone[];
+  icu_training_load: number;
+  moving_time: number;
+  pace: number;
 }
 
 interface pactivity {
@@ -27,7 +33,10 @@ interface pactivity {
   icu_hr_zone_times: number[];
   gap_zone_times: number[];
   icu_zone_times: number[];
+  acts: activity[];
 }
+
+export function test() {}
 
 export function getActivities(n: number, n2: number, apiKey: string | null) {
   let isodate1 = isoDateOffset(n);
@@ -77,12 +86,11 @@ export function parse(
   storedKey: string,
   sport: string = "Run",
 ): pactivity | undefined {
-  let acts = getActivities(0, 14, storedKey);
+  let acts = getActivities(0, 7 * 4, storedKey);
   if (acts != undefined) {
     let facts = acts.filter((s) => s.type == sport);
     let pzt = parseActivites(facts, "pace_zone_times");
     let hzt = parseActivites(facts, "icu_hr_zone_times");
-    console.log(hzt);
     let gzt = parseActivites(facts, "gap_zone_times");
     let pozt = parseActivitesPower(facts);
     return {
@@ -90,6 +98,7 @@ export function parse(
       icu_hr_zone_times: collapseZones(hzt),
       gap_zone_times: collapseZones(gzt),
       icu_zone_times: collapseZones(pozt),
+      acts: facts,
     };
   }
 }
@@ -108,6 +117,99 @@ export function collapseZones(zoneTimes: number[]) {
       zoneTimes[4],
     ];
   }
+}
+
+type Boundaries = {
+  min: number;
+  max: number;
+};
+
+function calculateX1Boundaries(
+  w: number[],
+  yMin: number,
+  yMax: number,
+  x2Min: number,
+  x2Max: number,
+): Boundaries {
+  const [w1, w2, w0] = w; // Bias term is last lmao
+
+  if (w1 === 0) {
+    throw new Error("w1 cannot be zero to avoid division by zero.");
+  }
+
+  // Calculate the boundaries for x1 based on yMin
+  const x1MinFromYMin = (yMin - w0 - w2 * x2Max) / w1;
+  const x1MaxFromYMin = (yMin - w0 - w2 * x2Min) / w1;
+
+  // Calculate the boundaries for x1 based on yMax
+  const x1MinFromYMax = (yMax - w0 - w2 * x2Max) / w1;
+  const x1MaxFromYMax = (yMax - w0 - w2 * x2Min) / w1;
+
+  // Determine the final boundaries
+  const x1MinFinal = Math.min(x1MinFromYMin, x1MinFromYMax);
+  const x1MaxFinal = Math.max(x1MaxFromYMin, x1MaxFromYMax);
+
+  return {
+    min: x1MinFinal,
+    max: x1MaxFinal,
+  };
+}
+
+function findDoable(
+  dt: number,
+  load: number[],
+  tol: number[],
+  S: number,
+  L: number,
+  lowerDiscount: number,
+  higherDiscount: number,
+): Boundaries {
+  const alpha = 1 - Math.exp(-Math.log(2) / S);
+  const beta = 1 - Math.exp(-Math.log(2) / L);
+
+  for (let z = 0; z < dt; z++) {
+    load.push((1 - alpha) * load[load.length - 1]);
+    tol.push((1 - beta) * tol[tol.length - 1]);
+  }
+
+  const last = load[load.length - 1] / tol[tol.length - 1];
+  const d =
+    ((alpha - 1) * load[load.length - 2] + load[load.length - 1]) / alpha;
+
+  const res: number[] = [];
+  for (const t of [lowerDiscount, higherDiscount]) {
+    let x =
+      alpha * (load[load.length - 2] - d) +
+      t * (beta * d - beta * tol[tol.length - 2] + tol[tol.length - 2]) -
+      load[load.length - 2];
+    x /= alpha - t * beta;
+    res.push(x);
+  }
+
+  // Ensure no negative values
+  const adjustedRes = res.map((val) => Math.max(0, val));
+  return {
+    min: adjustedRes[0],
+    max: adjustedRes[1],
+  };
+}
+
+export function fitNPred(
+  facts: activity[],
+  vBound: Boundaries,
+  lBound: Boundaries,
+): Boundaries {
+  let X = facts.map((s) => [s.moving_time, s.pace]);
+  let Y = facts.map((s) => [s.icu_training_load]);
+  const mlr = new MLR(X, Y);
+  console.log("weights", mlr.weights);
+  return calculateX1Boundaries(
+    mlr.weights.map((l) => l[0]),
+    lBound.min,
+    lBound.max,
+    vBound.min,
+    vBound.max,
+  );
 }
 
 export function toPrecent(zoneTimes: number[] | undefined) {
@@ -132,30 +234,75 @@ function daysSince() {
   return Math.ceil(diff / (1000 * 3600 * 24));
 }
 
-export default function ZoneScreen() {
-  const [storedKey, setStoredKey] = useState("");
-  useEffect(() => {
-    const loadApiKey = async () => {
-      try {
-        const value = await AsyncStorage.getItem("@api_key");
-        if (value !== null) {
-          setStoredKey(btoa("API_KEY:" + value));
-        }
-      } catch (e) {
-        console.log("Error reading API key:", e);
-      }
+// z is like z0, z1 here.
+function specZone(
+  storedKey: string,
+  sport: string,
+  z: number,
+  z2: number = -1,
+): Boundaries | undefined {
+  let setting = getSettings(storedKey)?.sportSettings.filter(
+    (t) =>
+      t.types.find((t) => {
+        return t == sport;
+      }) != null,
+  )[0];
+  let zl = z2 == -1 ? z - 1 : z2 - 1;
+  console.log(setting);
+  if (setting != null) {
+    let zone = setting.pace_zones[z];
+    let zoneL = zl != -1 ? setting.pace_zones[zl] : 50;
+    let tPace = setting?.threshold_pace;
+    console.log(zone, zoneL);
+    return {
+      min: (zoneL / 100) * tPace,
+      max: (zone / 100) * tPace,
     };
-    loadApiKey();
-  }, []);
+  }
+}
+
+function conv(s: number): number {
+  return 1000 / (s * 60);
+}
+
+function dist(s: number, t: number): string {
+  return ((s * t) / 1000).toFixed(2) + " km";
+}
+
+export default function ZoneScreen() {
+  const { storedKey } = useStoredKey();
+
   if (storedKey == undefined) {
     return <></>;
   }
+  //console.log(specZone(storedKey, "Run", 0));
   let d = daysSince() % 28;
   let type = "Run";
   let summary = parse(storedKey, type);
+  const dataWeek = getWellnessRange(0, 8, storedKey) ?? [];
+  let tol = dataWeek.map((s) => s.ctl);
+  let load = dataWeek.map((s) => s.atl);
+
+  let zoneNr = 4; //solve(summary?.pace_zone_times ?? [2222, 1, 1], 0.8) > 0 ? 1 : 2;
+  let zone = specZone(storedKey, "Run", zoneNr);
   if (summary == undefined) {
     return <></>;
   }
+
+  if (zone == undefined) {
+    return <></>;
+  }
+  console.log(
+    fitNPred(summary.acts, zone, findDoable(0, load, tol, 7, 42, 1, 1.3)),
+  );
+  let res = fitNPred(
+    summary.acts,
+    zone,
+    findDoable(0, load, tol, 7, 42, 1, 1.3),
+  );
+
+  console.log("load bound", findDoable(0, load, tol, 7, 42, 1, 1.3));
+
   let types: (keyof pactivity)[] = [
     "pace_zone_times",
     "gap_zone_times",
@@ -166,19 +313,38 @@ export default function ZoneScreen() {
   console.log(summary);
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
+      <View style={styles.container}>
+        <text>Zone: {zoneNr + 1}</text>
+        <text>
+          Speed: {hourToString(conv(zone.min))}-{hourToString(conv(zone.max))}
+          /km
+        </text>
+        <text>
+          Time: {hourToString(res.min / 60 / 60)} -{" "}
+          {hourToString(res.max / 60 / 60)}
+        </text>
+        <text>
+          Dist: {dist(zone.min, res.min)} - {dist(zone.max, res.max)}
+        </text>
+        <text>
+          Load: {(load[load.length - 1] / tol[tol.length - 1]).toPrecision(2)} -
+          (1-1.3)
+        </text>
+      </View>
       <ChartComponent
         title={"Period"}
         progress={d}
+        display={() => false}
         zones={[
           {
             text: "Menstrual",
             startVal: 0,
-            endVal: 5,
+            endVal: 6,
             color: "#F44336",
           },
           {
             text: "Follicular",
-            startVal: 6,
+            startVal: 7,
             endVal: 14,
             color: "#66BB6A",
           },
@@ -247,6 +413,13 @@ export default function ZoneScreen() {
   );
 }
 const styles = StyleSheet.create({
+  container: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 0,
+    margin: 0,
+    paddingRight: 0,
+  },
   scrollViewContent: {
     paddingBottom: 20, // To ensure scrolling area has enough space at the bottom
     backgroundColor: "white",
