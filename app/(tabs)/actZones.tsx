@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Text } from "@/components/Themed";
 import { ScrollView, StyleSheet, TextInput, View } from "react-native";
 import {
   fetchToJson,
@@ -316,22 +317,22 @@ export default function ZoneScreen() {
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <View style={styles.container}>
-        <text>Zone: {zoneNr + 1}</text>
-        <text>
+        <Text>Zone: {zoneNr + 1}</Text>
+        <Text>
           Speed: {hourToString(conv(zone.min))}-{hourToString(conv(zone.max))}
           /km
-        </text>
-        <text>
+        </Text>
+        <Text>
           Time: {hourToString(res.min / 60 / 60)} -{" "}
           {hourToString(res.max / 60 / 60)}
-        </text>
-        <text>
+        </Text>
+        <Text>
           Dist: {dist(zone.min, res.min)} - {dist(zone.max, res.max)}
-        </text>
-        <text>
+        </Text>
+        <Text>
           Load: {(load[load.length - 1] / tol[tol.length - 1]).toPrecision(2)} -
           (1-1.3)
-        </text>
+        </Text>
       </View>
       <ChartComponent
         title={"Period"}
