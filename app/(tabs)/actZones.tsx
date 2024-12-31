@@ -6,7 +6,6 @@ import {
   isoDateOffset,
 } from "@/components/utils/_utils";
 import { useQuery } from "@tanstack/react-query";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import ChartComponent from "@/components/chatComp";
 import MLR from "ml-regression-multivariate-linear";
 import { useStoredKey } from "@/components/utils/_keyContext";
@@ -34,6 +33,7 @@ interface pactivity {
   gap_zone_times: number[];
   icu_zone_times: number[];
   acts: activity[];
+  pace_zone_times_20: number[];
 }
 
 export function test() {}
@@ -95,12 +95,17 @@ export function parse(
     let pozt = parseActivitesPower(facts);
     return {
       pace_zone_times: collapseZones(pzt),
+      pace_zone_times_20: innerZone(pzt),
       icu_hr_zone_times: collapseZones(hzt),
       gap_zone_times: collapseZones(gzt),
       icu_zone_times: collapseZones(pozt),
       acts: facts,
     };
   }
+}
+
+function innerZone(zone: number[]) {
+  return [zone[2], zone[3], zone[4]];
 }
 
 export function collapseZones(zoneTimes: number[]) {
@@ -223,9 +228,9 @@ export function toPrecent(zoneTimes: number[] | undefined) {
   );
 }
 
-function solve(map: number[], t: number) {
+function solve(map: number[], t: number, i: number = 0) {
   const targetMap0 = t * map.reduce((sum, value) => sum + value, 0);
-  return (targetMap0 - map[0]) / (1 - t) / 60;
+  return (targetMap0 - map[i]) / (1 - t) / 60;
 }
 
 function daysSince() {
@@ -283,7 +288,7 @@ export default function ZoneScreen() {
   let tol = dataWeek.map((s) => s.ctl);
   let load = dataWeek.map((s) => s.atl);
 
-  let zoneNr = 4; //solve(summary?.pace_zone_times ?? [2222, 1, 1], 0.8) > 0 ? 1 : 2;
+  let zoneNr = solve(summary?.pace_zone_times ?? [2222, 1, 1], 0.8) > 0 ? 1 : 2;
   let zone = specZone(storedKey, "Run", zoneNr);
   if (summary == undefined) {
     return <></>;
@@ -301,16 +306,13 @@ export default function ZoneScreen() {
     findDoable(0, load, tol, 7, 42, 1, 1.3),
   );
 
-  console.log("load bound", findDoable(0, load, tol, 7, 42, 1, 1.3));
-
   let types: (keyof pactivity)[] = [
     "pace_zone_times",
     "gap_zone_times",
     "icu_zone_times",
     "icu_hr_zone_times",
   ];
-
-  console.log(summary);
+  let zoneI = [0, 1, 2];
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <View style={styles.container}>
@@ -375,7 +377,36 @@ export default function ZoneScreen() {
         ]}
         transform={(n) => n / 28}
       ></ChartComponent>
-
+      {zoneI.map((i) => {
+        let zones = toPrecent(summary?.pace_zone_times_20);
+        let vMap = toPrecent([0.12, 0.05, 0.02]);
+        let needed =
+          solve(summary?.pace_zone_times_20 ?? [0, 1, 1], vMap[i], i) / 60;
+        needed = needed;
+        let solved = (needed > 0 ? "" : "-") + hourToString(Math.abs(needed));
+        console.log(zones[i]);
+        return (
+          <ChartComponent
+            title={"Zone " + (i + 3).toString() + " " + solved.toString()}
+            progress={vMap[i]}
+            zones={[
+              {
+                text: "Zone" + (i + 3).toString(),
+                startVal: 0,
+                endVal: zones[i],
+                color: "#009E0066",
+              },
+              {
+                text: "Other",
+                startVal: zones[i],
+                endVal: 1,
+                color: "#FFCB0E80",
+              },
+            ]}
+            transform={(n) => n}
+          ></ChartComponent>
+        );
+      })}
       {types.map((s) => {
         let zones = toPrecent(summary[s]);
         let needed = solve(summary[s], 0.8) / 60;
