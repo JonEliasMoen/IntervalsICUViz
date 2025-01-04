@@ -1,32 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Text } from "@/components/Themed";
-import { ScrollView, StyleSheet, TextInput, View } from "react-native";
-import {
-  fetchToJson,
-  hourToString,
-  isoDateOffset,
-} from "@/components/utils/_utils";
-import { useQuery } from "@tanstack/react-query";
+import { ScrollView, StyleSheet, View } from "react-native";
+import { hourToString } from "@/components/utils/_utils";
 import ChartComponent from "@/components/chatComp";
-import MLR from "ml-regression-multivariate-linear";
+import { MultivariateLinearRegression } from "@/components/utils/mlr";
 import { useStoredKey } from "@/components/utils/_keyContext";
-import { getSettings, getWellnessRange } from "@/components/utils/_commonModel";
-
-interface powerzone {
-  id: string;
-  secs: number;
-}
-
-interface activity {
-  type: string;
-  pace_zone_times?: number[];
-  icu_hr_zone_times?: number[];
-  gap_zone_times?: number[];
-  icu_zone_times?: powerzone[];
-  icu_training_load: number;
-  moving_time: number;
-  pace: number;
-}
+import {
+  activity,
+  getActivities,
+  getSettings,
+  getWellnessRange,
+  wellness,
+} from "@/components/utils/_commonModel";
+import { mean, standardDeviation } from "simple-statistics";
 
 interface pactivity {
   pace_zone_times: number[];
@@ -35,30 +21,6 @@ interface pactivity {
   icu_zone_times: number[];
   acts: activity[];
   pace_zone_times_20: number[];
-}
-
-export function test() {}
-
-export function getActivities(n: number, n2: number, apiKey: string | null) {
-  let isodate1 = isoDateOffset(n);
-  let isodate2 = isoDateOffset(n2);
-  const { data: data } = useQuery(
-    ["activities", isodate1, isodate2],
-    () =>
-      fetchToJson<activity[]>(
-        `https://intervals.icu/api/v1/athlete/i174646/activities?oldest=${isodate2}&newest=${isodate1}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Basic ${apiKey}`,
-          },
-        },
-      ),
-    {
-      enabled: !!apiKey,
-    },
-  );
-  return data;
 }
 
 export function arrayIndexSum(list: number[][], index: number) {
@@ -125,20 +87,88 @@ export function collapseZones(zoneTimes: number[]) {
   }
 }
 
+export function convertToRanges(arr: number[]): Boundaries[] {
+  if (arr.length === 0) return [];
+
+  arr.sort((a, b) => a - b);
+
+  const ranges: Boundaries[] = [];
+  let start = arr[0];
+  let end = arr[0];
+
+  for (let i = 1; i < arr.length; i++) {
+    if (arr[i] === end + 1) {
+      end = arr[i];
+    } else {
+      ranges.push({
+        min: start,
+        max: end,
+      });
+      start = arr[i];
+      end = arr[i];
+    }
+  }
+
+  ranges.push({
+    min: start,
+    max: end,
+  });
+
+  return ranges;
+}
+
 type Boundaries = {
   min: number;
   max: number;
 };
+type finalRes = {
+  time: Boundaries;
+  load: Boundaries;
+};
+
+type desc = {
+  load: number;
+  monotony: number;
+  strain: number;
+};
+
+function calculateMonotonyLoadRange(
+  past7Days: number[],
+  loadBound: Boundaries,
+  monoBound: Boundaries,
+  strBound: Boundaries,
+): Boundaries[] {
+  const cLoad = structuredClone(past7Days);
+  const today = cLoad[cLoad.length - 1];
+  const data: desc[] = [];
+
+  for (let i = loadBound.min; i <= loadBound.max; i++) {
+    cLoad[cLoad.length - 1] = today + i;
+    let monotony = mean(cLoad) / standardDeviation(cLoad);
+    let strain = monotony * mean(cLoad);
+    data.push({
+      load: i,
+      monotony: monotony,
+      strain: strain,
+    });
+  }
+  const loads = data
+    .filter((t) => t.monotony < monoBound.max && t.monotony > monoBound.min)
+    .filter((t) => t.strain < strBound.max && t.strain > strBound.min)
+    .map((t) => t.load);
+  return convertToRanges(loads);
+}
 
 function calculateX1Boundaries(
   w: number[],
-  yMin: number,
-  yMax: number,
-  x2Min: number,
-  x2Max: number,
+  y: Boundaries,
+  x2: Boundaries,
 ): Boundaries {
   const [w1, w2, w0] = w; // Bias term is last lmao
-
+  const yMin = y.min;
+  const yMax = y.max;
+  const x2Min = x2.min;
+  const x2Max = x2.max;
   if (w1 === 0) {
     throw new Error("w1 cannot be zero to avoid division by zero.");
   }
@@ -156,8 +186,8 @@ function calculateX1Boundaries(
   const x1MaxFinal = Math.max(x1MaxFromYMin, x1MaxFromYMax);
 
   return {
-    min: x1MinFinal,
-    max: x1MaxFinal,
+    min: Math.max(x1MinFinal, 0),
+    max: Math.max(x1MaxFinal, 0),
   };
 }
 
@@ -201,21 +231,35 @@ function findDoable(
 }
 
 export function fitNPred(
+  dataWeek: wellness[],
   facts: activity[],
   vBound: Boundaries,
   lBound: Boundaries,
-): Boundaries {
-  let X = facts.map((s) => [s.moving_time, s.pace]);
-  let Y = facts.map((s) => [s.icu_training_load]);
-  const mlr = new MLR(X, Y);
-  console.log("weights", mlr.weights);
-  return calculateX1Boundaries(
-    mlr.weights.map((l) => l[0]),
-    lBound.min,
-    lBound.max,
-    vBound.min,
-    vBound.max,
+): finalRes {
+  let load = dataWeek.map((t) => t.ctlLoad).filter((t) => t != undefined);
+  load = load.slice(load.length - 7);
+  let loadRanges = calculateMonotonyLoadRange(
+    load,
+    lBound,
+    { min: 0.8, max: 1.5 },
+    { min: 30, max: 150 },
   );
+  loadRanges;
+  console.log(loadRanges);
+
+  let X = facts.map((s) => [s.moving_time, s.pace]);
+  let Y = facts.map((s) => s.icu_training_load);
+  const mlr = new MultivariateLinearRegression();
+  mlr.fit(X, Y);
+
+  return {
+    time: calculateX1Boundaries(
+      mlr.aweights.map((l) => l[0]),
+      loadRanges[0],
+      vBound,
+    ),
+    load: loadRanges[0],
+  };
 }
 
 export function toPrecent(zoneTimes: number[] | undefined) {
@@ -268,10 +312,15 @@ function specZone(
 }
 
 function conv(s: number): number {
-  return 1000 / (s * 60);
+  return 1000 / (s * 60); // m/s => m/km
+}
+
+function convertMStoKMH(metersPerSecond: number): number {
+  return metersPerSecond * 3.6;
 }
 
 function dist(s: number, t: number): string {
+  t = Math.max(0, t);
   return ((s * t) / 1000).toFixed(2) + " km";
 }
 
@@ -281,11 +330,13 @@ export default function ZoneScreen() {
   if (storedKey == undefined) {
     return <></>;
   }
-  //console.log(specZone(storedKey, "Run", 0));
   let d = daysSince() % 28;
   let type = "Run";
   let summary = parse(storedKey, type);
-  const dataWeek = getWellnessRange(0, 8, storedKey) ?? [];
+  const dataWeek = getWellnessRange(0, 8, storedKey);
+  if (dataWeek == undefined || dataWeek.length == 0) {
+    return <></>;
+  }
   let tol = dataWeek.map((s) => s.ctl);
   let load = dataWeek.map((s) => s.atl);
 
@@ -298,14 +349,9 @@ export default function ZoneScreen() {
   if (zone == undefined) {
     return <></>;
   }
-  console.log(
-    fitNPred(summary.acts, zone, findDoable(0, load, tol, 7, 42, 1, 1.3)),
-  );
-  let res = fitNPred(
-    summary.acts,
-    zone,
-    findDoable(0, load, tol, 7, 42, 1, 1.3),
-  );
+
+  let neededLoad = findDoable(0, load, tol, 7, 42, 1, 1.3);
+  let res = fitNPred(dataWeek, summary.acts, zone, neededLoad);
 
   let types: (keyof pactivity)[] = [
     "pace_zone_times",
@@ -323,11 +369,19 @@ export default function ZoneScreen() {
           /km
         </Text>
         <Text>
-          Time: {hourToString(res.min / 60 / 60)} -{" "}
-          {hourToString(res.max / 60 / 60)}
+          Speed: {convertMStoKMH(zone.min).toFixed(1)}-
+          {convertMStoKMH(zone.max).toFixed(1)}
+          km/h
         </Text>
         <Text>
-          Dist: {dist(zone.min, res.min)} - {dist(zone.max, res.max)}
+          Time: {hourToString(res.time.min / 60 / 60)} -{" "}
+          {hourToString(res.time.max / 60 / 60)}
+        </Text>
+        <Text>
+          Dist: {dist(zone.min, res.time.min)} - {dist(zone.max, res.time.max)}
+        </Text>
+        <Text>
+          LoadRange: {res.load.min} - {res.load.max}
         </Text>
         <Text>
           Load: {(load[load.length - 1] / tol[tol.length - 1]).toPrecision(2)} -
@@ -337,7 +391,7 @@ export default function ZoneScreen() {
       <ChartComponent
         title={"Period"}
         progress={d}
-        display={() => false}
+        display={() => true}
         zones={[
           {
             text: "Menstrual",

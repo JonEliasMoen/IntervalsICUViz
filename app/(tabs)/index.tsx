@@ -1,15 +1,10 @@
-import { Button, ScrollView, StyleSheet } from "react-native";
-
-import { Text, View } from "@/components/Themed";
+import { ScrollView, StyleSheet } from "react-native";
+import { Text } from "@/components/Themed";
 import ChartComponent from "@/components/chatComp";
-import { fetchToJson } from "@/components/utils/_utils";
-import { useQuery } from "@tanstack/react-query";
-
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import React from "react";
 import { mean, standardDeviation } from "simple-statistics";
 import quantile from "@stdlib/stats-base-dists-normal-quantile";
-import { hourToString, isoDateOffset } from "@/components/utils/_utils";
+import { hourToString } from "@/components/utils/_utils";
 import { useStoredKey } from "@/components/utils/_keyContext";
 import { getWellnessRange, wellness } from "@/components/utils/_commonModel";
 
@@ -22,6 +17,13 @@ export function wattPer(t: "Run" | "Ride", data: wellness | undefined) {
 export default function TabOneScreen() {
   const { storedKey } = useStoredKey();
   const dataWeek = getWellnessRange(0, 8, storedKey) ?? [];
+  if (dataWeek == undefined || dataWeek.length == 0) {
+    return <></>;
+  }
+  let load = dataWeek.map((t) => t.ctlLoad).filter((t) => t != undefined);
+  load = load.slice(load.length - 7);
+  let monotony = mean(load) / standardDeviation(load);
+
   const data = dataWeek.at(-1);
   const sleep =
     dataWeek
@@ -50,6 +52,80 @@ export default function TabOneScreen() {
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <Text style={styles.title}>Status</Text>
+      <ChartComponent
+        title={"Montony"}
+        progress={monotony ?? 0}
+        zones={[
+          {
+            text: "Very Low (0-0.8)",
+            startVal: 0.0,
+            endVal: 0.8,
+            color: "rgb(255,0,0)", // Red
+          },
+          {
+            text: "Low",
+            startVal: 0.8,
+            endVal: 1.0,
+            color: "#FFCB0E80", // Yellow
+          },
+          {
+            text: "Normal (1-1.5)",
+            startVal: 1.0,
+            endVal: 1.5,
+            color: "#009E0066", // Green
+          },
+          {
+            text: "High (1.5-2)",
+            startVal: 1.5,
+            endVal: 2.0,
+            color: "#FFCB0E80", // Yellow
+          },
+          {
+            text: "Very High (2-3)",
+            startVal: 2.0,
+            endVal: 3.0, // Arbitrary upper bound
+            color: "rgb(255,0,0)", // Red
+          },
+        ]}
+        transform={(n) => n / 3}
+      />
+      <ChartComponent
+        title={"Strain"}
+        progress={monotony * mean(load) ?? 0}
+        zones={[
+          {
+            text: "Very Low (0-30)",
+            startVal: 0.0,
+            endVal: 30,
+            color: "rgb(255,0,0)", // Red
+          },
+          {
+            text: "Low (30-60)",
+            startVal: 30,
+            endVal: 60,
+            color: "#FFCB0E80", // Yellow
+          },
+          {
+            text: "Normal (60-100)",
+            startVal: 60,
+            endVal: 100,
+            color: "#009E0066", // Green
+          },
+          {
+            text: "High (100-150)",
+            startVal: 100,
+            endVal: 150,
+            color: "#FFCB0E80", // Yellow
+          },
+          {
+            text: "Very High (150-200)",
+            startVal: 150,
+            endVal: 200,
+            color: "rgb(255,0,0)", // Red
+          },
+        ]}
+        transform={(n) => n / 200}
+      />
       <ChartComponent
         title={"HRV"}
         display={() => hmean != null}
