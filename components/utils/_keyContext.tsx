@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import base64 from "react-native-base64";
 
 type StoredKeyContextType = {
   storedKey: string;
@@ -20,7 +21,7 @@ export const StoredKeyProvider: React.FC<{ children: React.ReactNode }> = ({
       try {
         const value = await AsyncStorage.getItem("@api_key");
         if (value !== null) {
-          setStoredKey(btoa("API_KEY:" + value));
+          setStoredKey(base64.encode("API_KEY:" + value));
         }
       } catch (e) {
         console.error("Error reading API key:", e);
