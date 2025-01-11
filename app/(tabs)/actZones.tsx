@@ -1,10 +1,9 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Text } from "@/components/Themed";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { hourToString } from "@/components/utils/_utils";
 import ChartComponent from "@/components/chatComp";
 import { MultivariateLinearRegression } from "@/components/utils/mlr";
-import { useStoredKey } from "@/components/utils/_keyContext";
 import {
   activity,
   getActivities,
@@ -13,6 +12,8 @@ import {
   wellness,
 } from "@/components/utils/_commonModel";
 import { mean, standardDeviation } from "simple-statistics";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useStoredKey } from "@/components/utils/_keyContext";
 
 interface pactivity {
   pace_zone_times: number[];
@@ -142,12 +143,12 @@ function calculateMonotonyLoadRange(
   const today = cLoad[cLoad.length - 1];
   const data: desc[] = [];
 
-  for (let i = loadBound.min; i <= loadBound.max; i++) {
+  for (let i = Math.floor(loadBound.min); i <= Math.ceil(loadBound.max); i++) {
     cLoad[cLoad.length - 1] = today + i;
     let monotony = mean(cLoad) / standardDeviation(cLoad);
     let strain = monotony * mean(cLoad);
     data.push({
-      load: i,
+      load: Math.round(i),
       monotony: monotony,
       strain: strain,
     });
@@ -161,12 +162,18 @@ function calculateMonotonyLoadRange(
 
 function calculateX1Boundaries(
   w: number[],
-  y: Boundaries,
+  y2: Boundaries,
   x2: Boundaries,
 ): Boundaries {
+  if (y2 == undefined) {
+    return {
+      min: 0,
+      max: 0,
+    };
+  }
   const [w1, w2, w0] = w; // Bias term is last lmao
-  const yMin = y.min;
-  const yMax = y.max;
+  const yMin = y2.min;
+  const yMax = y2.max;
   const x2Min = x2.min;
   const x2Max = x2.max;
   if (w1 === 0) {
@@ -235,31 +242,38 @@ export function fitNPred(
   facts: activity[],
   vBound: Boundaries,
   lBound: Boundaries,
-): finalRes {
+): finalRes[] {
   let load = dataWeek.map((t) => t.ctlLoad).filter((t) => t != undefined);
   load = load.slice(load.length - 7);
   let loadRanges = calculateMonotonyLoadRange(
     load,
     lBound,
-    { min: 0.8, max: 1.5 },
+    { min: 0.8, max: 2 },
     { min: 30, max: 150 },
   );
-  loadRanges;
-  console.log(loadRanges);
+  let lrange: Boundaries[];
+  if (loadRanges == undefined || loadRanges.length == 0) {
+    lrange = [lBound];
+  } else {
+    lrange = loadRanges;
+  }
+  console.log(lrange);
 
   let X = facts.map((s) => [s.moving_time, s.pace]);
   let Y = facts.map((s) => s.icu_training_load);
   const mlr = new MultivariateLinearRegression();
   mlr.fit(X, Y);
 
-  return {
-    time: calculateX1Boundaries(
-      mlr.aweights.map((l) => l[0]),
-      loadRanges[0],
-      vBound,
-    ),
-    load: loadRanges[0],
-  };
+  return lrange.map((t) => {
+    return {
+      time: calculateX1Boundaries(
+        mlr.aweights.map((l) => l[0]),
+        t,
+        vBound,
+      ),
+      load: t,
+    };
+  });
 }
 
 export function toPrecent(zoneTimes: number[] | undefined) {
@@ -326,7 +340,6 @@ function dist(s: number, t: number): string {
 
 export default function ZoneScreen() {
   const { storedKey } = useStoredKey();
-
   if (storedKey == undefined) {
     return <></>;
   }
@@ -364,29 +377,39 @@ export default function ZoneScreen() {
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <View style={styles.container}>
         <Text>Zone: {zoneNr + 1}</Text>
-        <Text>
-          Speed: {hourToString(conv(zone.min))}-{hourToString(conv(zone.max))}
-          /km
-        </Text>
-        <Text>
-          Speed: {convertMStoKMH(zone.min).toFixed(1)}-
-          {convertMStoKMH(zone.max).toFixed(1)}
-          km/h
-        </Text>
-        <Text>
-          Time: {hourToString(res.time.min / 60 / 60)} -{" "}
-          {hourToString(res.time.max / 60 / 60)}
-        </Text>
-        <Text>
-          Dist: {dist(zone.min, res.time.min)} - {dist(zone.max, res.time.max)}
-        </Text>
-        <Text>
-          LoadRange: {res.load.min} - {res.load.max}
-        </Text>
-        <Text>
-          Load: {(load[load.length - 1] / tol[tol.length - 1]).toPrecision(2)} -
-          (1-1.3)
-        </Text>
+        {res.map((t, i) => {
+          return (
+            <>
+              <Text>Run: {i + 1}</Text>
+              <Text>
+                Speed: {hourToString(conv(zone.min))}-
+                {hourToString(conv(zone.max))}
+                /km
+              </Text>
+              <Text>
+                Speed: {convertMStoKMH(zone.min).toFixed(1)}-
+                {convertMStoKMH(zone.max).toFixed(1)}
+                km/h
+              </Text>
+              <Text>
+                Time: {hourToString(t.time.min / 60 / 60)} -{" "}
+                {hourToString(t.time.max / 60 / 60)}
+              </Text>
+              <Text>
+                Dist: {dist(zone.min, t.time.min)} -{" "}
+                {dist(zone.max, t.time.max)}
+              </Text>
+              <Text>
+                LoadRange: {t.load.min} - {t.load.max}
+              </Text>
+              <Text>
+                Load:{" "}
+                {(load[load.length - 1] / tol[tol.length - 1]).toPrecision(2)} -
+                (1-1.3)
+              </Text>
+            </>
+          );
+        })}
       </View>
       <ChartComponent
         title={"Period"}
