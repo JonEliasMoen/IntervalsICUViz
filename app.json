@@ -2,7 +2,7 @@
   "expo": {
     "name": "yrweather",
     "slug": "yrweather",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
@@ -39,6 +39,12 @@
         "projectId": "444caff6-a3c1-410b-a619-3dad27118854"
       }
     },
-    "owner": "joneliasmewoen"
+    "owner": "joneliasmewoen",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/444caff6-a3c1-410b-a619-3dad27118854"
+    }
   }
 }
