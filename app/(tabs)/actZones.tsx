@@ -12,9 +12,8 @@ import {
   wellness,
 } from "@/components/utils/_commonModel";
 import { mean, standardDeviation } from "simple-statistics";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useStoredKey } from "@/components/utils/_keyContext";
-
+import DropDownPicker from "react-native-dropdown-picker";
 interface pactivity {
   pace_zone_times: number[];
   icu_hr_zone_times: number[];
@@ -292,12 +291,6 @@ function solve(map: number[], t: number, i: number = 0) {
   return (targetMap0 - map[i]) / (1 - t) / 60;
 }
 
-function daysSince() {
-  var date2 = new Date();
-  var diff = Math.abs(Date.parse("2024-12-14T19:42:07.791Z") - date2.getTime());
-  return Math.ceil(diff / (1000 * 3600 * 24));
-}
-
 // z is like z0, z1 here.
 function specZone(
   storedKey: string,
@@ -343,8 +336,10 @@ export default function ZoneScreen() {
   if (storedKey == undefined) {
     return <></>;
   }
-  let d = daysSince() % 28;
   let type = "Run";
+  const [value, setValue] = useState<number | null>(null); // Initialize state for selected value
+  const [open, setOpen] = useState(false); // State for dropdown visibility
+
   let summary = parse(storedKey, type);
   const dataWeek = getWellnessRange(0, 8, storedKey);
   if (dataWeek == undefined || dataWeek.length == 0) {
@@ -352,8 +347,12 @@ export default function ZoneScreen() {
   }
   let tol = dataWeek.map((s) => s.ctl);
   let load = dataWeek.map((s) => s.atl);
-
-  let zoneNr = solve(summary?.pace_zone_times ?? [2222, 1, 1], 0.8) > 0 ? 1 : 2;
+  let zoneNr =
+    value != null
+      ? value - 1
+      : solve(summary?.pace_zone_times ?? [2222, 1, 1], 0.8) > 0
+        ? 1
+        : 2;
   let zone = specZone(storedKey, "Run", zoneNr);
   if (summary == undefined) {
     return <></>;
@@ -366,6 +365,13 @@ export default function ZoneScreen() {
   let neededLoad = findDoable(0, load, tol, 7, 42, 1, 1.3);
   let res = fitNPred(dataWeek, summary.acts, zone, neededLoad);
 
+  const items = [
+    { label: "Zone 1", value: 1 },
+    { label: "Zone 2", value: 2 },
+    { label: "Zone 3", value: 3 },
+    { label: "Zone 4", value: 4 },
+    { label: "Zone 5", value: 5 },
+  ];
   let types: (keyof pactivity)[] = [
     "pace_zone_times",
     "gap_zone_times",
@@ -375,8 +381,22 @@ export default function ZoneScreen() {
   let zoneI = [0, 1, 2];
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
+      <View style={[styles.dcontainer]}>
+        <DropDownPicker
+          open={open}
+          value={value}
+          items={items}
+          setOpen={setOpen}
+          setValue={setValue}
+          placeholder="Select a zone"
+          dropDownContainerStyle={{
+            zIndex: 1000,
+            elevation: 1000,
+            backgroundColor: "white",
+          }}
+        />
+      </View>
       <View style={styles.container}>
-        <Text>Zone: {zoneNr + 1}</Text>
         {res.map((t, i) => {
           return (
             <>
@@ -410,114 +430,41 @@ export default function ZoneScreen() {
             </>
           );
         })}
+        {types.map((s) => {
+          let zones = toPrecent(summary[s]);
+          let needed = solve(summary[s], 0.8) / 60;
+          console.log(s, needed);
+          let solved = (needed > 0 ? "" : "-") + hourToString(Math.abs(needed));
+          return (
+            <ChartComponent
+              title={type + " " + s.toString() + " " + solved.toString()}
+              progress={0.8}
+              zones={[
+                {
+                  text: "Polarized",
+                  startVal: 0,
+                  endVal: zones[0],
+                  color: "#009E0066",
+                },
+                {
+                  text: "Threshold",
+                  startVal: zones[0],
+                  endVal: zones[1] + zones[0],
+                  color: "#FFCB0E80",
+                },
+                {
+                  text: "HIT",
+                  startVal: zones[1] + zones[0],
+                  endVal: zones[1] + zones[0] + zones[2],
+                  color: "rgb(255, 0, 0)",
+                },
+              ]}
+              transform={(n) => n}
+            ></ChartComponent>
+          );
+        })}
+        ;
       </View>
-      <ChartComponent
-        title={"Period"}
-        progress={d}
-        display={() => true}
-        zones={[
-          {
-            text: "Menstrual",
-            startVal: 0,
-            endVal: 6,
-            color: "#F44336",
-          },
-          {
-            text: "Follicular",
-            startVal: 7,
-            endVal: 14,
-            color: "#66BB6A",
-          },
-          {
-            text: "Ovulation",
-            startVal: 14,
-            endVal: 15,
-            color: "#FF7043",
-          },
-          {
-            text: "Luteal",
-            startVal: 16,
-            endVal: 21,
-            color: "#FFB74D",
-          },
-          {
-            text: "Luteal - Estrogen",
-            startVal: 21,
-            endVal: 24,
-            color: "#755726",
-          },
-          {
-            text: "Luteal",
-            startVal: 15,
-            endVal: 30,
-            color: "#FFB74D",
-          },
-        ]}
-        transform={(n) => n / 28}
-      ></ChartComponent>
-      {zoneI.map((i) => {
-        let zones = toPrecent(summary?.pace_zone_times_20);
-        let vMap = toPrecent([0.12, 0.05, 0.02]);
-        let needed =
-          solve(summary?.pace_zone_times_20 ?? [0, 1, 1], vMap[i], i) / 60;
-        needed = needed;
-        let solved = (needed > 0 ? "" : "-") + hourToString(Math.abs(needed));
-        console.log(zones[i]);
-        return (
-          <ChartComponent
-            title={"Zone " + (i + 3).toString() + " " + solved.toString()}
-            progress={vMap[i]}
-            zones={[
-              {
-                text: "Zone" + (i + 3).toString(),
-                startVal: 0,
-                endVal: zones[i],
-                color: "#009E0066",
-              },
-              {
-                text: "Other",
-                startVal: zones[i],
-                endVal: 1,
-                color: "#FFCB0E80",
-              },
-            ]}
-            transform={(n) => n}
-          ></ChartComponent>
-        );
-      })}
-      {types.map((s) => {
-        let zones = toPrecent(summary[s]);
-        let needed = solve(summary[s], 0.8) / 60;
-        console.log(s, needed);
-        let solved = (needed > 0 ? "" : "-") + hourToString(Math.abs(needed));
-        return (
-          <ChartComponent
-            title={type + " " + s.toString() + " " + solved.toString()}
-            progress={0.8}
-            zones={[
-              {
-                text: "Polarized",
-                startVal: 0,
-                endVal: zones[0],
-                color: "#009E0066",
-              },
-              {
-                text: "Threshold",
-                startVal: zones[0],
-                endVal: zones[1] + zones[0],
-                color: "#FFCB0E80",
-              },
-              {
-                text: "HIT",
-                startVal: zones[1] + zones[0],
-                endVal: zones[1] + zones[0] + zones[2],
-                color: "rgb(255, 0, 0)",
-              },
-            ]}
-            transform={(n) => n}
-          ></ChartComponent>
-        );
-      })}
     </ScrollView>
   );
 }
@@ -528,18 +475,22 @@ const styles = StyleSheet.create({
     padding: 0,
     margin: 0,
     paddingRight: 0,
+    zIndex: 10, // Ensure dropdown is above other elements
   },
   scrollViewContent: {
     paddingBottom: 20, // To ensure scrolling area has enough space at the bottom
     backgroundColor: "white",
   },
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   redSection: {
     backgroundColor: "#FF4C4C", // Red section
+  },
+  dcontainer: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1000, // Prioritize dropdown over other content
+    alignSelf: "center", // Ensures centering
+    width: "25%",
   },
   title: {
     fontSize: 20,
