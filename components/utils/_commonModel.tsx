@@ -86,6 +86,7 @@ export interface powerzone {
 }
 
 export interface activity {
+  start_date_local: string;
   type: string;
   pace_zone_times?: number[];
   icu_hr_zone_times?: number[];

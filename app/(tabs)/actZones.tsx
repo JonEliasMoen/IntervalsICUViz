@@ -20,45 +20,64 @@ interface pactivity {
   gap_zone_times: number[];
   icu_zone_times: number[];
   acts: activity[];
-  pace_zone_times_20: number[];
 }
 
-export function arrayIndexSum(list: number[][], index: number) {
+export function arrayIndexSum(
+  list: number[][],
+  timeS: number[],
+  index: number,
+) {
+  const beta = 1 - Math.exp(-Math.log(2) / 14);
+
   return list
     .map((s) => s[index])
-    .reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+    .reduce(
+      (accumulator, currentValue, i) =>
+        accumulator + Math.pow(1 - beta, timeS[i]) * currentValue,
+      0,
+    );
 }
 
-export function parseActivites(acts: activity[], attr: keyof activity) {
+export function parseActivites(
+  acts: activity[],
+  timeS: number[],
+  attr: keyof activity,
+) {
   let filact = acts.map((a) => a[attr]).filter((s) => s != undefined);
   let res = Array(filact[0]?.length).fill(0);
   // @ts-ignore
-  return res.map((s, i) => arrayIndexSum(filact, i));
+  return res.map((s, i) => arrayIndexSum(filact, timeS, i));
 }
 
-export function parseActivitesPower(acts: activity[]) {
+export function parseActivitesPower(acts: activity[], timeS: number[]) {
   let filact = acts
     .map((a) => a.icu_zone_times?.map((s) => s.secs))
     .filter((s) => s != undefined);
   let res = Array(filact[0]?.length).fill(0);
   // @ts-ignore
-  return res.map((s, i) => arrayIndexSum(filact, i));
+  return res.map((s, i) => arrayIndexSum(filact, timeS, i));
 }
-
+function daysSince(d: Date) {
+  var date2 = new Date();
+  var diff = Math.abs(d - date2.getTime());
+  return Math.ceil(diff / (1000 * 3600 * 24)) - 1;
+}
 export function parse(
   storedKey: string,
   sport: string = "Run",
 ): pactivity | undefined {
   let acts = getActivities(0, 7 * 4, storedKey);
+
   if (acts != undefined) {
     let facts = acts.filter((s) => s.type == sport);
-    let pzt = parseActivites(facts, "pace_zone_times");
-    let hzt = parseActivites(facts, "icu_hr_zone_times");
-    let gzt = parseActivites(facts, "gap_zone_times");
-    let pozt = parseActivitesPower(facts);
+    let tacts = facts.map((s) => daysSince(new Date(s.start_date_local)));
+    console.log(tacts);
+    let pzt = parseActivites(facts, tacts, "pace_zone_times");
+    let hzt = parseActivites(facts, tacts, "icu_hr_zone_times");
+    let gzt = parseActivites(facts, tacts, "gap_zone_times");
+    let pozt = parseActivitesPower(facts, tacts);
     return {
       pace_zone_times: collapseZones(pzt),
-      pace_zone_times_20: innerZone(pzt),
       icu_hr_zone_times: collapseZones(hzt),
       gap_zone_times: collapseZones(gzt),
       icu_zone_times: collapseZones(pozt),
@@ -67,11 +86,8 @@ export function parse(
   }
 }
 
-function innerZone(zone: number[]) {
-  return [zone[2], zone[3], zone[4]];
-}
-
 export function collapseZones(zoneTimes: number[]) {
+  console.log(zoneTimes);
   if (zoneTimes.length >= 6) {
     return [
       zoneTimes[0] + zoneTimes[1],
@@ -341,6 +357,7 @@ export default function ZoneScreen() {
   const [open, setOpen] = useState(false); // State for dropdown visibility
 
   let summary = parse(storedKey, type);
+  console.log(summary);
   const dataWeek = getWellnessRange(0, 8, storedKey);
   if (dataWeek == undefined || dataWeek.length == 0) {
     return <></>;
