@@ -18,6 +18,25 @@ export function secondsSinceStartOfDay(date: Date): number {
   // @ts-ignore
   return (date - startOfDay) / 1000;
 }
+export function cutArrayIfOverLimit<T>(array: T[], maxLength: number): T[] {
+  return array.length > maxLength ? array.slice(0, maxLength) : array;
+}
+export function normalizeBasedOnRange(
+  array: number[],
+  min: number,
+  max: number,
+): number[] {
+  return array.map((t) => (t - min) / (max - min));
+}
+export function secondsFrom(date: Date, dateFrom: Date): number {
+  // @ts-ignore
+  return (date - dateFrom) / 1000;
+}
+export function getTimeHHMM(date: Date): string {
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
 
 export function secondsToHHMM(seconds: number): string {
   if (seconds < 0) throw new Error("Seconds cannot be negative");

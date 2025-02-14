@@ -1,9 +1,20 @@
-import { corsify, isoDateOffset } from "@/components/utils/_utils";
+import {
+  corsify,
+  cutArrayIfOverLimit,
+  getTimeHHMM,
+  isoDateOffset,
+  normalizeBasedOnRange,
+  secondsFrom,
+  secondsSinceStartOfDay,
+  secondsToHHMM,
+} from "@/components/utils/_utils";
 import { useQuery } from "@tanstack/react-query";
 import { ChartComponent, zone } from "@/components/chatComp";
 import { fetchToJson } from "@/components/utils/_utils";
 import { mean } from "simple-statistics";
 import { generateGradient } from "typescript-color-gradient";
+import { feelTemp } from "@/components/weatherComps/weatherFunc";
+import { forecast } from "@/components/weatherComps/_TideLocation";
 
 interface WeatherFeature {
   type: "Feature";
@@ -155,25 +166,61 @@ function summary(
   return stats(values);
 }
 
+function transform(dtoday: TimeSeriesEntry[]): number[] {
+  let x = dtoday.map((t) =>
+    secondsFrom(new Date(t.time), new Date(dtoday[0].time)),
+  );
+  let end = x[x.length - 1];
+  x = x.map((t) => t / end);
+  return x;
+}
+
 export function AirTempLocation(props: { lat: number; long: number }) {
   const data = getWeather(props.lat, props.long);
-  const today = data?.properties.timeseries.filter((n) =>
+  if (data == null) {
+    return <></>;
+  }
+  const today = data.properties.timeseries.filter((n) =>
     n.time.match(isoDateOffset(0)),
   );
-  const temp = summary("air_temperature", today);
+  const feltTemp = feelTemp(
+    today.map((t) => t.data.instant.details.air_temperature),
+    today.map((t) => t.data.instant.details.wind_speed),
+    today.map((t) => t.data.instant.details.relative_humidity),
+  );
+  const forecast = transform(today);
+  const sfeltTemp = normalizeBasedOnRange(feltTemp, -25, 25).map((t) =>
+    Math.round(t * 1000),
+  );
+  const gradientArray = generateGradient(["#02c7fc", "#ff0404"], 1000);
+  const max = new Date(
+    today[feltTemp.findIndex((t) => t == Math.max(...feltTemp))].time,
+  );
+  const until = getTimeHHMM(max);
+
   const wind = summary("wind_speed", today);
   const wind2 = summary("wind_speed_of_gust", today);
   const rain = stats(today?.map((n) => getRain(n)));
 
   const colorsw = generateGradient(["#F12711", "#F5AF19"], 10);
-  const colors = generateGradient(["#02c7fc", "#ff0404"], 6);
+  const colors = generateGradient(["#02c7fc", "#ff0404"], 6 * 2);
 
-  const zones: zone[] = [0, 5, 10, 15, 20, 25].map((v, i) => {
+  const zones: zone[] = [-25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25].map(
+    (v, i) => {
+      return {
+        startVal: v,
+        endVal: v + 5,
+        text: `Temp: ${v}-${v + 5}°C `,
+        color: colors[i],
+      };
+    },
+  );
+  const zonesF: zone[] = forecast.map((v, i, a) => {
     return {
       startVal: v,
-      endVal: v + 5,
-      text: `Temp: ${v}-${v + 5}°C `,
-      color: colors[i],
+      endVal: i != a.length - 1 ? a[i + 1] : v + 4,
+      text: until,
+      color: gradientArray[sfeltTemp[i]],
     };
   });
   const zonesw: zone[] = [0, 0.3, 1.5, 3.3, 5.4, 7.9, 10.7, 13.8, 17.1, 20].map(
@@ -200,9 +247,16 @@ export function AirTempLocation(props: { lat: number; long: number }) {
   return (
     <>
       <ChartComponent
-        progress={temp[1]}
+        title={"Temp today"}
+        progress={0}
+        zones={zonesF}
+        transform={(u) => u}
+        indicatorTextTransform={() => ""}
+      ></ChartComponent>
+      <ChartComponent
+        progress={stats(feltTemp)[1]}
         zones={zones}
-        transform={(v) => v / 25}
+        transform={(v) => (v + 25) / 50}
       ></ChartComponent>
       <ChartComponent
         progress={wind[1]}

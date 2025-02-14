@@ -1,5 +1,6 @@
 import {
   corsify,
+  cutArrayIfOverLimit,
   fetchToTxt,
   secondsSinceStartOfDay,
   secondsToHHMM,
@@ -198,15 +199,11 @@ function findHarbor(lat: number, long: number) {
   return harbors[dist.findIndex((u) => u == Math.min(...dist)) + 1];
 }
 
-interface forecast {
+export interface forecast {
   x: number[];
   y: number[];
   i: number;
   end: number;
-}
-
-function cutArrayIfOverLimit<T>(array: T[], maxLength: number): T[] {
-  return array.length > maxLength ? array.slice(0, maxLength) : array;
 }
 
 function findClosest(v: number[], i: number) {

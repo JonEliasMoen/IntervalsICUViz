@@ -107,6 +107,7 @@ export default function WeatherScreen() {
         indicatorTextTransform={(n) => hourToString(n / 3600)}
         transform={(n) => n / 86400}
       ></ChartComponent>
+      <AirTempLocation lat={lat} long={long}></AirTempLocation>
       <TideLocation lat={lat} long={long}></TideLocation>
       <SnowDepthLocation
         name={"Vassfjellet"}
@@ -129,7 +130,6 @@ export default function WeatherScreen() {
         y={"7029240"}
       ></SnowDepthLocation>
       <SeaWaterTempLocation lat={lat} long={long}></SeaWaterTempLocation>
-      <AirTempLocation lat={lat} long={long}></AirTempLocation>
     </ScrollView>
   );
 }

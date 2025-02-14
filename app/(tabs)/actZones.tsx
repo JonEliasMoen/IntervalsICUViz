@@ -27,10 +27,7 @@ export function arrayIndexSum(
   timeS: number[],
   index: number,
 ) {
-  const halfTimes = [12, 25, 12, 9, 4, 2, 1];
-  console.log(halfTimes[index]);
-  const beta = 1 - Math.exp(-Math.log(2) / halfTimes[index]);
-  console.log(beta, index);
+  const beta = 1 - Math.exp(-Math.log(2) / 14);
 
   return list
     .map((s) => s[index])
