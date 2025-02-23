@@ -35,11 +35,14 @@ interface SportSettings {
   [key: string]: any; // This allows for any other unknown properties
 }
 
-export function getSettings(apiKey: string | null): settings | undefined {
+export function getSettings(
+  apiKey: string | null,
+  aid: string | null,
+): settings | undefined {
   const { data: data } = useQuery(
     ["intervals", "settings"],
     () =>
-      fetchToJson<settings>(`https://intervals.icu/api/v1/athlete/i174646`, {
+      fetchToJson<settings>(`https://intervals.icu/api/v1/athlete/${aid}`, {
         method: "GET",
         headers: {
           Authorization: `Basic ${apiKey}`,
@@ -56,6 +59,7 @@ export function getWellnessRange(
   n: number,
   n2: number,
   apiKey: string | null,
+  aid: string | null,
 ): wellness[] | undefined {
   console.log(apiKey);
   let isodate1 = isoDateOffset(n);
@@ -65,7 +69,7 @@ export function getWellnessRange(
     ["intervals", "wellness", isodate2, isodate1],
     () =>
       fetchToJson<wellness[]>(
-        `https://intervals.icu/api/v1/athlete/i174646/wellness?oldest=${isodate2}&newest=${isodate1}`,
+        `https://intervals.icu/api/v1/athlete/${aid}/wellness?oldest=${isodate2}&newest=${isodate1}`,
         {
           method: "GET",
           headers: {
@@ -97,14 +101,19 @@ export interface activity {
   pace: number;
 }
 
-export function getActivities(n: number, n2: number, apiKey: string | null) {
+export function getActivities(
+  n: number,
+  n2: number,
+  apiKey: string | null,
+  aid: string | null,
+) {
   let isodate1 = isoDateOffset(n);
   let isodate2 = isoDateOffset(n2);
   const { data: data } = useQuery(
     ["intervals", "activities", isodate1, isodate2],
     () =>
       fetchToJson<activity[]>(
-        `https://intervals.icu/api/v1/athlete/i174646/activities?oldest=${isodate2}&newest=${isodate1}`,
+        `https://intervals.icu/api/v1/athlete/${aid}/activities?oldest=${isodate2}&newest=${isodate1}`,
         {
           method: "GET",
           headers: {

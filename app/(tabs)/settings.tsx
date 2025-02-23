@@ -7,7 +7,9 @@ import { useStoredKey } from "@/components/utils/_keyContext";
 
 export default function TabTwoScreen() {
   const [apiKey, setApiKey] = useState("");
-  const { storedKey, setStoredKey } = useStoredKey();
+  const [aid, setAid] = useState("");
+
+  const { storedKey, setStoredKey, storedAid, setStoredAid } = useStoredKey();
   const queryClient = useQueryClient();
   useEffect(() => {
     const loadApiKey = async () => {
@@ -16,6 +18,11 @@ export default function TabTwoScreen() {
         if (value !== null) {
           setStoredKey(value);
           setApiKey(".".repeat(value.length));
+        }
+        const aid = await AsyncStorage.getItem("@aid");
+        if (aid !== null) {
+          setStoredAid(aid);
+          setAid(aid);
         }
       } catch (e) {
         console.log("Error reading API key:", e);
@@ -36,6 +43,18 @@ export default function TabTwoScreen() {
       console.log("Error saving API key:", e);
     }
   };
+  const handleSaveAid = () => {
+    try {
+      if (aid != ".".repeat(aid.length)) {
+        AsyncStorage.setItem("@aid", aid);
+        setStoredAid(aid); // Clear the input after saving
+        console.log(aid);
+        queryClient.invalidateQueries(["intervals"]);
+      }
+    } catch (e) {
+      console.log("Error saving aid key:", e);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -47,20 +66,27 @@ export default function TabTwoScreen() {
         used if unavailable. refresh website after entering.
       </Text>
       <Text style={styles.title}>Api key</Text>
-      <form>
-        <TextInput
-          style={
-            (styles.input, { width: 200, borderWidth: 1, marginBottom: 10 })
-          }
-          value={apiKey}
-          onChangeText={setApiKey}
-          clearTextOnFocus={true}
-          onEndEditing={handleSave}
-          onBlur={handleSave}
-          placeholder="Paste api key here"
-          secureTextEntry={true}
-        />
-      </form>
+      <TextInput
+        style={(styles.input, { width: 200, borderWidth: 1, marginBottom: 10 })}
+        value={apiKey}
+        onChangeText={setApiKey}
+        clearTextOnFocus={true}
+        onEndEditing={handleSave}
+        onBlur={handleSave}
+        placeholder="Paste api key here"
+        secureTextEntry={true}
+      />
+      <Text style={styles.title}>Athlete ID</Text>
+      <TextInput
+        style={(styles.input, { width: 200, borderWidth: 1, marginBottom: 10 })}
+        value={aid}
+        onChangeText={setAid}
+        onEndEditing={handleSaveAid}
+        onBlur={handleSaveAid}
+        clearTextOnFocus={true}
+        placeholder="Athlede ID"
+        secureTextEntry={false}
+      />
     </View>
   );
 }

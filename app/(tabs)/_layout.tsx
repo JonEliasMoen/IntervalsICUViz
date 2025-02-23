@@ -48,7 +48,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="actZones"
         options={{
-          title: "activityzones",
+          title: "activityzones (80/20 run, 80% = z1+z2 )",
           tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
           headerRight: () => (
             <Link href="/modal" asChild>

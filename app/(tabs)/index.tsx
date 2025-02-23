@@ -15,8 +15,8 @@ export function wattPer(t: "Run" | "Ride", data: wellness | undefined) {
 }
 
 export default function TabOneScreen() {
-  const { storedKey } = useStoredKey();
-  const dataWeek = getWellnessRange(0, 8, storedKey) ?? [];
+  const { storedKey, storedAid } = useStoredKey();
+  const dataWeek = getWellnessRange(0, 8, storedKey, storedAid) ?? [];
   if (dataWeek == undefined || dataWeek.length == 0) {
     return <></>;
   }

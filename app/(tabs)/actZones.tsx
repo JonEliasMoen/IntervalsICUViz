@@ -60,10 +60,11 @@ export function parseActivitesPower(acts: activity[], timeS: number[]) {
 
 export function parse(
   storedKey: string,
+  aid: string,
   sport: string = "Run",
 ): pactivity | undefined {
-  let acts = getActivities(0, 7 * 4, storedKey);
-
+  console.log(storedKey, aid);
+  let acts = getActivities(0, 7 * 4, storedKey, aid);
   if (acts != undefined) {
     let facts = acts.filter((s) => s.type == sport);
     let tacts = facts.map((s) => daysSince(new Date(s.start_date_local)));
@@ -306,11 +307,12 @@ function solve(map: number[], t: number, i: number = 0) {
 // z is like z0, z1 here.
 function specZone(
   storedKey: string,
+  aid: string,
   sport: string,
   z: number,
   z2: number = -1,
 ): Boundaries | undefined {
-  let setting = getSettings(storedKey)?.sportSettings.filter(
+  let setting = getSettings(storedKey, aid)?.sportSettings.filter(
     (t) =>
       t.types.find((t) => {
         return t == sport;
@@ -344,7 +346,7 @@ function dist(s: number, t: number): string {
 }
 
 export default function ZoneScreen() {
-  const { storedKey } = useStoredKey();
+  const { storedKey, storedAid } = useStoredKey();
   if (storedKey == undefined) {
     return <></>;
   }
@@ -352,9 +354,9 @@ export default function ZoneScreen() {
   const [value, setValue] = useState<number | null>(null); // Initialize state for selected value
   const [open, setOpen] = useState(false); // State for dropdown visibility
 
-  let summary = parse(storedKey, type);
+  let summary = parse(storedKey, storedAid, type);
   console.log(summary);
-  const dataWeek = getWellnessRange(0, 8, storedKey);
+  const dataWeek = getWellnessRange(0, 8, storedKey, storedAid);
   if (dataWeek == undefined || dataWeek.length == 0) {
     return <></>;
   }
@@ -366,7 +368,7 @@ export default function ZoneScreen() {
       : solve(summary?.pace_zone_times ?? [2222, 1, 1], 0.8) > 0
         ? 1
         : 2;
-  let zone = specZone(storedKey, "Run", zoneNr);
+  let zone = specZone(storedKey, storedAid, "Run", zoneNr);
   if (summary == undefined) {
     return <></>;
   }

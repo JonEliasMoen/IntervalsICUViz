@@ -5,6 +5,9 @@ Worry no more, i have made a react native app, which is indended for Android. Bu
 ![image](https://github.com/user-attachments/assets/4cebe534-cf56-42aa-906e-a1baa3118ee0)
 ![image](https://github.com/user-attachments/assets/9785c7c8-3fb1-4649-b58b-cd36d6fef687)
 
+npx expo export --platform web
+eas deploy
+
 
 The app gives a PMC panel which gives performance mangement values such as:
 - ACWR (Acute chronic workload ratio)

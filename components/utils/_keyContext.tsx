@@ -5,6 +5,8 @@ import base64 from "react-native-base64";
 type StoredKeyContextType = {
   storedKey: string;
   setStoredKey: React.Dispatch<React.SetStateAction<string>>;
+  storedAid: string;
+  setStoredAid: React.Dispatch<React.SetStateAction<string>>;
 };
 
 const StoredKeyContext = createContext<StoredKeyContextType | undefined>(
@@ -15,23 +17,30 @@ export const StoredKeyProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [storedKey, setStoredKey] = useState("");
+  const [storedAid, setStoredAid] = useState("");
 
   useEffect(() => {
-    const loadApiKey = async () => {
+    const loadData = async () => {
       try {
         const value = await AsyncStorage.getItem("@api_key");
         if (value !== null) {
           setStoredKey(base64.encode("API_KEY:" + value));
         }
+        const aid = await AsyncStorage.getItem("@aid");
+        if (aid !== null) {
+          setStoredAid(aid);
+        }
       } catch (e) {
         console.error("Error reading API key:", e);
       }
     };
-    loadApiKey();
+    loadData();
   }, []);
 
   return (
-    <StoredKeyContext.Provider value={{ storedKey, setStoredKey }}>
+    <StoredKeyContext.Provider
+      value={{ storedKey, setStoredKey, storedAid, setStoredAid }}
+    >
       {children}
     </StoredKeyContext.Provider>
   );
