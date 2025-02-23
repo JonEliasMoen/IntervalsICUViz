@@ -1,20 +1,15 @@
 import {
-  corsify,
-  cutArrayIfOverLimit,
+  fetchToJson,
   getTimeHHMM,
   isoDateOffset,
   normalizeBasedOnRange,
   secondsFrom,
-  secondsSinceStartOfDay,
-  secondsToHHMM,
 } from "@/components/utils/_utils";
 import { useQuery } from "@tanstack/react-query";
 import { ChartComponent, zone } from "@/components/chatComp";
-import { fetchToJson } from "@/components/utils/_utils";
 import { mean } from "simple-statistics";
 import { generateGradient } from "typescript-color-gradient";
 import { feelTemp } from "@/components/weatherComps/weatherFunc";
-import { forecast } from "@/components/weatherComps/_TideLocation";
 
 interface WeatherFeature {
   type: "Feature";
@@ -139,13 +134,8 @@ export function getWeather(lat: number, long: number) {
   const date = isoDateOffset(0);
   const { data: data } = useQuery(["weather", date], () =>
     fetchToJson<WeatherFeature>(
-      corsify(
-        `https://api.met.no/weatherapi/locationforecast/2.0/complete?lat=${lat}&lon=${long}`,
-      ),
+      `https://yrweatherbackend.vercel.app/locationforecast/2.0/complete?lat=${lat}&lon=${long}`,
       {
-        headers: {
-          "User-Agent": "YrWeather & Intervals",
-        },
         method: "GET",
       },
     ),
@@ -174,35 +164,81 @@ function transform(dtoday: TimeSeriesEntry[]): number[] {
   x = x.map((t) => t / end);
   return x;
 }
+function groupByDay(data: TimeSeriesEntry[]) {
+  let myMap = new Array<Array<TimeSeriesEntry>>();
+  let index = new Array<number>();
+  data.forEach((d) => {
+    const date = new Date(d.time);
+    const key = date.getDate();
+    const i = index.findIndex((k) => k == key);
+    if (i != -1) {
+      const data = myMap[i];
+      if (data != undefined) {
+        myMap[i] = [...data, d];
+      }
+    } else {
+      index = [...index, key];
+      myMap.push([d]);
+    }
+  });
+  console.log(myMap);
+  return myMap;
+}
+function getFeltTempArray(data: TimeSeriesEntry[]) {
+  const feltTemp = feelTemp(
+    data.map((t) => t.data.instant.details.air_temperature),
+    data.map((t) => t.data.instant.details.wind_speed),
+    data.map((t) => t.data.instant.details.relative_humidity),
+  );
+  const forecast = transform(data);
+  const sfeltTemp = normalizeBasedOnRange(feltTemp, -25, 25).map((t) =>
+    Math.round(t * 1000),
+  );
 
+  return [feltTemp, sfeltTemp, forecast];
+}
 export function AirTempLocation(props: { lat: number; long: number }) {
   const data = getWeather(props.lat, props.long);
   if (data == null) {
     return <></>;
   }
-  const today = data.properties.timeseries.filter((n) =>
-    n.time.match(isoDateOffset(0)),
-  );
-  const feltTemp = feelTemp(
-    today.map((t) => t.data.instant.details.air_temperature),
-    today.map((t) => t.data.instant.details.wind_speed),
-    today.map((t) => t.data.instant.details.relative_humidity),
-  );
-  const forecast = transform(today);
-  const sfeltTemp = normalizeBasedOnRange(feltTemp, -25, 25).map((t) =>
-    Math.round(t * 1000),
-  );
-  const gradientArray = generateGradient(["#02c7fc", "#ff0404"], 1000);
+  const dayMap = groupByDay(data.properties.timeseries);
+  const today = dayMap[0];
+  const fData = getFeltTempArray(today);
+  const feltTemp = fData[0];
+  const sfeltTemp = fData[1];
+  const forecast = fData[2];
   const max = new Date(
     today[feltTemp.findIndex((t) => t == Math.max(...feltTemp))].time,
   );
   const until = getTimeHHMM(max);
 
+  const gradientArray = generateGradient(["#02c7fc", "#ff0404"], 1000);
+  const zonesF: zone[] = forecast.map((v, i, a) => {
+    return {
+      startVal: v,
+      endVal: i != a.length - 1 ? a[i + 1] : v + 4,
+      text: until,
+      color: gradientArray[sfeltTemp[i]],
+    };
+  });
+  const zonesFF = dayMap.map((k, i, a) => {
+    const fData = getFeltTempArray(k);
+    const sfeltTemp = Math.round(mean(fData[1]));
+    console.log(sfeltTemp);
+    return {
+      startVal: i * (1 / 11),
+      endVal: (i + 1) * (1 / 11),
+      text: until,
+      color: gradientArray[sfeltTemp],
+    };
+  });
+
   const wind = summary("wind_speed", today);
   const wind2 = summary("wind_speed_of_gust", today);
   const rain = stats(today?.map((n) => getRain(n)));
 
-  const colorsw = generateGradient(["#F12711", "#F5AF19"], 10);
+  const colorsw = generateGradient(["#F5AF19", "#F12711"], 10);
   const colors = generateGradient(["#02c7fc", "#ff0404"], 6 * 2);
 
   const zones: zone[] = [-25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25].map(
@@ -215,14 +251,7 @@ export function AirTempLocation(props: { lat: number; long: number }) {
       };
     },
   );
-  const zonesF: zone[] = forecast.map((v, i, a) => {
-    return {
-      startVal: v,
-      endVal: i != a.length - 1 ? a[i + 1] : v + 4,
-      text: until,
-      color: gradientArray[sfeltTemp[i]],
-    };
-  });
+
   const zonesw: zone[] = [0, 0.3, 1.5, 3.3, 5.4, 7.9, 10.7, 13.8, 17.1, 20].map(
     (v, i, a) => {
       return {
@@ -250,6 +279,13 @@ export function AirTempLocation(props: { lat: number; long: number }) {
         title={"Temp today"}
         progress={0}
         zones={zonesF}
+        transform={(u) => u}
+        indicatorTextTransform={() => ""}
+      ></ChartComponent>
+      <ChartComponent
+        title={"Temp today"}
+        progress={0}
+        zones={zonesFF}
         transform={(u) => u}
         indicatorTextTransform={() => ""}
       ></ChartComponent>

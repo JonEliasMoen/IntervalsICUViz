@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Text } from "@/components/Themed";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { hourToString } from "@/components/utils/_utils";
+import { daysSince, hourToString } from "@/components/utils/_utils";
 import ChartComponent from "@/components/chatComp";
 import { MultivariateLinearRegression } from "@/components/utils/mlr";
 import {
@@ -57,11 +57,7 @@ export function parseActivitesPower(acts: activity[], timeS: number[]) {
   // @ts-ignore
   return res.map((s, i) => arrayIndexSum(filact, timeS, i));
 }
-function daysSince(d: Date) {
-  var date2 = new Date();
-  var diff = Math.abs(d - date2.getTime());
-  return Math.ceil(diff / (1000 * 3600 * 24)) - 1;
-}
+
 export function parse(
   storedKey: string,
   sport: string = "Run",

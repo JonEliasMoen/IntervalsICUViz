@@ -1,5 +1,4 @@
 import {
-  corsify,
   cutArrayIfOverLimit,
   fetchToTxt,
   secondsSinceStartOfDay,
@@ -101,7 +100,7 @@ export function getTide(lat: number, long: number) {
   console.log(harbor);
   const { data: data } = useQuery(["tide", harbor], () =>
     fetchToTxt(
-      corsify(`https://api.met.no/weatherapi/tidalwater/1.1/?harbor=${harbor}`),
+      `https://yrweatherbackend.vercel.app/tidalwater/1.1/?harbor=${harbor}`,
       {
         method: "GET",
       },

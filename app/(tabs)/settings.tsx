@@ -29,7 +29,8 @@ export default function TabTwoScreen() {
       if (apiKey != ".".repeat(apiKey.length)) {
         AsyncStorage.setItem("@api_key", apiKey);
         setApiKey(apiKey); // Clear the input after saving
-        queryClient.invalidateQueries(["wellness"]);
+        console.log(apiKey);
+        queryClient.invalidateQueries(["intervals"]);
       }
     } catch (e) {
       console.log("Error saving API key:", e);
@@ -43,7 +44,7 @@ export default function TabTwoScreen() {
         Paste the api key here. The Api key is stored locally, revoke in
         intervals, uninstall app, or change value here to remove access. Do not
         share the api key and treat it as a password. Data from previous days is
-        used if unavailable
+        used if unavailable. refresh website after entering.
       </Text>
       <Text style={styles.title}>Api key</Text>
       <form>
@@ -55,8 +56,8 @@ export default function TabTwoScreen() {
           onChangeText={setApiKey}
           clearTextOnFocus={true}
           onEndEditing={handleSave}
-          onBlur={() => console.log("blur")}
-          placeholder="Pase api key here"
+          onBlur={handleSave}
+          placeholder="Paste api key here"
           secureTextEntry={true}
         />
       </form>

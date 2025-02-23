@@ -1,12 +1,12 @@
 import { ScrollView, StyleSheet } from "react-native";
 import ChartComponent from "@/components/chatComp";
 import {
-  corsify,
   fetchToJson,
+  hourToString,
+  isoDateOffset,
   secondsSinceStartOfDay,
 } from "@/components/utils/_utils";
 import { useQuery } from "@tanstack/react-query";
-import { hourToString, isoDateOffset } from "@/components/utils/_utils";
 import { SnowDepthLocation } from "@/components/weatherComps/_SnowDepthLocation";
 import { SeaWaterTempLocation } from "@/components/weatherComps/_SeaWaterTempLocation";
 import { AirTempLocation } from "@/components/weatherComps/_AirTempLocation";
@@ -59,14 +59,9 @@ export function getSunData(lat: number, long: number) {
   const date = isoDateOffset(0);
   const { data: data } = useQuery(["sun", date], () =>
     fetchToJson<WeatherData>(
-      corsify(
-        `https://api.met.no/weatherapi/sunrise/3.0/sun?lat=${lat}&lon=${long}&date=${date}&offset=+02:00`,
-      ),
+      `https://yrweatherbackend.vercel.app/sunrise/3.0/sun?lat=${lat}&lon=${long}&date=${date}&offset=+02:00`,
       {
         method: "GET",
-        headers: {
-          "User-Agent": "Mozilla",
-        },
       },
     ),
   );

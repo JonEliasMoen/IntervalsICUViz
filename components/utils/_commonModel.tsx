@@ -37,7 +37,7 @@ interface SportSettings {
 
 export function getSettings(apiKey: string | null): settings | undefined {
   const { data: data } = useQuery(
-    ["settings"],
+    ["intervals", "settings"],
     () =>
       fetchToJson<settings>(`https://intervals.icu/api/v1/athlete/i174646`, {
         method: "GET",
@@ -62,7 +62,7 @@ export function getWellnessRange(
   let isodate2 = isoDateOffset(n2);
 
   const { data: data } = useQuery(
-    ["wellness", isodate2, isodate1],
+    ["intervals", "wellness", isodate2, isodate1],
     () =>
       fetchToJson<wellness[]>(
         `https://intervals.icu/api/v1/athlete/i174646/wellness?oldest=${isodate2}&newest=${isodate1}`,
@@ -101,7 +101,7 @@ export function getActivities(n: number, n2: number, apiKey: string | null) {
   let isodate1 = isoDateOffset(n);
   let isodate2 = isoDateOffset(n2);
   const { data: data } = useQuery(
-    ["activities", isodate1, isodate2],
+    ["intervals", "activities", isodate1, isodate2],
     () =>
       fetchToJson<activity[]>(
         `https://intervals.icu/api/v1/athlete/i174646/activities?oldest=${isodate2}&newest=${isodate1}`,

@@ -28,6 +28,11 @@ export function normalizeBasedOnRange(
 ): number[] {
   return array.map((t) => (t - min) / (max - min));
 }
+export function daysSince(d: Date) {
+  var date2 = new Date();
+  var diff = Math.abs(d - date2.getTime());
+  return Math.ceil(diff / (1000 * 3600 * 24)) - 1;
+}
 export function secondsFrom(date: Date, dateFrom: Date): number {
   // @ts-ignore
   return (date - dateFrom) / 1000;
@@ -45,10 +50,6 @@ export function secondsToHHMM(seconds: number): string {
   const minutes = Math.floor((seconds % 3600) / 60);
 
   return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
-}
-
-export function corsify(url: string): string {
-  return `https://thingproxy.freeboard.io/fetch/${url}`;
 }
 
 export function hourToString(h: number) {
