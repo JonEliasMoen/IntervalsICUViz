@@ -320,7 +320,7 @@ function specZone(
   )[0];
   let zl = z2 == -1 ? z - 1 : z2 - 1;
   console.log(setting);
-  if (setting != null) {
+  if (setting != null && setting.pace_zones != null) {
     let zone = setting.pace_zones[z];
     let zoneL = zl != -1 ? setting.pace_zones[zl] : 50;
     let tPace = setting?.threshold_pace;
@@ -373,12 +373,11 @@ export default function ZoneScreen() {
     return <></>;
   }
 
-  if (zone == undefined) {
-    return <></>;
-  }
-
   let neededLoad = findDoable(0, load, tol, 7, 42, 1, 1.3);
-  let res = fitNPred(dataWeek, summary.acts, zone, neededLoad);
+  let res = undefined;
+  if (zone != undefined) {
+    let res = fitNPred(dataWeek, summary.acts, zone, neededLoad);
+  }
 
   const items = [
     { label: "Zone 1", value: 1 },
@@ -412,39 +411,40 @@ export default function ZoneScreen() {
         />
       </View>
       <View style={styles.container}>
-        {res.map((t, i) => {
-          return (
-            <>
-              <Text>Run: {i + 1}</Text>
-              <Text>
-                Speed: {hourToString(conv(zone.min))}-
-                {hourToString(conv(zone.max))}
-                /km
-              </Text>
-              <Text>
-                Speed: {convertMStoKMH(zone.min).toFixed(1)}-
-                {convertMStoKMH(zone.max).toFixed(1)}
-                km/h
-              </Text>
-              <Text>
-                Time: {hourToString(t.time.min / 60 / 60)} -{" "}
-                {hourToString(t.time.max / 60 / 60)}
-              </Text>
-              <Text>
-                Dist: {dist(zone.min, t.time.min)} -{" "}
-                {dist(zone.max, t.time.max)}
-              </Text>
-              <Text>
-                LoadRange: {t.load.min} - {t.load.max}
-              </Text>
-              <Text>
-                Load:{" "}
-                {(load[load.length - 1] / tol[tol.length - 1]).toPrecision(2)} -
-                (1-1.3)
-              </Text>
-            </>
-          );
-        })}
+        {zone != undefined &&
+          res.map((t, i) => {
+            return (
+              <>
+                <Text>Run: {i + 1}</Text>
+                <Text>
+                  Speed: {hourToString(conv(zone.min))}-
+                  {hourToString(conv(zone.max))}
+                  /km
+                </Text>
+                <Text>
+                  Speed: {convertMStoKMH(zone.min).toFixed(1)}-
+                  {convertMStoKMH(zone.max).toFixed(1)}
+                  km/h
+                </Text>
+                <Text>
+                  Time: {hourToString(t.time.min / 60 / 60)} -{" "}
+                  {hourToString(t.time.max / 60 / 60)}
+                </Text>
+                <Text>
+                  Dist: {dist(zone.min, t.time.min)} -{" "}
+                  {dist(zone.max, t.time.max)}
+                </Text>
+                <Text>
+                  LoadRange: {t.load.min} - {t.load.max}
+                </Text>
+                <Text>
+                  Load:{" "}
+                  {(load[load.length - 1] / tol[tol.length - 1]).toPrecision(2)}{" "}
+                  - (1-1.3)
+                </Text>
+              </>
+            );
+          })}
         {types.map((s) => {
           let zones = toPrecent(summary[s]);
           let needed = solve(summary[s], 0.8) / 60;

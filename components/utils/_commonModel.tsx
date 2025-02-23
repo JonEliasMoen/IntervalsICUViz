@@ -49,7 +49,7 @@ export function getSettings(
         },
       }),
     {
-      enabled: !!apiKey,
+      enabled: !!apiKey && !!aid,
     },
   );
   return data;
@@ -78,7 +78,7 @@ export function getWellnessRange(
         },
       ),
     {
-      enabled: !!apiKey,
+      enabled: !!apiKey && !!aid,
     },
   );
   return data;
@@ -122,7 +122,7 @@ export function getActivities(
         },
       ),
     {
-      enabled: !!apiKey,
+      enabled: !!apiKey && !!aid,
     },
   );
   return data;
