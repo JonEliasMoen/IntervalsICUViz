@@ -55,7 +55,7 @@ interface Details {
 
 export function getWaterTemp(lat: number, long: number) {
   const date = isoDateOffset(0);
-  const { data: data } = useQuery(["watertemp", date], () =>
+  const { data: data } = useQuery(["watertemp", date, lat, long], () =>
     fetchToJson<Feature>(
       `https://yrweatherbackend.vercel.app/oceanforecast/2.0/complete?lat=${lat}&lon=${long}`,
       {
@@ -92,6 +92,7 @@ export function SeaWaterTempLocation(props: { lat: number; long: number }) {
   const waveStr = ` ${wave}-${wavem}m`;
   return (
     <ChartComponent
+      title={"Sea info"}
       progress={temp}
       zones={[
         {

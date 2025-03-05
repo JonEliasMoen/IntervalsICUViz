@@ -132,7 +132,7 @@ interface TemperatureDetails {
 
 export function getWeather(lat: number, long: number) {
   const date = isoDateOffset(0);
-  const { data: data } = useQuery(["weather", date], () =>
+  const { data: data } = useQuery(["weather", date, lat, long], () =>
     fetchToJson<WeatherFeature>(
       `https://yrweatherbackend.vercel.app/locationforecast/2.0/complete?lat=${lat}&lon=${long}`,
       {
@@ -208,17 +208,13 @@ export function AirTempLocation(props: { lat: number; long: number }) {
   const feltTemp = fData[0];
   const sfeltTemp = fData[1];
   const forecast = fData[2];
-  const max = new Date(
-    today[feltTemp.findIndex((t) => t == Math.max(...feltTemp))].time,
-  );
-  const until = getTimeHHMM(max);
 
   const gradientArray = generateGradient(["#02c7fc", "#ff0404"], 1000);
   const zonesF: zone[] = forecast.map((v, i, a) => {
     return {
       startVal: v,
       endVal: i != a.length - 1 ? a[i + 1] : v + 4,
-      text: until,
+      text: "",
       color: gradientArray[sfeltTemp[i]],
     };
   });
@@ -229,7 +225,7 @@ export function AirTempLocation(props: { lat: number; long: number }) {
     return {
       startVal: i * (1 / 11),
       endVal: (i + 1) * (1 / 11),
-      text: until,
+      text: "",
       color: gradientArray[sfeltTemp],
     };
   });
@@ -251,13 +247,23 @@ export function AirTempLocation(props: { lat: number; long: number }) {
       };
     },
   );
-
+  const windText: string[] = [
+    "calm",
+    "Light air",
+    "Light Breeze",
+    "Gentle breeze",
+    "Moderate breeze",
+    "Fresh Breeze",
+    "Strong breeze",
+    "High wind",
+    "Gale",
+  ];
   const zonesw: zone[] = [0, 0.3, 1.5, 3.3, 5.4, 7.9, 10.7, 13.8, 17.1, 20].map(
     (v, i, a) => {
       return {
         startVal: v,
         endVal: i != 9 ? a[i + 1] : v + 4,
-        text: `Wind: ${v}-${i != 9 ? a[i + 1] : v + 4} m/s `,
+        text: `Wind: ${v}-${i != 9 ? a[i + 1] : v + 4} m/s ` + windText[i],
         color: colorsw[i],
       };
     },
@@ -276,14 +282,14 @@ export function AirTempLocation(props: { lat: number; long: number }) {
   return (
     <>
       <ChartComponent
-        title={"Temp today"}
+        title={"Temp Today"}
         progress={0}
         zones={zonesF}
         transform={(u) => u}
         indicatorTextTransform={() => ""}
       ></ChartComponent>
       <ChartComponent
-        title={"Temp today"}
+        title={"Temp Days forward"}
         progress={0}
         zones={zonesFF}
         transform={(u) => u}

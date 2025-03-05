@@ -20,6 +20,19 @@ export interface wellness {
   [key: string]: any; // This allows for any other unknown properties
 }
 
+export interface location {
+  lat: number;
+  long: number;
+  snowPlace?: snowPlace[];
+}
+export interface snowPlace {
+  name: string;
+  x: string;
+  y: string;
+  lat: number;
+  long: number;
+}
+
 export interface settings {
   sportSettings: SportSettings[];
 
