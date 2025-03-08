@@ -5,6 +5,7 @@ import {
   hourToString,
   isoDateOffset,
   secondsSinceStartOfDay,
+  secondsToHHMM,
 } from "@/components/utils/_utils";
 import { useQuery } from "@tanstack/react-query";
 import { SnowDepthLocation } from "@/components/weatherComps/_SnowDepthLocation";
@@ -70,6 +71,19 @@ export function getSunData(lat: number, long: number) {
     ),
   );
   return data;
+}
+
+function until(current: number, rise: number, set: number) {
+  if (current > set) {
+    return "Sunrise " + secondsToHHMM(24 * 3600 - current + rise);
+  }
+  if (current < set) {
+    return "Sunset " + secondsToHHMM(set - current);
+  }
+  if (current < rise) {
+    return "Sunrise" + secondsToHHMM(rise - current);
+  }
+  return "0";
 }
 export default function WeatherScreen() {
   const [value, setValue] = useState<number | null>(null); // Initialize state for selected value
@@ -180,23 +194,26 @@ export default function WeatherScreen() {
         />
       </View>
       <ChartComponent
-        title={"Sunrise & Sunset"}
+        title={
+          "Time until " +
+          until(secondsSinceStartOfDay(new Date()), sunriseSec, sunsetSec)
+        }
         progress={secondsSinceStartOfDay(new Date())}
         zones={[
           {
-            text: "Sunset",
+            text: "",
             startVal: 0,
             endVal: sunriseSec,
             color: "rgba(255, 57, 57, 0.5)",
           },
           {
-            text: "Daylight",
+            text: "",
             startVal: sunriseSec,
             endVal: sunsetSec,
             color: "rgba(255, 196, 0, 0.5)",
           },
           {
-            text: "Sunset",
+            text: "",
             startVal: sunsetSec,
             endVal: 86400,
             color: "rgba(255, 72, 72, 0.5)",

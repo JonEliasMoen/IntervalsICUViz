@@ -206,18 +206,8 @@ export function AirTempLocation(props: { lat: number; long: number }) {
   const today = dayMap[0];
   const fData = getFeltTempArray(today);
   const feltTemp = fData[0];
-  const sfeltTemp = fData[1];
-  const forecast = fData[2];
 
   const gradientArray = generateGradient(["#02c7fc", "#ff0404"], 1000);
-  const zonesF: zone[] = forecast.map((v, i, a) => {
-    return {
-      startVal: v,
-      endVal: i != a.length - 1 ? a[i + 1] : v + 4,
-      text: "",
-      color: gradientArray[sfeltTemp[i]],
-    };
-  });
   const zonesFF = dayMap.map((k, i, a) => {
     const fData = getFeltTempArray(k);
     const sfeltTemp = Math.round(mean(fData[1]));
@@ -242,14 +232,14 @@ export function AirTempLocation(props: { lat: number; long: number }) {
       return {
         startVal: v,
         endVal: v + 5,
-        text: `Temp: ${v}-${v + 5}°C `,
+        text: `Average temp: ${v}-${v + 5}°C `,
         color: colors[i],
       };
     },
   );
   const windText: string[] = [
-    "calm",
-    "Light air",
+    "Calm",
+    "Light Air",
     "Light Breeze",
     "Gentle breeze",
     "Moderate breeze",
@@ -263,7 +253,7 @@ export function AirTempLocation(props: { lat: number; long: number }) {
       return {
         startVal: v,
         endVal: i != 9 ? a[i + 1] : v + 4,
-        text: `Wind: ${v}-${i != 9 ? a[i + 1] : v + 4} m/s ` + windText[i],
+        text: `${v}-${i != 9 ? a[i + 1] : v + 4} m/s ` + windText[i],
         color: colorsw[i],
       };
     },
@@ -282,13 +272,6 @@ export function AirTempLocation(props: { lat: number; long: number }) {
   return (
     <>
       <ChartComponent
-        title={"Temp Today"}
-        progress={0}
-        zones={zonesF}
-        transform={(u) => u}
-        indicatorTextTransform={() => ""}
-      ></ChartComponent>
-      <ChartComponent
         title={"Temp Days forward"}
         progress={0}
         zones={zonesFF}
@@ -301,11 +284,13 @@ export function AirTempLocation(props: { lat: number; long: number }) {
         transform={(v) => (v + 25) / 50}
       ></ChartComponent>
       <ChartComponent
+        title={"Average wind"}
         progress={wind[1]}
         zones={zonesw}
         transform={(v) => v / 24}
       ></ChartComponent>
       <ChartComponent
+        title={"Average wind gale"}
         progress={wind2[1]}
         zones={zonesw}
         transform={(v) => v / 24}

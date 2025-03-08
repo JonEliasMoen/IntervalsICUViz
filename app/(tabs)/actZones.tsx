@@ -19,6 +19,7 @@ interface pactivity {
   icu_hr_zone_times: number[];
   gap_zone_times: number[];
   icu_zone_times: number[];
+  combined: number[];
   acts: activity[];
 }
 
@@ -30,10 +31,25 @@ export function arrayIndexSum(
   const beta = 1 - Math.exp(-Math.log(2) / 14);
 
   return list
-    .map((s) => s[index])
+    .map((s) => fix(s[index]))
     .reduce(
       (accumulator, currentValue, i) =>
         accumulator + Math.pow(1 - beta, timeS[i]) * currentValue,
+      0,
+    );
+}
+function fix(v: number | undefined | null): number {
+  if (v == undefined || Number.isNaN(v)) {
+    return 0;
+  }
+  return v;
+}
+export function arrayIndexSumNormal(list: number[][], index: number) {
+  console.log("list", list);
+  return list
+    .map((s) => fix(s[index]))
+    .reduce(
+      (accumulator, currentValue, i) => accumulator + currentValue ?? 0,
       0,
     );
 }
@@ -66,18 +82,28 @@ export function parse(
   console.log(storedKey, aid);
   let acts = getActivities(0, 7 * 4, storedKey, aid);
   if (acts != undefined) {
+    console.log(acts?.map((t) => t.type));
     let facts = acts.filter((s) => s.type == sport);
+    if (sport == "Combined") {
+      facts = acts;
+    }
     let tacts = facts.map((s) => daysSince(new Date(s.start_date_local)));
     console.log(tacts);
-    let pzt = parseActivites(facts, tacts, "pace_zone_times");
-    let hzt = parseActivites(facts, tacts, "icu_hr_zone_times");
-    let gzt = parseActivites(facts, tacts, "gap_zone_times");
-    let pozt = parseActivitesPower(facts, tacts);
+    let pzt = collapseZones(parseActivites(facts, tacts, "pace_zone_times"));
+    let hzt = collapseZones(parseActivites(facts, tacts, "icu_hr_zone_times"));
+    let gzt = collapseZones(parseActivites(facts, tacts, "gap_zone_times"));
+    let pozt = collapseZones(parseActivitesPower(facts, tacts));
+    console.log([pzt, hzt, gzt, pozt]);
+    let combined = [0, 1, 2].map((t) =>
+      arrayIndexSumNormal([pzt, hzt, gzt, pozt], t),
+    );
+
     return {
-      pace_zone_times: collapseZones(pzt),
-      icu_hr_zone_times: collapseZones(hzt),
-      gap_zone_times: collapseZones(gzt),
-      icu_zone_times: collapseZones(pozt),
+      pace_zone_times: pzt,
+      icu_hr_zone_times: hzt,
+      gap_zone_times: gzt,
+      icu_zone_times: pozt,
+      combined: combined,
       acts: facts,
     };
   }
@@ -99,195 +125,6 @@ export function collapseZones(zoneTimes: number[]) {
     ];
   }
 }
-
-export function convertToRanges(arr: number[]): Boundaries[] {
-  if (arr.length === 0) return [];
-
-  arr.sort((a, b) => a - b);
-
-  const ranges: Boundaries[] = [];
-  let start = arr[0];
-  let end = arr[0];
-
-  for (let i = 1; i < arr.length; i++) {
-    if (arr[i] === end + 1) {
-      end = arr[i];
-    } else {
-      ranges.push({
-        min: start,
-        max: end,
-      });
-      start = arr[i];
-      end = arr[i];
-    }
-  }
-
-  ranges.push({
-    min: start,
-    max: end,
-  });
-
-  return ranges;
-}
-
-type Boundaries = {
-  min: number;
-  max: number;
-};
-type finalRes = {
-  time: Boundaries;
-  load: Boundaries;
-};
-
-type desc = {
-  load: number;
-  monotony: number;
-  strain: number;
-};
-
-function calculateMonotonyLoadRange(
-  past7Days: number[],
-  loadBound: Boundaries,
-  monoBound: Boundaries,
-  strBound: Boundaries,
-): Boundaries[] {
-  const cLoad = structuredClone(past7Days);
-  const today = cLoad[cLoad.length - 1];
-  const data: desc[] = [];
-
-  for (let i = Math.floor(loadBound.min); i <= Math.ceil(loadBound.max); i++) {
-    cLoad[cLoad.length - 1] = today + i;
-    let monotony = mean(cLoad) / standardDeviation(cLoad);
-    let strain = monotony * mean(cLoad);
-    data.push({
-      load: Math.round(i),
-      monotony: monotony,
-      strain: strain,
-    });
-  }
-  const loads = data
-    .filter((t) => t.monotony < monoBound.max && t.monotony > monoBound.min)
-    .filter((t) => t.strain < strBound.max && t.strain > strBound.min)
-    .map((t) => t.load);
-  return convertToRanges(loads);
-}
-
-function calculateX1Boundaries(
-  w: number[],
-  y2: Boundaries,
-  x2: Boundaries,
-): Boundaries {
-  if (y2 == undefined) {
-    return {
-      min: 0,
-      max: 0,
-    };
-  }
-  const [w1, w2, w0] = w; // Bias term is last lmao
-  const yMin = y2.min;
-  const yMax = y2.max;
-  const x2Min = x2.min;
-  const x2Max = x2.max;
-  if (w1 === 0) {
-    throw new Error("w1 cannot be zero to avoid division by zero.");
-  }
-
-  // Calculate the boundaries for x1 based on yMin
-  const x1MinFromYMin = (yMin - w0 - w2 * x2Max) / w1;
-  const x1MaxFromYMin = (yMin - w0 - w2 * x2Min) / w1;
-
-  // Calculate the boundaries for x1 based on yMax
-  const x1MinFromYMax = (yMax - w0 - w2 * x2Max) / w1;
-  const x1MaxFromYMax = (yMax - w0 - w2 * x2Min) / w1;
-
-  // Determine the final boundaries
-  const x1MinFinal = Math.min(x1MinFromYMin, x1MinFromYMax);
-  const x1MaxFinal = Math.max(x1MaxFromYMin, x1MaxFromYMax);
-
-  return {
-    min: Math.max(x1MinFinal, 0),
-    max: Math.max(x1MaxFinal, 0),
-  };
-}
-
-function findDoable(
-  dt: number,
-  load: number[],
-  tol: number[],
-  S: number,
-  L: number,
-  lowerDiscount: number,
-  higherDiscount: number,
-): Boundaries {
-  const alpha = 1 - Math.exp(-Math.log(2) / S);
-  const beta = 1 - Math.exp(-Math.log(2) / L);
-
-  for (let z = 0; z < dt; z++) {
-    load.push((1 - alpha) * load[load.length - 1]);
-    tol.push((1 - beta) * tol[tol.length - 1]);
-  }
-
-  const last = load[load.length - 1] / tol[tol.length - 1];
-  const d =
-    ((alpha - 1) * load[load.length - 2] + load[load.length - 1]) / alpha;
-
-  const res: number[] = [];
-  for (const t of [lowerDiscount, higherDiscount]) {
-    let x =
-      alpha * (load[load.length - 2] - d) +
-      t * (beta * d - beta * tol[tol.length - 2] + tol[tol.length - 2]) -
-      load[load.length - 2];
-    x /= alpha - t * beta;
-    res.push(x);
-  }
-
-  // Ensure no negative values
-  const adjustedRes = res.map((val) => Math.max(0, val));
-  return {
-    min: adjustedRes[0],
-    max: adjustedRes[1],
-  };
-}
-
-export function fitNPred(
-  dataWeek: wellness[],
-  facts: activity[],
-  vBound: Boundaries,
-  lBound: Boundaries,
-): finalRes[] {
-  let load = dataWeek.map((t) => t.ctlLoad).filter((t) => t != undefined);
-  load = load.slice(load.length - 7);
-  let loadRanges = calculateMonotonyLoadRange(
-    load,
-    lBound,
-    { min: 0.8, max: 2 },
-    { min: 30, max: 150 },
-  );
-  let lrange: Boundaries[];
-  if (loadRanges == undefined || loadRanges.length == 0) {
-    lrange = [lBound];
-  } else {
-    lrange = loadRanges;
-  }
-  console.log(lrange);
-
-  let X = facts.map((s) => [s.moving_time, s.pace]);
-  let Y = facts.map((s) => s.icu_training_load);
-  const mlr = new MultivariateLinearRegression();
-  mlr.fit(X, Y);
-
-  return lrange.map((t) => {
-    return {
-      time: calculateX1Boundaries(
-        mlr.aweights.map((l) => l[0]),
-        t,
-        vBound,
-      ),
-      load: t,
-    };
-  });
-}
-
 export function toPrecent(zoneTimes: number[] | undefined) {
   return zoneTimes.map(
     (s) =>
@@ -304,55 +141,21 @@ function solve(map: number[], t: number, i: number = 0) {
   return (targetMap0 - map[i]) / (1 - t) / 60;
 }
 
-// z is like z0, z1 here.
-function specZone(
-  storedKey: string,
-  aid: string,
-  sport: string,
-  z: number,
-  z2: number = -1,
-): Boundaries | undefined {
-  let setting = getSettings(storedKey, aid)?.sportSettings.filter(
-    (t) =>
-      t.types.find((t) => {
-        return t == sport;
-      }) != null,
-  )[0];
-  let zl = z2 == -1 ? z - 1 : z2 - 1;
-  console.log(setting);
-  if (setting != null && setting.pace_zones != null) {
-    let zone = setting.pace_zones[z];
-    let zoneL = zl != -1 ? setting.pace_zones[zl] : 50;
-    let tPace = setting?.threshold_pace;
-    console.log(zone, zoneL);
-    return {
-      min: (zoneL / 100) * tPace,
-      max: (zone / 100) * tPace,
-    };
-  }
-}
-
-function conv(s: number): number {
-  return 1000 / (s * 60); // m/s => m/km
-}
-
-function convertMStoKMH(metersPerSecond: number): number {
-  return metersPerSecond * 3.6;
-}
-
-function dist(s: number, t: number): string {
-  t = Math.max(0, t);
-  return ((s * t) / 1000).toFixed(2) + " km";
-}
-
 export default function ZoneScreen() {
   const { storedKey, storedAid } = useStoredKey();
+  const [value, setValue] = useState<number | null>(null); // Initialize state for selected value
+  const [open, setOpen] = useState(false); // State for dropdown visibility
+
   if (storedKey == undefined) {
     return <></>;
   }
-  let type = "Run";
-  const [value, setValue] = useState<number | null>(null); // Initialize state for selected value
-  const [open, setOpen] = useState(false); // State for dropdown visibility
+  const itemsAct = [
+    { label: "Run", value: 1 },
+    { label: "Ride", value: 2 },
+    { label: "Swim", value: 3 },
+    { label: "Combined", value: 4 },
+  ];
+  let type = value != null ? itemsAct[value - 1].label : "Run";
 
   let summary = parse(storedKey, storedAid, type);
   console.log(summary);
@@ -360,49 +163,27 @@ export default function ZoneScreen() {
   if (dataWeek == undefined || dataWeek.length == 0) {
     return <></>;
   }
-  let tol = dataWeek.map((s) => s.ctl);
-  let load = dataWeek.map((s) => s.atl);
-  let zoneNr =
-    value != null
-      ? value - 1
-      : solve(summary?.pace_zone_times ?? [2222, 1, 1], 0.8) > 0
-        ? 1
-        : 2;
-  let zone = specZone(storedKey, storedAid, "Run", zoneNr);
   if (summary == undefined) {
     return <></>;
   }
-
-  let neededLoad = findDoable(0, load, tol, 7, 42, 1, 1.3);
-  let res = undefined;
-  if (zone != undefined) {
-    let res = fitNPred(dataWeek, summary.acts, zone, neededLoad);
-  }
-
-  const items = [
-    { label: "Zone 1", value: 1 },
-    { label: "Zone 2", value: 2 },
-    { label: "Zone 3", value: 3 },
-    { label: "Zone 4", value: 4 },
-    { label: "Zone 5", value: 5 },
-  ];
   let types: (keyof pactivity)[] = [
+    "combined",
     "pace_zone_times",
     "gap_zone_times",
     "icu_zone_times",
     "icu_hr_zone_times",
   ];
-  let zoneI = [0, 1, 2];
+  let nameMap = ["Combined", "Pace zone", "Gap zone", "Power zone", "Hr zone"];
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <View style={[styles.dcontainer]}>
         <DropDownPicker
           open={open}
           value={value}
-          items={items}
+          items={itemsAct}
           setOpen={setOpen}
           setValue={setValue}
-          placeholder="Select a zone"
+          placeholder="Select a type"
           dropDownContainerStyle={{
             zIndex: 1000,
             elevation: 1000,
@@ -411,74 +192,48 @@ export default function ZoneScreen() {
         />
       </View>
       <View style={styles.container}>
-        {zone != undefined &&
-          res.map((t, i) => {
+        {types
+          .filter((s) => !Number.isNaN(summary[s][0]))
+          .map((s) => {
+            let zones = toPrecent(summary[s]);
+            let needed = solve(summary[s], 0.8) / 60;
+            console.log(s, needed);
+            let solved =
+              (needed > 0 ? "" : "-") + hourToString(Math.abs(needed));
             return (
-              <>
-                <Text>Run: {i + 1}</Text>
-                <Text>
-                  Speed: {hourToString(conv(zone.min))}-
-                  {hourToString(conv(zone.max))}
-                  /km
-                </Text>
-                <Text>
-                  Speed: {convertMStoKMH(zone.min).toFixed(1)}-
-                  {convertMStoKMH(zone.max).toFixed(1)}
-                  km/h
-                </Text>
-                <Text>
-                  Time: {hourToString(t.time.min / 60 / 60)} -{" "}
-                  {hourToString(t.time.max / 60 / 60)}
-                </Text>
-                <Text>
-                  Dist: {dist(zone.min, t.time.min)} -{" "}
-                  {dist(zone.max, t.time.max)}
-                </Text>
-                <Text>
-                  LoadRange: {t.load.min} - {t.load.max}
-                </Text>
-                <Text>
-                  Load:{" "}
-                  {(load[load.length - 1] / tol[tol.length - 1]).toPrecision(2)}{" "}
-                  - (1-1.3)
-                </Text>
-              </>
+              <ChartComponent
+                title={
+                  type +
+                  " " +
+                  nameMap[types.indexOf(s)].toString() +
+                  " " +
+                  solved.toString()
+                }
+                progress={0.8}
+                zones={[
+                  {
+                    text: "Polarized",
+                    startVal: 0,
+                    endVal: zones[0],
+                    color: "#009E0066",
+                  },
+                  {
+                    text: "Threshold",
+                    startVal: zones[0],
+                    endVal: zones[1] + zones[0],
+                    color: "#FFCB0E80",
+                  },
+                  {
+                    text: "HIT",
+                    startVal: zones[1] + zones[0],
+                    endVal: zones[1] + zones[0] + zones[2],
+                    color: "rgb(255, 0, 0)",
+                  },
+                ]}
+                transform={(n) => n}
+              ></ChartComponent>
             );
           })}
-        {types.map((s) => {
-          let zones = toPrecent(summary[s]);
-          let needed = solve(summary[s], 0.8) / 60;
-          console.log(s, needed);
-          let solved = (needed > 0 ? "" : "-") + hourToString(Math.abs(needed));
-          return (
-            <ChartComponent
-              title={type + " " + s.toString() + " " + solved.toString()}
-              progress={0.8}
-              zones={[
-                {
-                  text: "Polarized",
-                  startVal: 0,
-                  endVal: zones[0],
-                  color: "#009E0066",
-                },
-                {
-                  text: "Threshold",
-                  startVal: zones[0],
-                  endVal: zones[1] + zones[0],
-                  color: "#FFCB0E80",
-                },
-                {
-                  text: "HIT",
-                  startVal: zones[1] + zones[0],
-                  endVal: zones[1] + zones[0] + zones[2],
-                  color: "rgb(255, 0, 0)",
-                },
-              ]}
-              transform={(n) => n}
-            ></ChartComponent>
-          );
-        })}
-        ;
       </View>
     </ScrollView>
   );

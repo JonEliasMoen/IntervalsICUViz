@@ -13,27 +13,47 @@ export function wattPer(t: "Run" | "Ride", data: wellness | undefined) {
   let eftp = data?.sportInfo.find((s) => s.type == t)?.eftp ?? 0;
   return eftp / (weight == undefined ? 73.0 : weight);
 }
+interface strainMonotony {
+  monotony: number;
+  acwr: number;
+}
+export function strainMonotony(data: wellness[]) {
+  let load = data.map((t) => t.ctlLoad).filter((t) => t != undefined);
+  let monotony =
+    mean(load.slice(data.length - 7)) /
+    standardDeviation(load.slice(data.length - 7));
+  let monotonyL =
+    mean(load.slice(data.length - 7 * 2)) /
+    standardDeviation(load.slice(data.length - 7 * 2));
+  let strain = monotony * mean(load.slice(data.length - 7));
+  let strainL = monotonyL * mean(load.slice(data.length - 7 * 2));
+  return {
+    monotony: monotony,
+    acwr: strain / strainL,
+  };
+}
 
 export default function TabOneScreen() {
   const { storedKey, storedAid } = useStoredKey();
-  const dataWeek = getWellnessRange(0, 8, storedKey, storedAid) ?? [];
-  if (dataWeek == undefined || dataWeek.length == 0) {
+  const dataLong = getWellnessRange(0, 14, storedKey, storedAid) ?? [];
+  const dataWeek = dataLong.slice(dataLong.length - 9);
+  console.log(dataLong);
+  if (dataLong.length == 0 && dataLong != undefined) {
     return <></>;
   }
-  let load = dataWeek.map((t) => t.ctlLoad).filter((t) => t != undefined);
-  load = load.slice(load.length - 7);
-  let monotony = mean(load) / standardDeviation(load);
+  let sAcwr = strainMonotony(dataLong);
 
   const data = dataWeek.at(-1);
+
   const sleep =
     dataWeek
-      .filter((s) => s.sleepSecs != 0 || s.sleepSecs != null)
+      .filter((s) => s.sleepSecs != 0 && s.sleepSecs != null)
       .map((s) => s.sleepSecs)
       .at(-1) ?? 0;
   console.log(sleep);
   let hrv = dataWeek
-    .filter((s) => s.hrv != 0 || s.hrv != null)
-    .map((t) => t.hrv ?? 90);
+    .filter((s) => s.hrv != 0 && s.hrv != null)
+    .map((t) => t.hrv);
   if (hrv.length == 0) {
     hrv = [90, 100];
   }
@@ -48,13 +68,13 @@ export default function TabOneScreen() {
   let hq = (q: number) => {
     return quantile(q, hmean, hstd);
   };
-
+  console.log("Sleep", hrv[hrv.length - 1], sleep);
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <Text style={styles.title}>Status</Text>
       <ChartComponent
         title={"Montony"}
-        progress={monotony ?? 0}
+        progress={sAcwr.monotony ?? 0}
         zones={[
           {
             text: "Very Low (0-0.8)",
@@ -90,46 +110,40 @@ export default function TabOneScreen() {
         transform={(n) => n / 3}
       />
       <ChartComponent
-        title={"Strain"}
-        progress={monotony * mean(load) ?? 0}
+        title={"Strain ACWR"}
+        progress={sAcwr.acwr}
         zones={[
           {
-            text: "Very Low (0-30)",
-            startVal: 0.0,
-            endVal: 30,
-            color: "rgb(255,0,0)", // Red
+            text: "Low",
+            startVal: 0,
+            endVal: 0.8,
+            color: "#1F77B44D",
           },
           {
-            text: "Low (30-60)",
-            startVal: 30,
-            endVal: 60,
-            color: "#FFCB0E80", // Yellow
+            text: "Optimal",
+            startVal: 0.8,
+            endVal: 1.3,
+            color: "#009E0066",
           },
           {
-            text: "Normal (60-100)",
-            startVal: 60,
-            endVal: 100,
-            color: "#009E0066", // Green
+            text: "High",
+            startVal: 1.3,
+            endVal: 1.5,
+            color: "#FFCB0E80",
           },
           {
-            text: "High (100-150)",
-            startVal: 100,
-            endVal: 150,
-            color: "#FFCB0E80", // Yellow
-          },
-          {
-            text: "Very High (150-200)",
-            startVal: 150,
-            endVal: 200,
-            color: "rgb(255,0,0)", // Red
+            text: "Very high",
+            startVal: 1.5,
+            endVal: 2,
+            color: "#D627284D",
           },
         ]}
-        transform={(n) => n / 200}
-      />
+        transform={(n) => n / 2.0}
+      ></ChartComponent>
       <ChartComponent
         title={"HRV"}
-        display={() => hmean != null}
-        progress={data != null ? data.hrv : 0}
+        display={() => hrv[hrv.length - 1] != null}
+        progress={hrv[hrv.length - 1] ?? 0}
         zones={[
           {
             text: "Low",
@@ -224,7 +238,7 @@ export default function TabOneScreen() {
       ></ChartComponent>
       <ChartComponent
         title={"Sleep"}
-        display={() => sleep != null || sleep != 0}
+        display={() => sleep != 0 && sleep != null}
         progress={sleep != null ? sleep / 3600 : 5}
         indicatorTextTransform={hourToString}
         zones={[
