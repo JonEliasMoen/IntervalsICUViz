@@ -126,15 +126,16 @@ export function SnowDepthLocation(props: { loc: snowPlace }) {
   console.log(props.loc.name, depth);
   return (
     <>
-      {depth > 0 && aPret[1] != 0 && (
-        <Text>
-          Last Prep: {aPret[0]}/{aPret[1]}/{aPret[2]}
-        </Text>
-      )}
+      {depth > 0 && aPret[1] != 0 && <Text></Text>}
       <ChartComponent
         progress={depth}
         display={() => depth > 10}
-        title={name + " PrepDays: " + aPret[1]}
+        title={name}
+        subtitle={
+          aPret[0] != null
+            ? `Last Prep: ${aPret[0]}/${aPret[1]}/${aPret[2]}`
+            : null
+        }
         indicatorTextTransform={(n) => n.toString() + " cm"}
         zones={[
           {

@@ -8,16 +8,30 @@ import { hourToString } from "@/components/utils/_utils";
 import { useStoredKey } from "@/components/utils/_keyContext";
 import { getWellnessRange, wellness } from "@/components/utils/_commonModel";
 
-export function wattPer(t: "Run" | "Ride", data: wellness | undefined) {
-  let weight = data?.weight;
-  let eftp = data?.sportInfo.find((s) => s.type == t)?.eftp ?? 0;
-  return eftp / (weight == undefined ? 73.0 : weight);
+interface wattResult {
+  wattPerKg: number;
+  kg: number;
+  watt: number;
+  title: string;
+}
+
+export function wattPer(t: "Run" | "Ride", data: wellness[]): wattResult {
+  let weight = mean(data.filter((t) => t.weight != null).map((t) => t.weight));
+  let eftp =
+    data[data.length - 1].sportInfo.find((s) => s.type == t)?.eftp ?? 0;
+  let text = "Kg=" + Math.round(weight) + ", W=" + Math.round(eftp);
+  return {
+    wattPerKg: eftp / weight,
+    kg: weight,
+    watt: eftp,
+    title: text,
+  };
 }
 interface strainMonotony {
   monotony: number;
   acwr: number;
 }
-export function strainMonotony(data: wellness[]) {
+export function strainMonotony(data: wellness[]): strainMonotony {
   let load = data.map((t) => t.ctlLoad).filter((t) => t != undefined);
   let monotony =
     mean(load.slice(data.length - 7)) /
@@ -41,9 +55,12 @@ export default function TabOneScreen() {
   if (dataLong.length == 0 && dataLong != undefined) {
     return <></>;
   }
+  if (dataWeek.length == 0 && dataWeek != undefined) {
+    return <></>;
+  }
   let sAcwr = strainMonotony(dataLong);
 
-  const data = dataWeek.at(-1);
+  const data = dataWeek[dataWeek.length - 1];
 
   const sleep =
     dataWeek
@@ -69,6 +86,9 @@ export default function TabOneScreen() {
     return quantile(q, hmean, hstd);
   };
   console.log("Sleep", hrv[hrv.length - 1], sleep);
+
+  let rideEftp = wattPer("Ride", dataWeek);
+  let runEftp = wattPer("Run", dataWeek);
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <Text style={styles.title}>Status</Text>
@@ -175,8 +195,8 @@ export default function TabOneScreen() {
         }
       ></ChartComponent>
       <ChartComponent
-        title={`Ramprate(${data?.ctl.toFixed()}/${data?.atl.toFixed()}) q`}
-        progress={data != null ? data.rampRate : 0}
+        title={`Ramprate q`}
+        progress={data.rampRate}
         zones={[
           {
             text: "0-0.2",
@@ -207,7 +227,7 @@ export default function TabOneScreen() {
       ></ChartComponent>
       <ChartComponent
         title={"ACWR"}
-        progress={data != null ? data.atl / data.ctl : 1}
+        progress={data.atl / data.ctl}
         zones={[
           {
             text: "Low",
@@ -262,8 +282,8 @@ export default function TabOneScreen() {
           },
           {
             text: "7-8 Hours",
-            startVal: 6,
-            endVal: 7,
+            startVal: 7,
+            endVal: 8,
             color: "#009E0057",
           },
           {
@@ -321,7 +341,7 @@ export default function TabOneScreen() {
       ></ChartComponent>
       <ChartComponent
         title={"Form %"}
-        progress={formPer != null ? -formPer : 0}
+        progress={-formPer}
         zones={[
           {
             text: "Transition",
@@ -361,7 +381,8 @@ export default function TabOneScreen() {
       ></ChartComponent>
       <ChartComponent
         title={"Running eftp/kg"}
-        progress={data != null ? wattPer("Run", data) : 0}
+        progress={runEftp.wattPerKg}
+        subtitle={runEftp.title}
         zones={[
           {
             text: "Very Poor (20%)",
@@ -425,7 +446,8 @@ export default function TabOneScreen() {
       ></ChartComponent>
       <ChartComponent
         title={"Ride eftp/kg"}
-        progress={data != null ? wattPer("Ride", data) : 0}
+        progress={rideEftp.wattPerKg}
+        subtitle={rideEftp.title}
         zones={[
           {
             text: "Untrained",

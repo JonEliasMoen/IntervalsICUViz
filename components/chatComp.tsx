@@ -68,6 +68,7 @@ export function indicator(
 
 export function ChartComponent(props: {
   title?: string;
+  subtitle?: string | null;
   display?: () => boolean;
   progress: number;
   zones: zone[];
@@ -87,6 +88,9 @@ export function ChartComponent(props: {
   return (
     <View style={[styles.container, display ? {} : { display: "none" }]}>
       <Text style={styles.statusText}>{titleText + text}</Text>
+      {props.subtitle != null && (
+        <Text style={styles.subText}>{props.subtitle}</Text>
+      )}
       <View style={styles.progressBarContainer}>
         {Zones(props.zones, props.transform)}
       </View>
@@ -130,6 +134,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     marginBottom: 10, // Adds space between text and bar
+  },
+  subText: {
+    fontSize: 13,
+    marginBottom: 5, // Adds space between text and bar
   },
   progressBarContainer: {
     flexDirection: "row",

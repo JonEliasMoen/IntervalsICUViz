@@ -272,7 +272,7 @@ export function AirTempLocation(props: { lat: number; long: number }) {
   return (
     <>
       <ChartComponent
-        title={"Temp Days forward"}
+        title={"Temp days forward"}
         progress={0}
         zones={zonesFF}
         transform={(u) => u}
@@ -284,13 +284,13 @@ export function AirTempLocation(props: { lat: number; long: number }) {
         transform={(v) => (v + 25) / 50}
       ></ChartComponent>
       <ChartComponent
-        title={"Average wind"}
+        title={"Avg wind"}
         progress={wind[1]}
         zones={zonesw}
         transform={(v) => v / 24}
       ></ChartComponent>
       <ChartComponent
-        title={"Average wind gale"}
+        title={"Avg wind gale"}
         progress={wind2[1]}
         zones={zonesw}
         transform={(v) => v / 24}
