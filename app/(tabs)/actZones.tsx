@@ -155,7 +155,7 @@ export default function ZoneScreen() {
     { label: "Swim", value: 3 },
     { label: "Combined", value: 4 },
   ];
-  let type = value != null ? itemsAct[value - 1].label : "Run";
+  let type = value != null ? itemsAct[value - 1].label : "Combined";
 
   let summary = parse(storedKey, storedAid, type);
   console.log(summary);
