@@ -14,6 +14,8 @@ import {
 import { mean, standardDeviation } from "simple-statistics";
 import { useStoredKey } from "@/components/utils/_keyContext";
 import DropDownPicker from "react-native-dropdown-picker";
+import Slider from "@react-native-community/slider";
+import { Checkbox } from "react-native-paper";
 interface pactivity {
   pace_zone_times: number[];
   icu_hr_zone_times: number[];
@@ -27,8 +29,9 @@ export function arrayIndexSum(
   list: number[][],
   timeS: number[],
   index: number,
+  hl: number,
 ) {
-  const beta = 1 - Math.exp(-Math.log(2) / 14);
+  const beta = 1 - Math.exp(-Math.log(2) / hl);
 
   return list
     .map((s) => fix(s[index]))
@@ -45,7 +48,6 @@ function fix(v: number | undefined | null): number {
   return v;
 }
 export function arrayIndexSumNormal(list: number[][], index: number) {
-  console.log("list", list);
   return list
     .map((s) => fix(s[index]))
     .reduce(
@@ -58,26 +60,47 @@ export function parseActivites(
   acts: activity[],
   timeS: number[],
   attr: keyof activity,
+  ewm: boolean = true,
+  hl: number,
 ) {
   let filact = acts.map((a) => a[attr]).filter((s) => s != undefined);
   let res = Array(filact[0]?.length).fill(0);
-  // @ts-ignore
-  return res.map((s, i) => arrayIndexSum(filact, timeS, i));
+  if (ewm) {
+    // @ts-ignore
+    return res.map((s, i) => arrayIndexSum(filact, timeS, i, hl));
+  } else {
+    filact = filact.slice(0, hl);
+    // @ts-ignore
+    return res.map((s, i) => arrayIndexSumNormal(filact, i));
+  }
 }
 
-export function parseActivitesPower(acts: activity[], timeS: number[]) {
+export function parseActivitesPower(
+  acts: activity[],
+  timeS: number[],
+  ewm: boolean = true,
+  hl: number,
+) {
   let filact = acts
     .map((a) => a.icu_zone_times?.map((s) => s.secs))
     .filter((s) => s != undefined);
   let res = Array(filact[0]?.length).fill(0);
-  // @ts-ignore
-  return res.map((s, i) => arrayIndexSum(filact, timeS, i));
+  if (ewm) {
+    // @ts-ignore
+    return res.map((s, i) => arrayIndexSum(filact, timeS, i));
+  } else {
+    filact = filact.slice(0, hl);
+    // @ts-ignore
+    return res.map((s, i) => arrayIndexSumNormal(filact, i));
+  }
 }
 
 export function parse(
   storedKey: string,
   aid: string,
   sport: string = "Run",
+  ewm: boolean = true,
+  hl: number,
 ): pactivity | undefined {
   console.log(storedKey, aid);
   let acts = getActivities(0, 7 * 4, storedKey, aid);
@@ -89,10 +112,16 @@ export function parse(
     }
     let tacts = facts.map((s) => daysSince(new Date(s.start_date_local)));
     console.log(tacts);
-    let pzt = collapseZones(parseActivites(facts, tacts, "pace_zone_times"));
-    let hzt = collapseZones(parseActivites(facts, tacts, "icu_hr_zone_times"));
-    let gzt = collapseZones(parseActivites(facts, tacts, "gap_zone_times"));
-    let pozt = collapseZones(parseActivitesPower(facts, tacts));
+    let pzt = collapseZones(
+      parseActivites(facts, tacts, "pace_zone_times", ewm, hl),
+    );
+    let hzt = collapseZones(
+      parseActivites(facts, tacts, "icu_hr_zone_times", ewm, hl),
+    );
+    let gzt = collapseZones(
+      parseActivites(facts, tacts, "gap_zone_times", ewm, hl),
+    );
+    let pozt = collapseZones(parseActivitesPower(facts, tacts, ewm, hl));
     console.log([pzt, hzt, gzt, pozt]);
     let combined = [0, 1, 2].map((t) =>
       arrayIndexSumNormal([pzt, hzt, gzt, pozt], t),
@@ -145,7 +174,8 @@ export default function ZoneScreen() {
   const { storedKey, storedAid } = useStoredKey();
   const [value, setValue] = useState<number | null>(null); // Initialize state for selected value
   const [open, setOpen] = useState(false); // State for dropdown visibility
-
+  const [ewmvalue, setEwmValue] = useState<number | null>(null); // Initialize state for selected value
+  const [checked, setChecked] = useState(false);
   if (storedKey == undefined) {
     return <></>;
   }
@@ -157,12 +187,8 @@ export default function ZoneScreen() {
   ];
   let type = value != null ? itemsAct[value - 1].label : "Combined";
 
-  let summary = parse(storedKey, storedAid, type);
+  let summary = parse(storedKey, storedAid, type, checked, ewmvalue ?? 14);
   console.log(summary);
-  const dataWeek = getWellnessRange(0, 8, storedKey, storedAid);
-  if (dataWeek == undefined || dataWeek.length == 0) {
-    return <></>;
-  }
   if (summary == undefined) {
     return <></>;
   }
@@ -177,6 +203,22 @@ export default function ZoneScreen() {
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <View style={[styles.dcontainer]}>
+        <Slider
+          style={{ width: 200, height: 40 }}
+          minimumValue={1}
+          maximumValue={7 * 4}
+          value={14}
+          minimumTrackTintColor="#000000"
+          maximumTrackTintColor="#FFFFFF"
+          onValueChange={(value) => setEwmValue(value)}
+        />
+        <Text>{Math.round(ewmvalue ?? 14)}</Text>
+        <Checkbox
+          status={checked ? "checked" : "unchecked"}
+          onPress={() => {
+            setChecked(!checked);
+          }}
+        />
         <DropDownPicker
           open={open}
           value={value}
