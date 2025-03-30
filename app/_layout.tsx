@@ -16,7 +16,14 @@ export const unstable_settings = {
 };
 
 SplashScreen.preventAutoHideAsync();
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      cacheTime: 30 * 60,
+      staleTime: 30 * 60,
+    },
+  },
+});
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),

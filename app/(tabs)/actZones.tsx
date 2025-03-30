@@ -1,21 +1,24 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Text } from "@/components/Themed";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { daysSince, hourToString } from "@/components/utils/_utils";
 import ChartComponent from "@/components/chatComp";
-import { MultivariateLinearRegression } from "@/components/utils/mlr";
 import {
   activity,
   getActivities,
   getSettings,
-  getWellnessRange,
-  wellness,
+  getStravaActivities,
+  getStream,
+  powerzone,
+  settings,
+  SportSettings,
+  stream,
 } from "@/components/utils/_commonModel";
-import { mean, standardDeviation } from "simple-statistics";
 import { useStoredKey } from "@/components/utils/_keyContext";
 import DropDownPicker from "react-native-dropdown-picker";
 import Slider from "@react-native-community/slider";
 import { Checkbox } from "react-native-paper";
+
 interface pactivity {
   pace_zone_times: number[];
   icu_hr_zone_times: number[];
@@ -41,12 +44,14 @@ export function arrayIndexSum(
       0,
     );
 }
+
 function fix(v: number | undefined | null): number {
   if (v == undefined || Number.isNaN(v)) {
     return 0;
   }
   return v;
 }
+
 export function arrayIndexSumNormal(list: number[][], index: number) {
   return list
     .map((s) => fix(s[index]))
@@ -69,7 +74,6 @@ export function parseActivites(
     // @ts-ignore
     return res.map((s, i) => arrayIndexSum(filact, timeS, i, hl));
   } else {
-    filact = filact.slice(0, hl);
     // @ts-ignore
     return res.map((s, i) => arrayIndexSumNormal(filact, i));
   }
@@ -87,55 +91,53 @@ export function parseActivitesPower(
   let res = Array(filact[0]?.length).fill(0);
   if (ewm) {
     // @ts-ignore
-    return res.map((s, i) => arrayIndexSum(filact, timeS, i));
+    return res.map((s, i) => arrayIndexSum(filact, timeS, i, hl));
   } else {
-    filact = filact.slice(0, hl);
     // @ts-ignore
     return res.map((s, i) => arrayIndexSumNormal(filact, i));
   }
 }
 
 export function parse(
-  storedKey: string,
-  aid: string,
+  acts: activity[],
   sport: string = "Run",
   ewm: boolean = true,
   hl: number,
-): pactivity | undefined {
-  console.log(storedKey, aid);
-  let acts = getActivities(0, 7 * 4, storedKey, aid);
-  if (acts != undefined) {
-    console.log(acts?.map((t) => t.type));
-    let facts = acts.filter((s) => s.type == sport);
-    if (sport == "Combined") {
-      facts = acts;
-    }
-    let tacts = facts.map((s) => daysSince(new Date(s.start_date_local)));
-    console.log(tacts);
-    let pzt = collapseZones(
-      parseActivites(facts, tacts, "pace_zone_times", ewm, hl),
-    );
-    let hzt = collapseZones(
-      parseActivites(facts, tacts, "icu_hr_zone_times", ewm, hl),
-    );
-    let gzt = collapseZones(
-      parseActivites(facts, tacts, "gap_zone_times", ewm, hl),
-    );
-    let pozt = collapseZones(parseActivitesPower(facts, tacts, ewm, hl));
-    console.log([pzt, hzt, gzt, pozt]);
-    let combined = [0, 1, 2].map((t) =>
-      arrayIndexSumNormal([pzt, hzt, gzt, pozt], t),
-    );
-
-    return {
-      pace_zone_times: pzt,
-      icu_hr_zone_times: hzt,
-      gap_zone_times: gzt,
-      icu_zone_times: pozt,
-      combined: combined,
-      acts: facts,
-    };
+): pactivity {
+  let facts = acts.filter((s) => s.type == sport);
+  if (sport == "Combined") {
+    facts = acts;
   }
+  console.log(facts);
+  let tacts = facts.map((s) => daysSince(new Date(s.start_date_local)));
+
+  if (!ewm) {
+    facts = facts.filter((s) => daysSince(new Date(s.start_date_local)) <= hl);
+  }
+  console.log(tacts);
+  let pzt = collapseZones(
+    parseActivites(facts, tacts, "pace_zone_times", ewm, hl),
+  );
+  let hzt = collapseZones(
+    parseActivites(facts, tacts, "icu_hr_zone_times", ewm, hl),
+  );
+  let gzt = collapseZones(
+    parseActivites(facts, tacts, "gap_zone_times", ewm, hl),
+  );
+  let pozt = collapseZones(parseActivitesPower(facts, tacts, ewm, hl));
+  console.log("all zones", [pzt, hzt, gzt, pozt]);
+  let combined = [0, 1, 2].map((t) =>
+    arrayIndexSumNormal([pzt, hzt, gzt, pozt], t),
+  );
+
+  return {
+    pace_zone_times: pzt,
+    icu_hr_zone_times: hzt,
+    gap_zone_times: gzt,
+    icu_zone_times: pozt,
+    combined: combined,
+    acts: facts,
+  };
 }
 
 export function collapseZones(zoneTimes: number[]) {
@@ -154,6 +156,7 @@ export function collapseZones(zoneTimes: number[]) {
     ];
   }
 }
+
 export function toPrecent(zoneTimes: number[] | undefined) {
   return zoneTimes.map(
     (s) =>
@@ -170,28 +173,118 @@ function solve(map: number[], t: number, i: number = 0) {
   return (targetMap0 - map[i]) / (1 - t) / 60;
 }
 
+interface zone {
+  type: string;
+  zones: number[];
+}
+
+export function getDataForType(
+  settings: settings,
+  sport: string,
+  attribute: string[],
+): zone[] {
+  let setting = settings?.sportSettings.filter(
+    (t) =>
+      t.types.find((t) => {
+        return t == sport;
+      }) != null,
+  )[0];
+  let available = [
+    ["ftp", "power_zones", "watts"],
+    ["threshold_pace", "pace_zones", "velocity_smooth"],
+    ["max_hr", "hr_zones", "heartrate"],
+  ]
+    .filter((t) => setting[t[0]] != null && setting[t[0]] != undefined)
+    .filter((t) => attribute.findIndex((k) => k == t[2]) != -1);
+  console.log("available", available);
+  return available.map((t): zone => {
+    let value: number = setting[t[0]];
+    let prec: number[] = setting[t[1]];
+    console.log("prec", prec);
+    console.log("value", value);
+    return {
+      type: t[2],
+      zones: prec.map((k) => (k / 100) * value),
+    };
+  });
+}
+
+export function streamToZone(
+  acts: activity[],
+  streams: stream[],
+  settings: settings,
+): zone[][] {
+  return streams.map((stream, i): zone[] => {
+    let available = ["heartrate", "watts", "velocity_smooth"].filter((t) =>
+      stream.hasOwnProperty(t),
+    );
+    let zoneData = getDataForType(settings, acts[i]?.type ?? "Ride", available);
+    return zoneData.map((zone): zone => {
+      let result: number[] = Array(zone.zones.length).fill(0);
+      const { data } = stream[zone.type];
+      for (const powerValue of data) {
+        let zoneIndex = zone.zones.findIndex(
+          (threshold) => powerValue < threshold,
+        );
+        if (zoneIndex === -1) {
+          zoneIndex = zone.zones.length - 1;
+        }
+        result[zoneIndex] += 1;
+      }
+      return {
+        type: zone.type,
+        zones: result,
+      };
+    });
+  });
+}
+
+export function mergeStravaIntervals(
+  acts: activity[],
+  timeData: zone[][],
+): activity[] {
+  // @ts-ignore
+  return acts.map((t, i) => {
+    const powerZone: powerzone[] | undefined = timeData[i]
+      .find((t) => t.type == "watts")
+      ?.zones.map((zone) => {
+        return { id: "", secs: zone };
+      });
+    const paceZone: number[] | undefined = timeData[i].find(
+      (t) => t.type == "velocity_smooth",
+    )?.zones;
+    const hrZone: number[] | undefined = timeData[i].find(
+      (t) => t.type == "heartrate",
+    )?.zones;
+
+    return {
+      id: "",
+      _note: null,
+      start_date_local: t.start_date_local,
+      type: t.type,
+      pace_zone_times: paceZone,
+      icu_hr_zone_times: hrZone,
+      gap_zone_times: paceZone,
+      icu_zone_times: powerZone,
+      icu_training_load: 0,
+      moving_time: t.moving_time,
+      pace: 0,
+    };
+  });
+}
+
 export default function ZoneScreen() {
   const { storedKey, storedAid } = useStoredKey();
   const [value, setValue] = useState<number | null>(null); // Initialize state for selected value
   const [open, setOpen] = useState(false); // State for dropdown visibility
   const [ewmvalue, setEwmValue] = useState<number | null>(null); // Initialize state for selected value
   const [checked, setChecked] = useState(false);
-  if (storedKey == undefined) {
-    return <></>;
-  }
   const itemsAct = [
     { label: "Run", value: 1 },
     { label: "Ride", value: 2 },
     { label: "Swim", value: 3 },
     { label: "Combined", value: 4 },
   ];
-  let type = value != null ? itemsAct[value - 1].label : "Combined";
-
-  let summary = parse(storedKey, storedAid, type, checked, ewmvalue ?? 14);
-  console.log(summary);
-  if (summary == undefined) {
-    return <></>;
-  }
   let types: (keyof pactivity)[] = [
     "combined",
     "pace_zone_times",
@@ -200,6 +293,31 @@ export default function ZoneScreen() {
     "icu_hr_zone_times",
   ];
   let nameMap = ["Combined", "Pace zone", "Gap zone", "Power zone", "Hr zone"];
+  let type = value != null ? itemsAct[value - 1].label : "Combined";
+
+  let acts = getActivities(0, 7 * 4, storedKey, storedAid);
+  let settings = getSettings(storedKey, storedAid);
+  const iacts = acts?.filter((t) => t._note != null) || [];
+  const streamData = getStream(
+    iacts.map((t) => t.id),
+    ["watts", "heartrate", "velocity_smooth"],
+  );
+  const sacts = getStravaActivities(iacts.map((t) => t.id));
+
+  if (!storedKey || !storedAid || !acts || !settings || !streamData || !sacts) {
+    return <Text>Loading...</Text>;
+  }
+  console.log("streams", streamData);
+  let rideData = streamToZone(sacts, streamData, settings);
+  acts = [
+    ...acts.filter((t) => t._note == null),
+    ...mergeStravaIntervals(sacts, rideData),
+  ];
+  console.log("activities", acts);
+  let summary = parse(acts, type, checked, ewmvalue ?? 14);
+
+  console.log(sacts, rideData);
+
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <View style={[styles.dcontainer]}>

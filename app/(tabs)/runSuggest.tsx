@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Text } from "@/components/Themed";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { daysSince, hourToString } from "@/components/utils/_utils";
+import { hourToString } from "@/components/utils/_utils";
 import { MultivariateLinearRegression } from "@/components/utils/mlr";
 import {
   activity,
