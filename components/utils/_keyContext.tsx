@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import base64 from "react-native-base64";
 import { tokenResponse } from "@/components/utils/_commonModel";
+import { useMutation } from "@tanstack/react-query";
 
 type StoredKeyContextType = {
   storedKey: string;
@@ -23,7 +24,22 @@ export const StoredKeyProvider: React.FC<{ children: React.ReactNode }> = ({
   const [storedAid, setStoredAid] = useState("");
   // @ts-ignore
   const [storedToken, setStoredToken] = useState<tokenResponse>("{}");
-
+  const { mutate, isLoading, error } = useMutation(
+    async (token: tokenResponse): Promise<tokenResponse> => {
+      const response = await fetch(
+        `https://yrweatherbackend.vercel.app/strava/exchange?refresh_token=${token.refresh_token}`,
+        { method: "GET" },
+      );
+      if (!response.ok) throw new Error("Failed to fetch refresh token");
+      return response.json();
+    },
+    {
+      onSuccess: (data) => {
+        AsyncStorage.setItem("@token", JSON.stringify(data));
+        setStoredToken(data);
+      },
+    },
+  );
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -37,7 +53,11 @@ export const StoredKeyProvider: React.FC<{ children: React.ReactNode }> = ({
         }
         const token = await AsyncStorage.getItem("@token");
         if (token !== null) {
-          setStoredToken(JSON.parse(token));
+          const dtoken: tokenResponse = JSON.parse(token);
+          setStoredToken(dtoken);
+          if (dtoken.expires_at < Math.floor(Date.now() / 1000)) {
+            mutate(dtoken);
+          }
         }
       } catch (e) {
         console.error("Error reading API key:", e);

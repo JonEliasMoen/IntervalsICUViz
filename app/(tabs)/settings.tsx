@@ -5,11 +5,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useStoredKey } from "@/components/utils/_keyContext";
 import { useRouter, useFocusEffect } from "expo-router";
-import {
-  getRefreshToken,
-  tokenResponse,
-  useGetRefreshToken,
-} from "@/components/utils/_commonModel";
+import { tokenResponse } from "@/components/utils/_commonModel";
 
 export default function TabTwoScreen() {
   const [apiKey, setApiKey] = useState("");
@@ -116,7 +112,7 @@ export default function TabTwoScreen() {
     try {
       const callbackUrl = `${window.location.origin}/settings`;
       router.replace(
-        `http://www.strava.com/oauth/authorize?client_id=108568&response_type=code&redirect_uri=${callbackUrl}&approval_prompt=force&scope=read`,
+        `http://www.strava.com/oauth/authorize?client_id=108568&response_type=code&redirect_uri=${callbackUrl}&approval_prompt=force&scope=read_all,activity:read_all`,
       );
     } catch (e) {
       console.log("Error saving aid key:", e);

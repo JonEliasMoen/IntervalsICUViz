@@ -274,7 +274,7 @@ export function mergeStravaIntervals(
 }
 
 export default function ZoneScreen() {
-  const { storedKey, storedAid } = useStoredKey();
+  const { storedKey, storedAid, storedToken } = useStoredKey();
   const [value, setValue] = useState<number | null>(null); // Initialize state for selected value
   const [open, setOpen] = useState(false); // State for dropdown visibility
   const [ewmvalue, setEwmValue] = useState<number | null>(null); // Initialize state for selected value
@@ -294,15 +294,19 @@ export default function ZoneScreen() {
   ];
   let nameMap = ["Combined", "Pace zone", "Gap zone", "Power zone", "Hr zone"];
   let type = value != null ? itemsAct[value - 1].label : "Combined";
-
+  console.log("token", storedToken);
   let acts = getActivities(0, 7 * 4, storedKey, storedAid);
   let settings = getSettings(storedKey, storedAid);
   const iacts = acts?.filter((t) => t._note != null) || [];
   const streamData = getStream(
     iacts.map((t) => t.id),
     ["watts", "heartrate", "velocity_smooth"],
+    storedToken,
   );
-  const sacts = getStravaActivities(iacts.map((t) => t.id));
+  const sacts = getStravaActivities(
+    iacts.map((t) => t.id),
+    storedToken,
+  );
 
   if (!storedKey || !storedAid || !acts || !settings || !streamData || !sacts) {
     return <Text>Loading...</Text>;
