@@ -214,15 +214,17 @@ function findClosest(v: number[], i: number) {
 function parse(d: forecast) {
   let index = findClosest(d.x, d.i);
   let data = cutArrayIfOverLimit(
-    d.y.filter((a, b) => b >= index), // data point every 10 min. 50*10min = 500min = 8 hours.
-    50,
+    d.y.filter((a, b) => b >= index), // data point every 10 min. 100*10min = 1000min = 16 hours.
+    100,
   );
   let datax = cutArrayIfOverLimit(
     d.x.filter((a, b) => b >= index),
-    50,
+    100,
   );
+
   let im = findClosest(data, Math.min(...data));
   let ima = findClosest(data, Math.max(...data));
+  console.log(data, im, ima);
   let closest = Math.min(im, ima);
   let until = Math.abs(datax[0] - datax[closest]) * d.end;
   let text = im < ima ? "min" : "max";

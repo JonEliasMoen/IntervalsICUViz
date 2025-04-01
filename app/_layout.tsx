@@ -19,8 +19,8 @@ SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      cacheTime: 30 * 60,
-      staleTime: 30 * 60,
+      cacheTime: 30 * 60 * 1000,
+      staleTime: 30 * 60 * 1000,
     },
   },
 });

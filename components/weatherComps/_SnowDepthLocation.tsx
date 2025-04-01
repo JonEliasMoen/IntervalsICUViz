@@ -18,14 +18,18 @@ export function getSnowDepth(x: String, y: String) {
     encodeURIComponent(
       `https://gts.nve.no/api/GridTimeSeries/${x}/${y}/${date}/${date}/sd.json`,
     );
-  const { data: data } = useQuery({
-    queryKey: ["snow", date, x, y],
-    queryFn: () =>
+  const { data: data } = useQuery(
+    ["snow", date, x, y],
+    () =>
       fetchToJson<SnowResp>(url, {
         method: "GET",
       }),
-    retry: false,
-  });
+    {
+      retry: false,
+      cacheTime: 30 * 60 * 1000,
+      staleTime: 30 * 60 * 1000,
+    },
+  );
   return data;
 }
 type FeatureCollection = {
@@ -67,13 +71,19 @@ export function getSkiSporet(
     name,
     `https://yrweatherbackend.vercel.app/map/${lat + s}/${long + s}/${long - s}/${long - s}/12?showSimulatedData=false`,
   );
-  const { data: data } = useQuery(["skisporet", lat, long, s], () =>
-    fetchToJson<FeatureCollection>(
-      `https://yrweatherbackend.vercel.app/map/${lat + s}/${long + s}/${long - s}/${long - s}/12?showSimulatedData=false`,
-      {
-        method: "GET",
-      },
-    ),
+  const { data: data } = useQuery(
+    ["skisporet", lat, long, s],
+    () =>
+      fetchToJson<FeatureCollection>(
+        `https://yrweatherbackend.vercel.app/map/${lat + s}/${long + s}/${long - s}/${long - s}/12?showSimulatedData=false`,
+        {
+          method: "GET",
+        },
+      ),
+    {
+      cacheTime: 30 * 60 * 1000,
+      staleTime: 30 * 60 * 1000,
+    },
   );
   return data;
 }

@@ -105,7 +105,7 @@ export default function TabTwoScreen() {
     }
     if (storedToken != null) {
       setToken(storedToken);
-      setAuthenticated(true);
+      //setAuthenticated(true);
     }
   }, []);
   const handleRedirect = () => {

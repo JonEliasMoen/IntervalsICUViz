@@ -55,7 +55,10 @@ export const StoredKeyProvider: React.FC<{ children: React.ReactNode }> = ({
         if (token !== null) {
           const dtoken: tokenResponse = JSON.parse(token);
           setStoredToken(dtoken);
-          if (dtoken.expires_at < Math.floor(Date.now() / 1000)) {
+          if (
+            dtoken.expires_at < Math.floor(Date.now() / 1000) ||
+            dtoken.access_token == undefined
+          ) {
             mutate(dtoken);
           }
         }
