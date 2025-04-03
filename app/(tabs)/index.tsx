@@ -30,6 +30,8 @@ export function wattPer(t: "Run" | "Ride", data: wellness[]): wattResult {
 interface strainMonotony {
   monotony: number;
   acwr: number;
+  strain: number;
+  strainL: number;
 }
 export function strainMonotony(data: wellness[]): strainMonotony {
   let load = data.map((t) => t.ctlLoad).filter((t) => t != undefined);
@@ -44,6 +46,8 @@ export function strainMonotony(data: wellness[]): strainMonotony {
   return {
     monotony: monotony,
     acwr: strain / strainL,
+    strain: strain,
+    strainL: strainL,
   };
 }
 
@@ -53,10 +57,10 @@ export default function TabOneScreen() {
   const dataWeek = dataLong.slice(dataLong.length - 9);
   console.log(dataLong);
   if (dataLong.length == 0 && dataLong != undefined) {
-    return <></>;
+    return <Text>Loading</Text>;
   }
   if (dataWeek.length == 0 && dataWeek != undefined) {
-    return <></>;
+    return <Text>Loading</Text>;
   }
   let sAcwr = strainMonotony(dataLong);
 

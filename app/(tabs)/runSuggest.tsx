@@ -8,23 +8,13 @@ import {
   getActivities,
   getSettings,
   getWellnessRange,
+  settings,
   wellness,
 } from "@/components/utils/_commonModel";
 import { mean, standardDeviation } from "simple-statistics";
 import { useStoredKey } from "@/components/utils/_keyContext";
 import DropDownPicker from "react-native-dropdown-picker";
-
-export function parse(
-  storedKey: string,
-  aid: string,
-  sport: string = "Run",
-): activity[] | undefined {
-  console.log(storedKey, aid);
-  let acts = getActivities(0, 365, storedKey, aid);
-  if (acts != undefined) {
-    return acts.filter((s) => s.type == sport);
-  }
-}
+import { strainMonotony } from "@/app/(tabs)/index";
 
 export function convertToRanges(arr: number[]): Boundaries[] {
   if (arr.length === 0) return [];
@@ -181,6 +171,14 @@ export function fitNPred(
   vBound: Boundaries,
   lBound: Boundaries,
 ): finalRes[] {
+  let str = strainMonotony(dataWeek);
+  let c = [0.8, 1.2];
+  let sBound: Boundaries = {
+    max: (c[1] * str.strainL - 2 * str.strain) / (2 - c[1]),
+    min: (c[0] * str.strainL - 2 * str.strain) / (2 - c[0]),
+  };
+  console.log("Strain bound", sBound);
+
   let load = dataWeek.map((t) => t.ctlLoad).filter((t) => t != undefined);
   console.log(dataWeek);
   load = load.slice(load.length - 7);
@@ -188,7 +186,7 @@ export function fitNPred(
     load,
     lBound,
     { min: 0.8, max: 2 },
-    { min: 30, max: 150 },
+    sBound,
   );
   let lrange: Boundaries[];
   if (loadRanges == undefined || loadRanges.length == 0) {
@@ -222,17 +220,12 @@ export function fitNPred(
 
 // z is like z0, z1 here.
 function specZone(
-  storedKey: string,
-  aid: string,
+  settings: settings,
   sport: string,
   z: number,
   z2: number = -1,
 ): Boundaries | undefined {
-  console.log(
-    "Sport settings",
-    getSettings(storedKey, aid)?.sportSettings.map((t) => t.types),
-  );
-  let setting = getSettings(storedKey, aid)?.sportSettings.filter(
+  let setting = settings.sportSettings.filter(
     (t) =>
       t.types.find((t) => {
         return t == sport;
@@ -276,25 +269,33 @@ export default function RunSuggestScreen() {
     { label: "Zone 4", value: 4 },
     { label: "Zone 5", value: 5 },
   ];
-  if (storedKey == undefined) {
-    return <></>;
+  if (storedKey == undefined || storedAid == undefined) {
+    return <Text>Loading</Text>;
   }
-  let activities = parse(storedKey, storedAid, "Run");
-
+  let activities = getActivities(0, 365, storedKey, storedAid);
   const dataWeek = getWellnessRange(0, 8, storedKey, storedAid);
-  if (dataWeek == undefined || dataWeek.length == 0) {
-    return <></>;
+  const settings = getSettings(storedKey, storedAid);
+  if (
+    dataWeek == undefined ||
+    activities == undefined ||
+    settings == undefined
+  ) {
+    return <Text>Loading</Text>;
   }
+  activities = activities.filter((s) => s.type == "Run");
+
   let tol = dataWeek.map((s) => s.ctl);
   let load = dataWeek.map((s) => s.atl);
   let zoneNr = value != null ? value - 1 : 1;
-  let zone = specZone(storedKey, storedAid, "Run", zoneNr);
-  console.log("zone", zone);
-  if (activities == undefined) {
-    return <></>;
-  }
+  let zone = specZone(settings, "Run", zoneNr);
+
   if (zone == undefined) {
-    return <></>;
+    return (
+      <Text>
+        This page does not work without pace zones in intervals.icu settings for
+        running.
+      </Text>
+    );
   }
   let neededLoad = findDoable(0, load, tol, 7, 42, 1, 1.3);
   let res = fitNPred(dataWeek, activities, zone, neededLoad);

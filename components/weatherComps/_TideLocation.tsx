@@ -224,7 +224,6 @@ function parse(d: forecast) {
 
   let im = findClosest(data, Math.min(...data));
   let ima = findClosest(data, Math.max(...data));
-  console.log(data, im, ima);
   let closest = Math.min(im, ima);
   let until = Math.abs(datax[0] - datax[closest]) * d.end;
   let text = im < ima ? "min" : "max";
