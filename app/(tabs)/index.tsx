@@ -6,7 +6,7 @@ import { mean, standardDeviation } from "simple-statistics";
 import quantile from "@stdlib/stats-base-dists-normal-quantile";
 import { hourToString } from "@/components/utils/_utils";
 import { useStoredKey } from "@/components/utils/_keyContext";
-import { getWellnessRange, wellness } from "@/components/utils/_commonModel";
+import { getWellnessRange, wellness } from "@/components/utils/_fitnessModel";
 
 interface wattResult {
   wattPerKg: number;

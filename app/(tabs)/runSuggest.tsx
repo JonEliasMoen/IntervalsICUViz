@@ -10,7 +10,7 @@ import {
   getWellnessRange,
   settings,
   wellness,
-} from "@/components/utils/_commonModel";
+} from "@/components/utils/_fitnessModel";
 import { mean, standardDeviation } from "simple-statistics";
 import { useStoredKey } from "@/components/utils/_keyContext";
 import DropDownPicker from "react-native-dropdown-picker";

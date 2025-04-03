@@ -1,92 +1,14 @@
-import { isoDateOffset } from "@/components/utils/_utils";
-import { useQuery } from "@tanstack/react-query";
 import ChartComponent from "@/components/chatComp";
-import { fetchToJson } from "@/components/utils/_utils";
 import { generateGradient } from "typescript-color-gradient";
 import { mean } from "simple-statistics";
-import { location, snowPlace } from "@/components/utils/_commonModel";
 import { Text } from "@/components/Themed";
-
-interface SnowResp {
-  Data: number[];
-  [key: string]: any;
-}
-export function getSnowDepth(x: String, y: String) {
-  const date = isoDateOffset(0);
-  const url =
-    "https://corsproxy.io/?" +
-    encodeURIComponent(
-      `https://gts.nve.no/api/GridTimeSeries/${x}/${y}/${date}/${date}/sd.json`,
-    );
-  const { data: data } = useQuery(
-    ["snow", date, x, y],
-    () =>
-      fetchToJson<SnowResp>(url, {
-        method: "GET",
-      }),
-    {
-      retry: false,
-      cacheTime: 30 * 60 * 1000,
-      staleTime: 30 * 60 * 1000,
-    },
-  );
-  return data;
-}
-type FeatureCollection = {
-  type: "FeatureCollection";
-  features: Feature[];
-};
-
-type Feature = {
-  type: "Feature";
-  properties: Properties;
-  geometry: Geometry;
-};
-
-type Properties = {
-  parent: number;
-  level: number;
-  type: "TRACK_SEGMENT"; // If this can vary, change to string
-  scooter: boolean;
-  floodLit: boolean;
-  skating: boolean;
-  classic: boolean;
-  newest_prep_days: number;
-  newest_prep_hours: number;
-  length: number;
-};
-
-type Geometry = {
-  type: "LineString";
-  coordinates: [number, number][];
-};
-
-export function getSkiSporet(
-  name: string,
-  lat: number,
-  long: number,
-  s: number,
-) {
-  console.log(
-    name,
-    `https://yrweatherbackend.vercel.app/map/${lat + s}/${long + s}/${long - s}/${long - s}/12?showSimulatedData=false`,
-  );
-  const { data: data } = useQuery(
-    ["skisporet", lat, long, s],
-    () =>
-      fetchToJson<FeatureCollection>(
-        `https://yrweatherbackend.vercel.app/map/${lat + s}/${long + s}/${long - s}/${long - s}/12?showSimulatedData=false`,
-        {
-          method: "GET",
-        },
-      ),
-    {
-      cacheTime: 30 * 60 * 1000,
-      staleTime: 30 * 60 * 1000,
-    },
-  );
-  return data;
-}
+import {
+  Feature,
+  FeatureCollection,
+  getSkiSporet,
+  getSnowDepth,
+  snowPlace,
+} from "@/components/utils/_weatherModel";
 
 export function averagePrep(
   data: FeatureCollection,

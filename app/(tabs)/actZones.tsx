@@ -13,7 +13,7 @@ import {
   settings,
   SportSettings,
   stream,
-} from "@/components/utils/_commonModel";
+} from "@/components/utils/_fitnessModel";
 import { useStoredKey } from "@/components/utils/_keyContext";
 import DropDownPicker from "react-native-dropdown-picker";
 import Slider from "@react-native-community/slider";

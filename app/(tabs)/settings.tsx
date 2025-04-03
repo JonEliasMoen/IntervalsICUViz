@@ -5,7 +5,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useStoredKey } from "@/components/utils/_keyContext";
 import { useRouter, useFocusEffect } from "expo-router";
-import { tokenResponse } from "@/components/utils/_commonModel";
+import { tokenResponse } from "@/components/utils/_fitnessModel";
 
 export default function TabTwoScreen() {
   const [apiKey, setApiKey] = useState("");

@@ -2,69 +2,7 @@ import { fetchToJson, isoDateOffset } from "@/components/utils/_utils";
 import { useQuery } from "@tanstack/react-query";
 import { ChartComponent } from "@/components/chatComp";
 import { generateGradient } from "typescript-color-gradient";
-
-interface Feature {
-  type: "Feature";
-  geometry: Geometry;
-  properties: Properties;
-}
-
-interface Geometry {
-  type: "Point";
-  coordinates: [number, number]; // [longitude, latitude]
-}
-
-interface Properties {
-  meta: Meta;
-  timeseries: Timeseries[];
-}
-
-interface Meta {
-  updated_at: string; // ISO date string
-  units: Units;
-}
-
-interface Units {
-  sea_surface_wave_from_direction: "degrees";
-  sea_surface_wave_height: "m";
-  sea_water_speed: "m/s";
-  sea_water_temperature: "celsius";
-  sea_water_to_direction: "degrees";
-}
-
-interface Timeseries {
-  time: string; // ISO date string
-  data: Data;
-}
-
-interface Data {
-  instant: Instant;
-}
-
-interface Instant {
-  details: Details;
-}
-
-interface Details {
-  sea_surface_wave_from_direction: number;
-  sea_surface_wave_height: number;
-  sea_water_speed: number;
-  sea_water_temperature: number;
-  sea_water_to_direction: number;
-}
-
-export function getWaterTemp(lat: number, long: number) {
-  const date = isoDateOffset(0);
-  const { data: data } = useQuery(["watertemp", date, lat, long], () =>
-    fetchToJson<Feature>(
-      `https://yrweatherbackend.vercel.app/oceanforecast/2.0/complete?lat=${lat}&lon=${long}`,
-      {
-        method: "GET",
-      },
-    ),
-  );
-  return data;
-}
+import { getWaterTemp } from "@/components/utils/_weatherModel";
 
 export function SeaWaterTempLocation(props: { lat: number; long: number }) {
   const data = getWaterTemp(props.lat, props.long);

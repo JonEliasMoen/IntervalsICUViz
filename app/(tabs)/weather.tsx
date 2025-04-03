@@ -5,8 +5,8 @@ import { AirTempLocation } from "@/components/weatherComps/_AirTempLocation";
 import { TideLocation } from "@/components/weatherComps/_TideLocation";
 import DropDownPicker from "react-native-dropdown-picker";
 import React, { useEffect, useState } from "react";
-import { location } from "@/components/utils/_commonModel";
 import { SunRiseSetLocation } from "@/components/weatherComps/_SunRiseSetLocation";
+import { location } from "@/components/utils/_weatherModel";
 
 export default function WeatherScreen() {
   const [value, setValue] = useState<number>(0); // Initialize state for selected value

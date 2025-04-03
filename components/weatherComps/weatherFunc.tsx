@@ -67,6 +67,30 @@ function windIndex(T: number[], V: number[]): number[] {
 
   return res;
 }
+interface result {
+  current: number;
+  low: number;
+  daylength: number;
+  nightlength: number;
+  difference: number;
+}
+export function sunSinus(t: number, sunrise: number, sunset: number): result {
+  let daylength = sunset - sunrise;
+  let daySeconds = 3600 * 24;
+  let nightLength = daySeconds - sunset + sunrise;
+  let difference = -(nightLength / daylength); // ylow. value at lowest
+  console.log(difference);
+  let xZero = (1 + difference) * 0.5; // middle of high and low
+  let amp = 1 - xZero; // Difference between high and zero
+  let radians = 1 - (2 * Math.PI * t) / daySeconds + amp; // i dont bother..
+  return {
+    current: -amp * Math.sin(radians) + xZero,
+    low: difference,
+    nightlength: nightLength,
+    daylength: nightLength,
+    difference: difference,
+  };
+}
 
 export function feelTemp(T: number[], V: number[], RH: number[]): number[] {
   return windIndex(heatIndexReel(T, RH), V);

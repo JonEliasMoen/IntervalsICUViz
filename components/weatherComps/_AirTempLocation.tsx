@@ -1,95 +1,13 @@
-import {
-  fetchToJson,
-  getTimeHHMM,
-  isoDateOffset,
-  normalizeBasedOnRange,
-  secondsFrom,
-} from "@/components/utils/_utils";
-import { useQuery } from "@tanstack/react-query";
+import { normalizeBasedOnRange, secondsFrom } from "@/components/utils/_utils";
 import { ChartComponent, zone } from "@/components/chatComp";
 import { mean } from "simple-statistics";
 import { generateGradient } from "typescript-color-gradient";
 import { feelTemp } from "@/components/weatherComps/weatherFunc";
-
-interface WeatherFeature {
-  type: "Feature";
-  geometry: {
-    type: "Point";
-    coordinates: [number, number, number]; // [longitude, latitude, altitude]
-  };
-  properties: {
-    meta: {
-      updated_at: string; // ISO date string
-      units: {
-        air_pressure_at_sea_level: string;
-        air_temperature: string;
-        air_temperature_max: string;
-        air_temperature_min: string;
-        air_temperature_percentile_10: string;
-        air_temperature_percentile_90: string;
-        cloud_area_fraction: string;
-        cloud_area_fraction_high: string;
-        cloud_area_fraction_low: string;
-        cloud_area_fraction_medium: string;
-        dew_point_temperature: string;
-        fog_area_fraction: string;
-        precipitation_amount: string;
-        precipitation_amount_max: string;
-        precipitation_amount_min: string;
-        probability_of_precipitation: string;
-        probability_of_thunder: string;
-        relative_humidity: string;
-        ultraviolet_index_clear_sky: string;
-        wind_from_direction: string;
-        wind_speed: string;
-        wind_speed_of_gust: string;
-        wind_speed_percentile_10: string;
-        wind_speed_percentile_90: string;
-      };
-    };
-    timeseries: TimeSeriesEntry[];
-  };
-}
-
-interface InstantDetails {
-  air_pressure_at_sea_level: number;
-  air_temperature: number;
-  air_temperature_percentile_10: number;
-  air_temperature_percentile_90: number;
-  cloud_area_fraction: number;
-  cloud_area_fraction_high: number;
-  cloud_area_fraction_low: number;
-  cloud_area_fraction_medium: number;
-  dew_point_temperature: number;
-  fog_area_fraction: number;
-  relative_humidity: number;
-  ultraviolet_index_clear_sky: number;
-  wind_from_direction: number;
-  wind_speed: number;
-  wind_speed_of_gust: number;
-  wind_speed_percentile_10: number;
-  wind_speed_percentile_90: number;
-}
-
-interface PrecipationDetails {
-  precipitation_amount: number;
-  precipitation_amount_max: number;
-  precipitation_amount_min: number;
-  probability_of_precipitation: number;
-  probability_of_thunder: number;
-}
-
-interface TimeSeriesEntry {
-  time: string; // ISO date string
-  data: {
-    instant: {
-      details: InstantDetails;
-    };
-    next_12_hours?: SummaryDetails;
-    next_1_hours?: PrecipitationDetails;
-    next_6_hours?: TemperatureDetails;
-  };
-}
+import {
+  getWeather,
+  InstantDetails,
+  TimeSeriesEntry,
+} from "@/components/utils/_weatherModel";
 
 function getRain(t: TimeSeriesEntry) {
   return (
@@ -97,50 +15,6 @@ function getRain(t: TimeSeriesEntry) {
     t.data.next_6_hours?.details.precipitation_amount ??
     0
   );
-}
-
-interface SummaryDetails {
-  summary: {
-    symbol_code: string;
-    symbol_confidence: string;
-  };
-  details: {
-    probability_of_precipitation: number;
-  };
-}
-
-interface PrecipitationDetails {
-  summary: {
-    symbol_code: string;
-  };
-  details: PrecipationDetails;
-}
-
-interface TemperatureDetails {
-  summary: {
-    symbol_code: string;
-  };
-  details: {
-    air_temperature_max: number;
-    air_temperature_min: number;
-    precipitation_amount: number;
-    precipitation_amount_max: number;
-    precipitation_amount_min: number;
-    probability_of_precipitation: number;
-  };
-}
-
-export function getWeather(lat: number, long: number) {
-  const date = isoDateOffset(0);
-  const { data: data } = useQuery(["weather", date, lat, long], () =>
-    fetchToJson<WeatherFeature>(
-      `https://yrweatherbackend.vercel.app/locationforecast/2.0/complete?lat=${lat}&lon=${long}`,
-      {
-        method: "GET",
-      },
-    ),
-  );
-  return data;
 }
 
 function stats(values: number[] | undefined) {

@@ -1,83 +1,14 @@
 import { ChartComponent, zone } from "@/components/chatComp";
 import {
-  fetchToJson,
   hourToString,
-  isoDateOffset,
   secondsSinceStartOfDay,
   secondsToHHMM,
 } from "@/components/utils/_utils";
 import React, { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { generateGradient } from "typescript-color-gradient";
+import { getSunData } from "@/components/utils/_weatherModel";
+import { sunSinus } from "@/components/weatherComps/weatherFunc";
 
-interface WeatherData {
-  copyright: string;
-  licenseURL: string;
-  type: string;
-  geometry: Geometry;
-  when: When;
-  properties: Properties;
-}
-
-interface Geometry {
-  type: string; // e.g., "Point"
-  coordinates: [number, number]; // [longitude, latitude]
-}
-
-interface When {
-  interval: string[]; // e.g., ["2024-10-11T23:03:00Z", "2024-10-12T23:17:00Z"]
-}
-
-interface Properties {
-  body: string; // e.g., "Sun"
-  sunrise: SolarEvent;
-  sunset: SolarEvent;
-  solarnoon: SolarNoon;
-  solarmidnight: SolarMidnight;
-}
-
-interface SolarEvent {
-  time: string; // e.g., "2024-10-12T06:49+01:00"
-  azimuth: number; // e.g., 103.8
-}
-
-interface SolarNoon {
-  time: string; // e.g., "2024-10-12T12:03+01:00"
-  disc_centre_elevation: number; // e.g., 22.42
-  visible: boolean; // e.g., true
-}
-
-interface SolarMidnight {
-  time: string; // e.g., "2024-10-12T00:03+01:00"
-  disc_centre_elevation: number; // e.g., -37.59
-  visible: boolean; // e.g., false
-}
-
-interface result {
-  current: number;
-  low: number;
-  daylength: number;
-  nightlength: number;
-  difference: number;
-}
-
-function sunSinus(t: number, sunrise: number, sunset: number): result {
-  let daylength = sunset - sunrise;
-  let daySeconds = 3600 * 24;
-  let nightLength = daySeconds - sunset + sunrise;
-  let difference = -(nightLength / daylength); // ylow. value at lowest
-  console.log(difference);
-  let xZero = (1 + difference) * 0.5; // middle of high and low
-  let amp = 1 - xZero; // Difference between high and zero
-  let radians = 1 - (2 * Math.PI * t) / daySeconds + amp; // i dont bother..
-  return {
-    current: -amp * Math.sin(radians) + xZero,
-    low: difference,
-    nightlength: nightLength,
-    daylength: nightLength,
-    difference: difference,
-  };
-}
 function until(current: number, rise: number, set: number, noon: number) {
   if (current > set) {
     return "Sunrise " + secondsToHHMM(24 * 3600 - current + rise);
@@ -93,18 +24,7 @@ function until(current: number, rise: number, set: number, noon: number) {
   }
   return "0";
 }
-export function getSunData(lat: number, long: number) {
-  const date = isoDateOffset(0);
-  const { data: data } = useQuery(["sun", date, lat, long], () =>
-    fetchToJson<WeatherData>(
-      `https://yrweatherbackend.vercel.app/sunrise/3.0/sun?lat=${lat}&lon=${long}&date=${date}&offset=+02:00`,
-      {
-        method: "GET",
-      },
-    ),
-  );
-  return data;
-}
+
 export function toPercent(v: number) {
   return Math.round(Math.abs(v) * 100) + "%";
 }

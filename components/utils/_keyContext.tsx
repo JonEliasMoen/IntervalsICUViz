@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import base64 from "react-native-base64";
-import { tokenResponse } from "@/components/utils/_commonModel";
+import { tokenResponse } from "@/components/utils/_fitnessModel";
 import { useMutation } from "@tanstack/react-query";
 
 type StoredKeyContextType = {
