@@ -13,6 +13,7 @@ import {
   InstantDetails,
   TimeSeriesEntry,
 } from "@/components/utils/_weatherModel";
+import ChartComponentRange from "@/components/components/_chatCompRange";
 
 function getRain(t: TimeSeriesEntry) {
   return (
@@ -89,7 +90,7 @@ export function AirTempLocation(props: { lat: number; long: number }) {
       return {
         startVal: v,
         endVal: v + 5,
-        text: `Average temp: ${v}-${v + 5}°C `,
+        text: `${v}-${v + 5}°C `,
         color: colors[i],
       };
     },
@@ -135,27 +136,34 @@ export function AirTempLocation(props: { lat: number; long: number }) {
         transform={(u) => u}
         indicatorTextTransform={() => ""}
       ></ChartComponent>
-      <ChartComponent
-        progress={stats(feltTemp)[1]}
+      <ChartComponentRange
+        title={"Average temp"}
         subtitle={"Now: " + feltTempNow.toFixed(2) + "°C"}
+        progressFrom={stats(feltTemp)[0]}
+        progressValue={stats(feltTemp)[1]}
+        progressTo={stats(feltTemp)[2]}
         zones={zones}
         transform={(v) => (v + 25) / 50}
         indicatorTextTransform={(n) => n.toFixed(2) + "°C"}
-      ></ChartComponent>
-      <ChartComponent
+      ></ChartComponentRange>
+      <ChartComponentRange
         title={"Avg wind"}
-        progress={wind[1]}
+        progressFrom={wind[0]}
+        progressValue={wind[1]}
+        progressTo={wind[2]}
         zones={zonesw}
         transform={(v) => v / 24}
         indicatorTextTransform={(n) => n.toFixed(2) + "m/s"}
-      ></ChartComponent>
-      <ChartComponent
+      ></ChartComponentRange>
+      <ChartComponentRange
         title={"Avg wind gale"}
-        progress={wind2[1]}
+        progressFrom={wind2[0]}
+        progressValue={wind2[1]}
+        progressTo={wind2[2]}
         zones={zonesw}
         transform={(v) => v / 24}
         indicatorTextTransform={(n) => n.toFixed(2) + "m/s"}
-      ></ChartComponent>
+      ></ChartComponentRange>
       <ChartComponent
         display={() => rain[2] != 0}
         progress={rain[1]}

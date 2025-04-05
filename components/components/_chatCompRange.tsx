@@ -50,17 +50,19 @@ export function ChartComponentRange(props: {
   transform: (n: number) => number;
   indicatorTextTransform?: (n: number) => string | number;
 }) {
-  let mean = props.progressValue ?? (props.progressFrom + props.progressTo) / 2;
-  let value = [props.progressFrom, mean, props.progressTo].map((t) =>
-    props.transform(t),
-  );
+  let value = [
+    props.progressFrom,
+    (props.progressFrom + props.progressTo) / 2,
+    props.progressTo,
+  ].map((t) => props.transform(t));
   let text =
     props.zones.find(
       (zone) =>
         value[0] >= props.transform(zone.startVal) &&
         value[0] <= props.transform(zone.endVal),
     )?.text ?? "";
-  let progress = value[1] - 0.5;
+  let progress =
+    props.transform((props.progressFrom + props.progressTo) / 2) - 0.5;
   let display = props.display != null ? props.display() : true;
   let titleText = props.title != undefined ? props.title + ": " : "";
   return (

@@ -1,6 +1,8 @@
 import {
   cutArrayIfOverLimit,
   fetchToTxt,
+  getTimeHHMM,
+  hourToString,
   secondsSinceStartOfDay,
   secondsToHHMM,
 } from "@/components/utils/_utils";
@@ -293,6 +295,8 @@ export function TideLocation(props: { lat: number; long: number; now: Date }) {
       zones={zones}
       transform={(u) => u}
       indicatorTextTransform={(u) =>
+        getTimeHHMM(props.now) +
+        " " +
         transform(
           normalizeToPercentageRangeFromArray(
             data.y,
