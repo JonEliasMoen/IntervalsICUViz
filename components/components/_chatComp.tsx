@@ -1,6 +1,5 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { random } from "nanoid";
 
 export interface zone {
   text: string;
@@ -9,12 +8,16 @@ export interface zone {
   color: string;
 }
 
-export function Zones(zones: zone[], valTrans: (n: number) => number) {
+export function Zones(
+  zones: zone[],
+  valTrans: (n: number) => number,
+  title: string,
+) {
   return (
     <>
       {zones.map((zone, index) => (
         <View
-          key={index + random(5).toString()}
+          key={index + title}
           style={[
             styles.section,
             {
@@ -29,7 +32,7 @@ export function Zones(zones: zone[], valTrans: (n: number) => number) {
 }
 
 export function ChartComponent(props: {
-  title?: string;
+  title: string;
   subtitle?: string | null;
   display?: () => boolean;
   progress: number;
@@ -54,7 +57,7 @@ export function ChartComponent(props: {
         <Text style={styles.subText}>{props.subtitle}</Text>
       )}
       <View style={styles.progressBarContainer}>
-        {Zones(props.zones, props.transform)}
+        {Zones(props.zones, props.transform, props.title)}
       </View>
       <View
         style={[

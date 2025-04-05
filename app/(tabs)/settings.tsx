@@ -20,7 +20,6 @@ export default function TabTwoScreen() {
   const [apiKey, setApiKey] = useState("");
   const [aid, setAid] = useState("");
   const [authenticated, setAuthenticated] = useState(false);
-  const [token, setToken] = useState<tokenResponse>("{}");
   const router = useRouter();
   const { mutate, isLoading, error } = useMutation(
     async (code: string): Promise<tokenResponse> => {
@@ -98,7 +97,6 @@ export default function TabTwoScreen() {
   const handleSaveRefreshToken = (token: tokenResponse) => {
     try {
       AsyncStorage.setItem("@token", JSON.stringify(token));
-      setStoredToken(token);
       setAuthenticated(true);
     } catch (e) {
       console.log("Error saving refresh key:", e);
@@ -113,8 +111,7 @@ export default function TabTwoScreen() {
       mutate(code);
     }
     if (storedToken != null) {
-      setToken(storedToken);
-      //setAuthenticated(true);
+      setAuthenticated(true);
     }
   }, []);
   const handleRedirect = () => {
