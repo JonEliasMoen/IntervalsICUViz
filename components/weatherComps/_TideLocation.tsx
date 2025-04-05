@@ -8,6 +8,8 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchToJson } from "@/components/utils/_utils";
 import { ChartComponent, zone } from "@/components/chatComp";
 import { generateGradient } from "typescript-color-gradient";
+import { useEffect, useState } from "react";
+import { sunSinus } from "@/components/weatherComps/weatherFunc";
 
 const harbors: string[] = [
   "andenes",
@@ -250,14 +252,14 @@ function normalizeToPercentageRangeFromArray(
   return scaled;
 }
 
-function getTideReal(data: WaterLevelForecast): forecast {
+function getTideReal(data: WaterLevelForecast, now: Date): forecast {
   let today = new Date();
   let dtoday = data.records.filter((t) => t.day == today.getDate());
   let x = dtoday.map((t) =>
     secondsSinceStartOfDay(new Date(t.year, t.month, t.day, t.hour, t.minute)),
   );
   let end = x[x.length - 1];
-  let i = secondsSinceStartOfDay(new Date()) / end;
+  let i = secondsSinceStartOfDay(now) / end;
   x = x.map((t) => t / end);
   let y = dtoday.map((t) => t.total);
   return { x: x, y: y, i: i, end: end };
@@ -268,10 +270,22 @@ export function TideLocation(props: { lat: number; long: number }) {
   if (raw == undefined) {
     return <></>;
   }
-  let data = getTideReal(parseForecast(raw));
+  const [now, setCurrentTime] = useState(new Date());
+  let data = getTideReal(parseForecast(raw), now);
+  useEffect(() => {
+    const updateCurrentTime = () => setCurrentTime(new Date());
+    const msUntilNextMinute = (60 - now.getSeconds()) * 1000;
+    const timeout = setTimeout(() => {
+      updateCurrentTime();
+      const interval = setInterval(updateCurrentTime, 60 * 1000);
+      return () => clearInterval(interval);
+    }, msUntilNextMinute);
+
+    return () => clearTimeout(timeout);
+  }, [now]);
+
   let values = Array.from(new Set(data?.y)).sort((a, b) => a - b);
   const gradientArray = generateGradient(["#004f64", "#7fffd4"], values.length);
-  const test = data.y.map((t) => values.findIndex((v) => v == t));
   let transform = (v: number) => Math.round(v).toString() + "%";
 
   const zones: zone[] = data.x.map((v, i, a) => {

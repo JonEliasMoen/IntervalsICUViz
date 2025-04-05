@@ -7,6 +7,15 @@ import { useStoredKey } from "@/components/utils/_keyContext";
 import { useRouter, useFocusEffect } from "expo-router";
 import { tokenResponse } from "@/components/utils/_fitnessModel";
 
+export interface userSettings {
+  stravaToken: tokenResponse;
+  intervalsDat: intervalsData;
+}
+interface intervalsData {
+  aid: string;
+  apiKey: string;
+}
+
 export default function TabTwoScreen() {
   const [apiKey, setApiKey] = useState("");
   const [aid, setAid] = useState("");

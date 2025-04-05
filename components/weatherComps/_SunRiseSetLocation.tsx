@@ -31,10 +31,15 @@ export function toPercent(v: number) {
 
 export function SunRiseSetLocation(props: { lat: number; long: number }) {
   let { lat, long } = props;
-  let sunrise = getSunData(lat, long)?.properties.sunrise.time;
-  let sunset = getSunData(lat, long)?.properties.sunset.time;
-  let sunriseSec = secondsSinceStartOfDay(new Date(sunrise ?? "09:00"));
-  let sunsetSec = secondsSinceStartOfDay(new Date(sunset ?? "20:00"));
+  let sunData = getSunData(lat, long);
+  if (!sunData) {
+    return <></>;
+  }
+
+  let sunrise = sunData.properties.sunrise.time;
+  let sunset = sunData.properties.sunset.time;
+  let sunriseSec = secondsSinceStartOfDay(new Date(sunrise));
+  let sunsetSec = secondsSinceStartOfDay(new Date(sunset));
   let noon = (sunriseSec + sunsetSec) * 0.5;
 
   const [now, setCurrentTime] = useState(new Date());

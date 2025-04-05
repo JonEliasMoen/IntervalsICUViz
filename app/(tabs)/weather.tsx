@@ -7,6 +7,11 @@ import DropDownPicker from "react-native-dropdown-picker";
 import React, { useEffect, useState } from "react";
 import { SunRiseSetLocation } from "@/components/weatherComps/_SunRiseSetLocation";
 import { location } from "@/components/utils/_weatherModel";
+import { BrightnessLocation } from "@/components/weatherComps/_BrightnessLocation";
+import {
+  mode,
+  PressureLocation,
+} from "@/components/weatherComps/_PressureLocation";
 
 export default function WeatherScreen() {
   const [value, setValue] = useState<number>(0); // Initialize state for selected value
@@ -112,6 +117,32 @@ export default function WeatherScreen() {
         />
       </View>
       <SunRiseSetLocation lat={loc.lat} long={loc.long}></SunRiseSetLocation>
+      <BrightnessLocation lat={loc.lat} long={loc.long}></BrightnessLocation>
+      <PressureLocation
+        lat={loc.lat}
+        long={loc.long}
+        mode={mode.Worst}
+      ></PressureLocation>
+      <PressureLocation
+        lat={loc.lat}
+        long={loc.long}
+        mode={mode.Current}
+      ></PressureLocation>
+      <PressureLocation
+        lat={loc.lat}
+        long={loc.long}
+        mode={mode.Avg}
+      ></PressureLocation>
+      <PressureLocation
+        lat={loc.lat}
+        long={loc.long}
+        mode={mode.Min}
+      ></PressureLocation>
+      <PressureLocation
+        lat={loc.lat}
+        long={loc.long}
+        mode={mode.Max}
+      ></PressureLocation>
       <AirTempLocation lat={loc.lat} long={loc.long}></AirTempLocation>
       <TideLocation lat={loc.lat} long={loc.long}></TideLocation>
 

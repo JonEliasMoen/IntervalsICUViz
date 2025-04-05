@@ -2,7 +2,12 @@ import { normalizeBasedOnRange, secondsFrom } from "@/components/utils/_utils";
 import { ChartComponent, zone } from "@/components/chatComp";
 import { mean } from "simple-statistics";
 import { generateGradient } from "typescript-color-gradient";
-import { feelTemp } from "@/components/weatherComps/weatherFunc";
+import {
+  feelTemp,
+  feelTempArray,
+  feelTempNow,
+  groupByDay,
+} from "@/components/weatherComps/weatherFunc";
 import {
   getWeather,
   InstantDetails,
@@ -38,32 +43,9 @@ function transform(dtoday: TimeSeriesEntry[]): number[] {
   x = x.map((t) => t / end);
   return x;
 }
-function groupByDay(data: TimeSeriesEntry[]) {
-  let myMap = new Array<Array<TimeSeriesEntry>>();
-  let index = new Array<number>();
-  data.forEach((d) => {
-    const date = new Date(d.time);
-    const key = date.getDate();
-    const i = index.findIndex((k) => k == key);
-    if (i != -1) {
-      const data = myMap[i];
-      if (data != undefined) {
-        myMap[i] = [...data, d];
-      }
-    } else {
-      index = [...index, key];
-      myMap.push([d]);
-    }
-  });
-  console.log(myMap);
-  return myMap;
-}
-function getFeltTempArray(data: TimeSeriesEntry[]) {
-  const feltTemp = feelTemp(
-    data.map((t) => t.data.instant.details.air_temperature),
-    data.map((t) => t.data.instant.details.wind_speed),
-    data.map((t) => t.data.instant.details.relative_humidity),
-  );
+
+function getFeltTempArrayMapped(data: TimeSeriesEntry[]) {
+  const feltTemp: number[] = feelTempArray(data);
   const forecast = transform(data);
   const sfeltTemp = normalizeBasedOnRange(feltTemp, -25, 25).map((t) =>
     Math.round(t * 1000),
@@ -78,12 +60,13 @@ export function AirTempLocation(props: { lat: number; long: number }) {
   }
   const dayMap = groupByDay(data.properties.timeseries);
   const today = dayMap[0];
-  const fData = getFeltTempArray(today);
+  const fData = getFeltTempArrayMapped(today);
   const feltTemp = fData[0];
+  const feltTempNow = feelTempNow(today[0].data.instant.details);
 
   const gradientArray = generateGradient(["#02c7fc", "#ff0404"], 1000);
-  const zonesFF = dayMap.map((k, i, a) => {
-    const fData = getFeltTempArray(k);
+  const zonesFF = dayMap.map((k, i) => {
+    const fData = getFeltTempArrayMapped(k);
     const sfeltTemp = Math.round(mean(fData[1]));
     console.log(sfeltTemp);
     return {
@@ -127,7 +110,7 @@ export function AirTempLocation(props: { lat: number; long: number }) {
       return {
         startVal: v,
         endVal: i != 9 ? a[i + 1] : v + 4,
-        text: `${v}-${i != 9 ? a[i + 1] : v + 4} m/s ` + windText[i],
+        text: windText[i], // `${v}-${i != 9 ? a[i + 1] : v + 4} m/s `
         color: colorsw[i],
       };
     },
@@ -154,20 +137,24 @@ export function AirTempLocation(props: { lat: number; long: number }) {
       ></ChartComponent>
       <ChartComponent
         progress={stats(feltTemp)[1]}
+        subtitle={"Now: " + feltTempNow.toFixed(2) + "°C"}
         zones={zones}
         transform={(v) => (v + 25) / 50}
+        indicatorTextTransform={(n) => n.toFixed(2) + "°C"}
       ></ChartComponent>
       <ChartComponent
         title={"Avg wind"}
         progress={wind[1]}
         zones={zonesw}
         transform={(v) => v / 24}
+        indicatorTextTransform={(n) => n.toFixed(2) + "m/s"}
       ></ChartComponent>
       <ChartComponent
         title={"Avg wind gale"}
         progress={wind2[1]}
         zones={zonesw}
         transform={(v) => v / 24}
+        indicatorTextTransform={(n) => n.toFixed(2) + "m/s"}
       ></ChartComponent>
       <ChartComponent
         display={() => rain[2] != 0}

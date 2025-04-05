@@ -26,7 +26,14 @@ export function normalizeBasedOnRange(
   min: number,
   max: number,
 ): number[] {
-  return array.map((t) => (t - min) / (max - min));
+  return array.map((t) => normalizeBasedOnRangeSingle(t, min, max));
+}
+export function normalizeBasedOnRangeSingle(
+  t: number,
+  min: number,
+  max: number,
+): number {
+  return (t - min) / (max - min);
 }
 export function daysSince(d: Date) {
   var date2 = new Date();
