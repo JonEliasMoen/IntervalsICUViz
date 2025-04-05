@@ -120,7 +120,7 @@ export function AirTempLocation(props: { lat: number; long: number }) {
     return {
       startVal: v,
       endVal: i != 9 ? a[i + 1] : v + 4,
-      text: `Rain: ${v}-${i != 9 ? a[i + 1] : v + 4} mm `,
+      text: `${v}-${i != 9 ? a[i + 1] : v + 4} mm `,
       color: colorsw[i],
     };
   });
@@ -165,6 +165,7 @@ export function AirTempLocation(props: { lat: number; long: number }) {
         indicatorTextTransform={(n) => n.toFixed(2) + "m/s"}
       ></ChartComponentRange>
       <ChartComponent
+        title={"Rain"}
         display={() => rain[2] != 0}
         progress={rain[1]}
         zones={zonesr}
