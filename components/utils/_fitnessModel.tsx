@@ -175,7 +175,10 @@ export function getStream(
         ),
     })),
   });
-
+  let any = queries.map((q) => q.data).some((d) => d == undefined);
+  if (any) {
+    return undefined;
+  }
   return queries.map((q) => q.data).filter((d) => d !== undefined) as stream[];
 }
 
