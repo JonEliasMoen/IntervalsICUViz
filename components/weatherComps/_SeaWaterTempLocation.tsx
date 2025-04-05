@@ -1,26 +1,26 @@
-import { fetchToJson, isoDateOffset } from "@/components/utils/_utils";
-import { useQuery } from "@tanstack/react-query";
-import { ChartComponent } from "@/components/chatComp";
+import { isoDateOffset } from "@/components/utils/_utils";
+import { ChartComponent } from "@/components/components/_chatComp";
 import { generateGradient } from "typescript-color-gradient";
 import { getWaterTemp } from "@/components/utils/_weatherModel";
+import { mean } from "simple-statistics";
 
 export function SeaWaterTempLocation(props: { lat: number; long: number }) {
   const data = getWaterTemp(props.lat, props.long);
-
-  const today = data?.properties.timeseries.filter((n) =>
+  if (data == null) {
+    return <></>;
+  }
+  const today = data.properties.timeseries.filter((n) =>
     n.time.match(isoDateOffset(0)),
   );
   console.log(today);
-  const temps = today?.map(
-    (v) => v.data.instant.details.sea_water_temperature,
-  ) ?? [8, 3];
+  const temps = today.map((v) => v.data.instant.details.sea_water_temperature);
   const waveHeight = today?.map(
     (v) => v.data.instant.details.sea_surface_wave_height,
-  ) ?? [8, 3];
+  );
 
   const colors = generateGradient(["#00fff3", "#b90002"], 6);
 
-  const temp = Math.min(...temps);
+  const temp = Math.round(mean(temps));
 
   const wave = Math.min(...waveHeight);
   const wavem = Math.max(...waveHeight);

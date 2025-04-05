@@ -1,4 +1,4 @@
-import ChartComponent from "@/components/chatComp";
+import ChartComponent from "@/components/components/_chatComp";
 import { generateGradient } from "typescript-color-gradient";
 import { mean } from "simple-statistics";
 import { Text } from "@/components/Themed";

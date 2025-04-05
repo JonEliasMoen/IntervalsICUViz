@@ -1,33 +1,14 @@
 import {
-  cutArrayIfOverLimit,
-  fetchToTxt,
-  normalizeBasedOnRange,
   normalizeBasedOnRangeSingle,
   secondsFrom,
-  secondsSinceStartOfDay,
-  secondsToHHMM,
 } from "@/components/utils/_utils";
-import { useQuery } from "@tanstack/react-query";
-import { fetchToJson } from "@/components/utils/_utils";
-import { ChartComponent, zone } from "@/components/chatComp";
-import { generateGradient } from "typescript-color-gradient";
-import { useEffect, useState } from "react";
-import { sunSinus } from "@/components/weatherComps/weatherFunc";
+
+import { ChartComponent, zone } from "@/components/components/_chatComp";
+
 import { getWeather } from "@/components/utils/_weatherModel";
 import { mean } from "simple-statistics";
-export enum mode {
-  Worst = "biggest",
-  Min = "min",
-  Max = "max",
-  Avg = "average",
-  Current = "current",
-}
-
-export function PressureLocation(props: {
-  lat: number;
-  long: number;
-  mode: mode;
-}) {
+import { ChartComponentRange } from "@/components/components/_chatCompRange";
+export function PressureLocation(props: { lat: number; long: number }) {
   const data = getWeather(props.lat, props.long);
   if (data == null) {
     return <></>;
@@ -57,33 +38,22 @@ export function PressureLocation(props: {
 
   console.log(deltaP);
   console.log(date);
-  let biggestV = 0;
-  if (props.mode == mode.Worst) {
-    biggestV =
-      Math.abs(Math.min(...deltaP)) > Math.abs(Math.max(...deltaP))
-        ? Math.min(...deltaP)
-        : Math.max(...deltaP);
-  } else if (props.mode == mode.Min) {
-    biggestV = Math.min(...deltaP);
-  } else if (props.mode == mode.Max) {
-    biggestV = Math.max(...deltaP);
-  } else if (props.mode == mode.Current) {
-    biggestV = deltaP[0];
-  } else if (props.mode == mode.Avg) {
-    biggestV = mean(deltaP);
-  }
+  let biggestV =
+    Math.abs(Math.min(...deltaP)) > Math.abs(Math.max(...deltaP))
+      ? Math.min(...deltaP)
+      : Math.max(...deltaP);
 
-  console.log(Math.min(...deltaP), Math.max(...deltaP));
-  let biggestTimestamp =
-    props.mode == mode.Avg
-      ? null
-      : date[deltaP.findIndex((t) => t == biggestV) + start].toString();
+  let biggestTimestamp = date[deltaP.findIndex((t) => t == biggestV) + start]
+    .toString()
+    .slice(0, 25);
 
   return (
-    <ChartComponent
-      title={"Air pressure drop " + props.mode.toString()}
+    <ChartComponentRange
+      title={"Air pressure drop "}
       subtitle={biggestTimestamp}
-      progress={biggestV}
+      progressFrom={Math.min(...deltaP)}
+      progressTo={Math.max(...deltaP)}
+      progressValue={deltaP[0]}
       zones={[
         {
           startVal: -20.0,
@@ -142,6 +112,6 @@ export function PressureLocation(props: {
       ]}
       transform={(u) => normalizeBasedOnRangeSingle(u, -20, 20)}
       indicatorTextTransform={(n) => n.toFixed(2) + " ΔHpa"}
-    ></ChartComponent>
+    ></ChartComponentRange>
   );
 }

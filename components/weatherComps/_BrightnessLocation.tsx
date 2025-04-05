@@ -1,16 +1,8 @@
 import { generateGradient } from "typescript-color-gradient";
-import { ChartComponent, zone } from "@/components/chatComp";
-import { getTide } from "@/components/weatherComps/_TideLocation";
+import { ChartComponent, zone } from "@/components/components/_chatComp";
 import { getWeather } from "@/components/utils/_weatherModel";
-import { groupByDay, sunSinus } from "@/components/weatherComps/weatherFunc";
+import { groupByDay } from "@/components/weatherComps/weatherFunc";
 import { mean } from "simple-statistics";
-import {
-  hourToString,
-  secondsSinceStartOfDay,
-  secondsToHHMM,
-} from "@/components/utils/_utils";
-import { useEffect, useState } from "react";
-import { toPercent } from "@/components/weatherComps/_SunRiseSetLocation";
 
 export function BrightnessLocation(props: { lat: number; long: number }) {
   const data = getWeather(props.lat, props.long);

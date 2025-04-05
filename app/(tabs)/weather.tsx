@@ -8,10 +8,7 @@ import React, { useEffect, useState } from "react";
 import { SunRiseSetLocation } from "@/components/weatherComps/_SunRiseSetLocation";
 import { location } from "@/components/utils/_weatherModel";
 import { BrightnessLocation } from "@/components/weatherComps/_BrightnessLocation";
-import {
-  mode,
-  PressureLocation,
-} from "@/components/weatherComps/_PressureLocation";
+import { PressureLocation } from "@/components/weatherComps/_PressureLocation";
 
 export default function WeatherScreen() {
   const [value, setValue] = useState<number>(0); // Initialize state for selected value
@@ -98,7 +95,36 @@ export default function WeatherScreen() {
     { label: "Trondheim", value: 0 },
     { label: "Oslo", value: 1 },
   ];
+  const [now, setCurrentTime] = useState(new Date());
+  useEffect(() => {
+    const updateCurrentTime = () => setCurrentTime(new Date());
+    const msUntilNextMinute = (60 - now.getSeconds()) * 1000;
+    const timeout = setTimeout(() => {
+      updateCurrentTime();
+      const interval = setInterval(updateCurrentTime, 60 * 1000);
+      return () => clearInterval(interval);
+    }, msUntilNextMinute);
 
+    return () => clearTimeout(timeout);
+  }, [now]);
+
+  //
+  /*
+        <BrightnessLocation lat={loc.lat} long={loc.long}></BrightnessLocation>
+{loc.snowPlace?.map((t) => {
+        return <SnowDepthLocation loc={t}></SnowDepthLocation>;
+      })}
+
+      <PressureLocation lat={loc.lat} long={loc.long}></PressureLocation>
+
+
+      <SeaWaterTempLocation
+        lat={loc.lat}
+        long={loc.long}
+      ></SeaWaterTempLocation>
+      <SunRiseSetLocation lat={loc.lat} long={loc.long}></SunRiseSetLocation>
+      <TideLocation lat={loc.lat} long={loc.long}></TideLocation>
+   */
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <View style={[styles.dcontainer]}>
@@ -116,35 +142,15 @@ export default function WeatherScreen() {
           }}
         />
       </View>
-      <SunRiseSetLocation lat={loc.lat} long={loc.long}></SunRiseSetLocation>
+      <SunRiseSetLocation
+        lat={loc.lat}
+        long={loc.long}
+        now={now}
+      ></SunRiseSetLocation>
       <BrightnessLocation lat={loc.lat} long={loc.long}></BrightnessLocation>
-      <PressureLocation
-        lat={loc.lat}
-        long={loc.long}
-        mode={mode.Worst}
-      ></PressureLocation>
-      <PressureLocation
-        lat={loc.lat}
-        long={loc.long}
-        mode={mode.Current}
-      ></PressureLocation>
-      <PressureLocation
-        lat={loc.lat}
-        long={loc.long}
-        mode={mode.Avg}
-      ></PressureLocation>
-      <PressureLocation
-        lat={loc.lat}
-        long={loc.long}
-        mode={mode.Min}
-      ></PressureLocation>
-      <PressureLocation
-        lat={loc.lat}
-        long={loc.long}
-        mode={mode.Max}
-      ></PressureLocation>
+      <PressureLocation lat={loc.lat} long={loc.long}></PressureLocation>
       <AirTempLocation lat={loc.lat} long={loc.long}></AirTempLocation>
-      <TideLocation lat={loc.lat} long={loc.long}></TideLocation>
+      <TideLocation lat={loc.lat} long={loc.long} now={now}></TideLocation>
 
       {loc.snowPlace?.map((t) => {
         return <SnowDepthLocation loc={t}></SnowDepthLocation>;

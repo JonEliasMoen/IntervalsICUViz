@@ -28,44 +28,6 @@ export function Zones(zones: zone[], valTrans: (n: number) => number) {
   );
 }
 
-export function indicator(
-  value: number,
-  value2: number,
-  index: number,
-  func?: (n: number) => string | number,
-) {
-  return (
-    <>
-      <View
-        id={index.toString()}
-        key={index.toString()}
-        style={[
-          styles.progressIndicator,
-          {
-            position: "relative",
-            left: value * 2 * 100,
-          },
-        ]}
-      >
-        <Text
-          style={[
-            styles.subtext,
-            {
-              width: 100,
-            },
-          ]}
-        >
-          {func == null
-            ? value2 != null
-              ? value2.toFixed(2).toString()
-              : value2
-            : func(value2)}
-        </Text>
-      </View>
-    </>
-  );
-}
-
 export function ChartComponent(props: {
   title?: string;
   subtitle?: string | null;

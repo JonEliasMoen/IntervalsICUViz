@@ -1,4 +1,4 @@
-import { ChartComponent, zone } from "@/components/chatComp";
+import { ChartComponent, zone } from "@/components/components/_chatComp";
 import {
   hourToString,
   secondsSinceStartOfDay,
@@ -29,7 +29,11 @@ export function toPercent(v: number) {
   return Math.round(Math.abs(v) * 100) + "%";
 }
 
-export function SunRiseSetLocation(props: { lat: number; long: number }) {
+export function SunRiseSetLocation(props: {
+  lat: number;
+  long: number;
+  now: Date;
+}) {
   let { lat, long } = props;
   let sunData = getSunData(lat, long);
   if (!sunData) {
@@ -42,20 +46,8 @@ export function SunRiseSetLocation(props: { lat: number; long: number }) {
   let sunsetSec = secondsSinceStartOfDay(new Date(sunset));
   let noon = (sunriseSec + sunsetSec) * 0.5;
 
-  const [now, setCurrentTime] = useState(new Date());
-  let current = secondsSinceStartOfDay(now);
+  let current = secondsSinceStartOfDay(props.now);
   let data = sunSinus(current, sunriseSec, sunsetSec);
-  useEffect(() => {
-    const updateCurrentTime = () => setCurrentTime(new Date());
-    const msUntilNextMinute = (60 - now.getSeconds()) * 1000;
-    const timeout = setTimeout(() => {
-      updateCurrentTime();
-      const interval = setInterval(updateCurrentTime, 60 * 1000);
-      return () => clearInterval(interval);
-    }, msUntilNextMinute);
-
-    return () => clearTimeout(timeout);
-  }, [now]);
 
   let zones: zone[] = [];
   let step: number = 10 * 60;

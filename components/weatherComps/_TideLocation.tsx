@@ -6,7 +6,7 @@ import {
 } from "@/components/utils/_utils";
 import { useQuery } from "@tanstack/react-query";
 import { fetchToJson } from "@/components/utils/_utils";
-import { ChartComponent, zone } from "@/components/chatComp";
+import { ChartComponent, zone } from "@/components/components/_chatComp";
 import { generateGradient } from "typescript-color-gradient";
 import { useEffect, useState } from "react";
 import { sunSinus } from "@/components/weatherComps/weatherFunc";
@@ -265,24 +265,13 @@ function getTideReal(data: WaterLevelForecast, now: Date): forecast {
   return { x: x, y: y, i: i, end: end };
 }
 
-export function TideLocation(props: { lat: number; long: number }) {
+export function TideLocation(props: { lat: number; long: number; now: Date }) {
   let raw = getTide(props.lat, props.long);
   if (raw == undefined) {
     return <></>;
   }
-  const [now, setCurrentTime] = useState(new Date());
-  let data = getTideReal(parseForecast(raw), now);
-  useEffect(() => {
-    const updateCurrentTime = () => setCurrentTime(new Date());
-    const msUntilNextMinute = (60 - now.getSeconds()) * 1000;
-    const timeout = setTimeout(() => {
-      updateCurrentTime();
-      const interval = setInterval(updateCurrentTime, 60 * 1000);
-      return () => clearInterval(interval);
-    }, msUntilNextMinute);
 
-    return () => clearTimeout(timeout);
-  }, [now]);
+  let data = getTideReal(parseForecast(raw), props.now);
 
   let values = Array.from(new Set(data?.y)).sort((a, b) => a - b);
   const gradientArray = generateGradient(["#004f64", "#7fffd4"], values.length);

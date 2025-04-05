@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Text } from "@/components/Themed";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { daysSince, hourToString } from "@/components/utils/_utils";
-import ChartComponent from "@/components/chatComp";
+import ChartComponent from "@/components/components/_chatComp";
 import {
   activity,
   getActivities,

@@ -1,6 +1,6 @@
 import { ScrollView, StyleSheet } from "react-native";
 import { Text } from "@/components/Themed";
-import ChartComponent from "@/components/chatComp";
+import ChartComponent from "@/components/components/_chatComp";
 import React from "react";
 import { mean, standardDeviation } from "simple-statistics";
 import quantile from "@stdlib/stats-base-dists-normal-quantile";

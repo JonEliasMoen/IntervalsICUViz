@@ -1,5 +1,5 @@
 import { normalizeBasedOnRange, secondsFrom } from "@/components/utils/_utils";
-import { ChartComponent, zone } from "@/components/chatComp";
+import { ChartComponent, zone } from "@/components/components/_chatComp";
 import { mean } from "simple-statistics";
 import { generateGradient } from "typescript-color-gradient";
 import {
