@@ -12,7 +12,7 @@ export function SeaWaterTempLocation(props: { lat: number; long: number }) {
   const today = data.properties.timeseries.filter((n) =>
     n.time.match(isoDateOffset(0)),
   );
-  console.log(today);
+
   const temps = today.map((v) => v.data.instant.details.sea_water_temperature);
   const waveHeight = today?.map(
     (v) => v.data.instant.details.sea_surface_wave_height,
@@ -25,8 +25,6 @@ export function SeaWaterTempLocation(props: { lat: number; long: number }) {
   const wave = Math.min(...waveHeight);
   const wavem = Math.max(...waveHeight);
 
-  console.log(wave);
-  console.log(Math.min(...waveHeight));
   const waveStr = ` ${wave}-${wavem}m`;
   return (
     <ChartComponent

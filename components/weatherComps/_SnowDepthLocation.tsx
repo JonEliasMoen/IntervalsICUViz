@@ -43,7 +43,6 @@ export function SnowDepthLocation(props: { loc: snowPlace }) {
   const name = props.loc.name;
   let x = props.loc.x;
   let y = props.loc.y;
-  console.log(x, y, name);
   const colors = generateGradient(["#00FFF3", "#0200B9"], 7);
   const prepData = getSkiSporet(
     props.loc.name,
@@ -56,7 +55,6 @@ export function SnowDepthLocation(props: { loc: snowPlace }) {
   }
   const aPret = averagePrep(prepData, props.loc.lat, props.loc.long);
 
-  console.log(props.loc.name, depth);
   return (
     <>
       {depth > 0 && aPret[1] != 0 && <Text></Text>}

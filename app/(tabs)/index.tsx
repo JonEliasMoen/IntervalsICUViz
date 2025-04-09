@@ -4,7 +4,7 @@ import ChartComponent from "@/components/components/_chatComp";
 import React from "react";
 import { mean, standardDeviation } from "simple-statistics";
 import quantile from "@stdlib/stats-base-dists-normal-quantile";
-import { hourToString } from "@/components/utils/_utils";
+import { hourToString, sLong, sShort } from "@/components/utils/_utils";
 import { useStoredKey } from "@/components/utils/_keyContext";
 import { getWellnessRange, wellness } from "@/components/utils/_fitnessModel";
 
@@ -16,7 +16,8 @@ interface wattResult {
 }
 
 export function wattPer(t: "Run" | "Ride", data: wellness[]): wattResult {
-  let weight = mean(data.filter((t) => t.weight != null).map((t) => t.weight));
+  let weightData = data.filter((t) => t.weight != null).map((t) => t.weight);
+  let weight = mean(weightData.length > 0 ? weightData : [70]);
   let eftp =
     data[data.length - 1].sportInfo.find((s) => s.type == t)?.eftp ?? 0;
   let text = "Kg=" + Math.round(weight) + ", W=" + Math.round(eftp);
@@ -34,15 +35,34 @@ interface strainMonotony {
   strainL: number;
 }
 export function strainMonotony(data: wellness[]): strainMonotony {
+  let length = 7;
   let load = data.map((t) => t.ctlLoad).filter((t) => t != undefined);
+  console.log("load", load);
+  console.log(load.slice(data.length - sShort));
   let monotony =
-    mean(load.slice(data.length - 7)) /
-    standardDeviation(load.slice(data.length - 7));
+    mean(load.slice(data.length - sShort)) /
+    standardDeviation(load.slice(data.length - sShort));
   let monotonyL =
-    mean(load.slice(data.length - 7 * 2)) /
-    standardDeviation(load.slice(data.length - 7 * 2));
-  let strain = monotony * mean(load.slice(data.length - 7));
-  let strainL = monotonyL * mean(load.slice(data.length - 7 * 2));
+    mean(load.slice(data.length - sLong)) /
+    standardDeviation(load.slice(data.length - sLong));
+  let strain = monotony * mean(load.slice(data.length - sShort));
+  let strainL = monotonyL * mean(load.slice(data.length - sLong));
+  return {
+    monotony: monotony,
+    acwr: strain / strainL,
+    strain: strain,
+    strainL: strainL,
+  };
+}
+export function strainMonotonyList(load: number[]): strainMonotony {
+  let monotony =
+    mean(load.slice(load.length - sShort)) /
+    standardDeviation(load.slice(load.length - sShort));
+  let monotonyL =
+    mean(load.slice(load.length - sLong)) /
+    standardDeviation(load.slice(load.length - sLong));
+  let strain = monotony * mean(load.slice(load.length - sShort));
+  let strainL = monotonyL * mean(load.slice(load.length - sLong));
   return {
     monotony: monotony,
     acwr: strain / strainL,
@@ -53,16 +73,17 @@ export function strainMonotony(data: wellness[]): strainMonotony {
 
 export default function TabOneScreen() {
   const { storedKey, storedAid } = useStoredKey();
-  const dataLong = getWellnessRange(0, 14, storedKey, storedAid) ?? [];
+  const dataLong = getWellnessRange(0, 42, storedKey, storedAid) ?? [];
   const dataWeek = dataLong.slice(dataLong.length - 9);
-  console.log(dataLong);
+
   if (dataLong.length == 0 && dataLong != undefined) {
     return <Text>Loading</Text>;
   }
   if (dataWeek.length == 0 && dataWeek != undefined) {
     return <Text>Loading</Text>;
   }
-  let sAcwr = strainMonotony(dataLong);
+  let sAcwr = strainMonotony(dataLong.slice(dataLong.length - 28));
+  let acwr = dataLong.map((t) => t.atl / t.ctl);
 
   const data = dataWeek[dataWeek.length - 1];
 
@@ -71,7 +92,7 @@ export default function TabOneScreen() {
       .filter((s) => s.sleepSecs != 0 && s.sleepSecs != null)
       .map((s) => s.sleepSecs)
       .at(-1) ?? 0;
-  console.log(sleep);
+
   let hrv = dataWeek
     .filter((s) => s.hrv != 0 && s.hrv != null)
     .map((t) => t.hrv);
@@ -89,7 +110,6 @@ export default function TabOneScreen() {
   let hq = (q: number) => {
     return quantile(q, hmean, hstd);
   };
-  console.log("Sleep", hrv[hrv.length - 1], sleep);
 
   let rideEftp = wattPer("Ride", dataWeek);
   let runEftp = wattPer("Run", dataWeek);
@@ -231,7 +251,38 @@ export default function TabOneScreen() {
       ></ChartComponent>
       <ChartComponent
         title={"ACWR"}
-        progress={data.atl / data.ctl}
+        progress={acwr[acwr.length - 1]}
+        zones={[
+          {
+            text: "Low",
+            startVal: 0,
+            endVal: 0.8,
+            color: "#1F77B44D",
+          },
+          {
+            text: "Optimal",
+            startVal: 0.8,
+            endVal: 1.1,
+            color: "#009E0066",
+          },
+          {
+            text: "High",
+            startVal: 1.1,
+            endVal: 1.2,
+            color: "#FFCB0E80",
+          },
+          {
+            text: "Very high",
+            startVal: 1.2,
+            endVal: 2,
+            color: "#D627284D",
+          },
+        ]}
+        transform={(n) => n / 2.0}
+      ></ChartComponent>
+      <ChartComponent
+        title={"ACWR 42d"}
+        progress={mean(acwr)}
         zones={[
           {
             text: "Low",
@@ -259,7 +310,7 @@ export default function TabOneScreen() {
           },
         ]}
         transform={(n) => n / 2.0}
-      ></ChartComponent>
+      />
       <ChartComponent
         title={"Sleep"}
         display={() => sleep != 0 && sleep != null}

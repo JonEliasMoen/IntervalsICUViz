@@ -101,7 +101,6 @@ type WaterLevelForecast = {
 
 export function getTide(lat: number, long: number) {
   const harbor = findHarbor(lat, long);
-  console.log(harbor);
   const { data: data } = useQuery(["tide", harbor], () =>
     fetchToTxt(
       `https://yrweatherbackend.vercel.app/tidalwater/1.1/?harbor=${harbor}`,
@@ -193,8 +192,6 @@ function parseForecast(data: string): WaterLevelForecast {
 }
 
 function findHarbor(lat: number, long: number) {
-  console.log(lat, long);
-
   let dist = locations.map((u) =>
     Math.sqrt(Math.pow(u[0] - lat, 2) + Math.pow(u[1] - long, 2)),
   );

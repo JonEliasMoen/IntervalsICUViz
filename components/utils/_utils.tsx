@@ -2,6 +2,8 @@ export function today() {
   let d = new Date();
   return d.getDate();
 }
+export const sShort = 7;
+export const sLong = 28;
 
 export function isoDateOffset(n: number) {
   let date = new Date();

@@ -14,7 +14,7 @@ import {
 import { mean, standardDeviation } from "simple-statistics";
 import { useStoredKey } from "@/components/utils/_keyContext";
 import DropDownPicker from "react-native-dropdown-picker";
-import { strainMonotony } from "@/app/(tabs)/index";
+import { strainMonotony, strainMonotonyList } from "@/app/(tabs)/index";
 
 export function convertToRanges(arr: number[]): Boundaries[] {
   if (arr.length === 0) return [];
@@ -58,7 +58,7 @@ type finalRes = {
 type desc = {
   load: number;
   monotony: number;
-  strain: number;
+  acwr: number;
 };
 
 function calculateMonotonyLoadRange(
@@ -73,18 +73,19 @@ function calculateMonotonyLoadRange(
 
   for (let i = Math.floor(loadBound.min); i <= Math.ceil(loadBound.max); i++) {
     cLoad[cLoad.length - 1] = today + i;
-    let monotony = mean(cLoad) / standardDeviation(cLoad);
-    let strain = monotony * mean(cLoad);
+    let mdata = strainMonotonyList(cLoad);
     data.push({
       load: Math.round(i),
-      monotony: monotony,
-      strain: strain,
+      monotony: mdata.monotony,
+      acwr: mdata.acwr,
     });
   }
   const loads = data
     .filter((t) => t.monotony < monoBound.max && t.monotony > monoBound.min)
-    .filter((t) => t.strain < strBound.max && t.strain > strBound.min)
+    .filter((t) => t.acwr < strBound.max && t.acwr > strBound.min)
     .map((t) => t.load);
+  console.log(data);
+
   return convertToRanges(loads);
 }
 
@@ -171,36 +172,23 @@ export function fitNPred(
   vBound: Boundaries,
   lBound: Boundaries,
 ): finalRes[] {
-  let str = strainMonotony(dataWeek);
-  let c = [0.8, 1.2];
-  let sBound: Boundaries = {
-    max: (c[1] * str.strainL - 2 * str.strain) / (2 - c[1]),
-    min: (c[0] * str.strainL - 2 * str.strain) / (2 - c[0]),
-  };
-  console.log("Strain bound", sBound);
-
   let load = dataWeek.map((t) => t.ctlLoad).filter((t) => t != undefined);
-  console.log(dataWeek);
-  load = load.slice(load.length - 7);
   let loadRanges = calculateMonotonyLoadRange(
     load,
     lBound,
     { min: 0.8, max: 2 },
-    sBound,
+    { min: 0.8, max: 1.3 },
   );
   let lrange: Boundaries[];
   if (loadRanges == undefined || loadRanges.length == 0) {
-    lrange = [lBound];
+    return [];
   } else {
     lrange = loadRanges;
   }
-  console.log("zone", vBound);
-  console.log("Before", facts.length);
   let filtered = facts
     .filter((f) => vBound.min < f.pace)
     .filter((f) => f.pace < vBound.max);
-  console.log("after", filtered.length);
-  console.log(filtered.map((f) => f.icu_training_load));
+
   let X = filtered.map((s) => [s.moving_time, s.pace]);
   let Y = filtered.map((s) => s.icu_training_load);
   const mlr = new MultivariateLinearRegression();
@@ -273,7 +261,8 @@ export default function RunSuggestScreen() {
     return <Text>Loading</Text>;
   }
   let activities = getActivities(0, 365, storedKey, storedAid);
-  const dataWeek = getWellnessRange(0, 8, storedKey, storedAid);
+  const dataLong = getWellnessRange(0, 28, storedKey, storedAid) ?? [];
+  const dataWeek = dataLong.slice(dataLong.length - 7);
   const settings = getSettings(storedKey, storedAid);
   if (
     dataWeek == undefined ||
@@ -298,7 +287,7 @@ export default function RunSuggestScreen() {
     );
   }
   let neededLoad = findDoable(0, load, tol, 7, 42, 1, 1.3);
-  let res = fitNPred(dataWeek, activities, zone, neededLoad);
+  let res = fitNPred(dataLong, activities, zone, neededLoad);
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <View style={[styles.dcontainer]}>
@@ -317,6 +306,7 @@ export default function RunSuggestScreen() {
         />
       </View>
       <View style={styles.container}>
+        {res.length == 0 && <Text>Dont Run</Text>}
         {res.map((t, i) => {
           return (
             <>

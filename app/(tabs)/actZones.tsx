@@ -108,13 +108,11 @@ export function parse(
   if (sport == "Combined") {
     facts = acts;
   }
-  console.log(facts);
   let tacts = facts.map((s) => daysSince(new Date(s.start_date_local)));
 
   if (!ewm) {
     facts = facts.filter((s) => daysSince(new Date(s.start_date_local)) <= hl);
   }
-  console.log(tacts);
   let pzt = collapseZones(
     parseActivites(facts, tacts, "pace_zone_times", ewm, hl),
   );
@@ -125,7 +123,7 @@ export function parse(
     parseActivites(facts, tacts, "gap_zone_times", ewm, hl),
   );
   let pozt = collapseZones(parseActivitesPower(facts, tacts, ewm, hl));
-  console.log("all zones", [pzt, hzt, gzt, pozt]);
+
   let combined = [0, 1, 2].map((t) =>
     arrayIndexSumNormal([pzt, hzt, gzt, pozt], t),
   );
@@ -141,7 +139,6 @@ export function parse(
 }
 
 export function collapseZones(zoneTimes: number[]) {
-  console.log(zoneTimes);
   if (zoneTimes.length >= 6) {
     return [
       zoneTimes[0] + zoneTimes[1],
@@ -196,12 +193,11 @@ export function getDataForType(
   ]
     .filter((t) => setting[t[0]] != null && setting[t[0]] != undefined)
     .filter((t) => attribute.findIndex((k) => k == t[2]) != -1);
-  console.log("available", available);
+
   return available.map((t): zone => {
     let value: number = setting[t[0]];
     let prec: number[] = setting[t[1]];
-    console.log("prec", prec);
-    console.log("value", value);
+
     return {
       type: t[2],
       zones: prec.map((k) => (k / 100) * value),
@@ -311,16 +307,13 @@ export default function ZoneScreen() {
   if (!storedKey || !storedAid || !acts || !settings || !streamData || !sacts) {
     return <Text>Loading...</Text>;
   }
-  console.log("streams", streamData);
+
   let rideData = streamToZone(sacts, streamData, settings);
   acts = [
     ...acts.filter((t) => t._note == null),
     ...mergeStravaIntervals(sacts, rideData),
   ];
-  console.log("activities", acts);
   let summary = parse(acts, type, checked, ewmvalue ?? 14);
-
-  console.log(sacts, rideData);
 
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
@@ -361,7 +354,6 @@ export default function ZoneScreen() {
           .map((s) => {
             let zones = toPrecent(summary[s]);
             let needed = solve(summary[s], 0.8) / 60;
-            console.log(s, needed);
             let solved =
               (needed > 0 ? "" : "-") + hourToString(Math.abs(needed));
             return (

@@ -84,7 +84,7 @@ export function sunSinus(t: number, sunrise: number, sunset: number): result {
   let daySeconds = 3600 * 24;
   let nightLength = daySeconds - sunset + sunrise;
   let difference = -(nightLength / daylength); // ylow. value at lowest
-  console.log(difference);
+
   let xZero = (1 + difference) * 0.5; // middle of high and low
   let amp = 1 - xZero; // Difference between high and zero
   let radians = 1 - (2 * Math.PI * t) / daySeconds + amp; // i dont bother..
@@ -113,7 +113,6 @@ export function groupByDay(data: TimeSeriesEntry[]) {
       myMap.push([d]);
     }
   });
-  console.log(myMap);
   return myMap;
 }
 export function feelTempNow(i: InstantDetails): number {
