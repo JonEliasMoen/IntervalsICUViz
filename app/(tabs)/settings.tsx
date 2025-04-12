@@ -127,9 +127,6 @@ export default function TabTwoScreen() {
       }
     };
     Linking.addEventListener("url", handleDeepLink);
-    if (storedToken != null) {
-      setAuthenticated(true);
-    }
     checkInitialDeepLink();
     return () => {};
   }, []);
@@ -186,6 +183,8 @@ export default function TabTwoScreen() {
         onPress={handleRedirect}
         disabled={authenticated}
       />
+      <Text>{storedToken.access_token}</Text>
+      <Text>{authenticated}</Text>
     </View>
   );
 }

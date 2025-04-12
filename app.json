@@ -28,7 +28,8 @@
           "data": {
             "scheme": "com.joneliasmewoen.yrweather",
             "host": "callback"
-          }
+          },
+          "category": ["BROWSABLE", "DEFAULT"]
         }
       ]
     },

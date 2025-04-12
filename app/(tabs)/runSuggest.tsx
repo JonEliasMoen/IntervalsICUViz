@@ -67,7 +67,7 @@ function calculateMonotonyLoadRange(
   monoBound: Boundaries,
   strBound: Boundaries,
 ): Boundaries[] {
-  const cLoad = structuredClone(past7Days);
+  const cLoad = JSON.parse(JSON.stringify(past7Days));
   const today = cLoad[cLoad.length - 1];
   const data: desc[] = [];
 
