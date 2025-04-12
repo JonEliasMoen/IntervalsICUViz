@@ -184,7 +184,7 @@ export default function TabTwoScreen() {
         disabled={authenticated}
       />
       <Text>{storedToken.access_token}</Text>
-      <Text>{authenticated}</Text>
+      <Text>{authenticated.toString()}</Text>
     </View>
   );
 }
