@@ -4,9 +4,10 @@ import React, { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useStoredKey } from "@/components/utils/_keyContext";
-import { useRouter, useFocusEffect, RelativePathString } from "expo-router";
+import { useRouter } from "expo-router";
 import { tokenResponse } from "@/components/utils/_fitnessModel";
 import * as Linking from "expo-linking";
+import { startActivityAsync } from "expo-intent-launcher";
 
 export interface userSettings {
   stravaToken: tokenResponse;
@@ -128,10 +129,14 @@ export default function TabTwoScreen() {
     try {
       const redirUrl =
         Platform.OS == "android"
-          ? "com.joneliasmewoen.yrweather://"
+          ? "https://yrweather.expo.app"
           : `${window.location.origin}/settings`;
       const url = makeUrl(redirUrl);
-      Linking.openURL(url);
+      if (Platform.OS == "android") {
+        startActivityAsync(url);
+      } else {
+        Linking.openURL(url);
+      }
     } catch (e) {
       console.log("Error saving aid key:", e);
     }

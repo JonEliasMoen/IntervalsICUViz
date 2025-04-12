@@ -44,7 +44,8 @@
     "react-native-screens": "~4.4.0",
     "react-native-web": "~0.19.13",
     "simple-statistics": "^7.8.5",
-    "typescript-color-gradient": "^4.0.0"
+    "typescript-color-gradient": "^4.0.0",
+    "expo-intent-launcher": "~12.0.2"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
