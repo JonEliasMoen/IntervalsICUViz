@@ -117,7 +117,21 @@ export default function TabTwoScreen() {
         }
       }
     };
+    const handleDeepLink = (event) => {
+      const { url } = event;
+      const parsedUrl = new URL(url);
+      const code = parsedUrl.searchParams.get("code");
+      if (code) {
+        console.log("Code from deep link:", code);
+        mutate(code);
+      }
+    };
+    Linking.addEventListener("url", handleDeepLink);
+    if (storedToken != null) {
+      setAuthenticated(true);
+    }
     checkInitialDeepLink();
+    return () => {};
   }, []);
 
   const makeUrl = (callbackUrl: string) => {
