@@ -304,15 +304,23 @@ export default function ZoneScreen() {
     storedToken,
   );
 
-  if (!storedKey || !storedAid || !acts || !settings || !streamData || !sacts) {
-    return <Text>Loading...</Text>;
+  if (!storedKey || !storedAid || !acts || !settings) {
+    return (
+      <Text>
+        {storedKey}
+        {storedAid}
+      </Text>
+    );
   }
-
-  let rideData = streamToZone(sacts, streamData, settings);
-  acts = [
-    ...acts.filter((t) => t._note == null),
-    ...mergeStravaIntervals(sacts, rideData),
-  ];
+  if (streamData && sacts) {
+    let rideData = streamToZone(sacts, streamData, settings);
+    acts = [
+      ...acts.filter((t) => t._note == null),
+      ...mergeStravaIntervals(sacts, rideData),
+    ];
+  } else {
+    acts = [...acts.filter((t) => t._note == null)];
+  }
   let summary = parse(acts, type, checked, ewmvalue ?? 14);
 
   return (

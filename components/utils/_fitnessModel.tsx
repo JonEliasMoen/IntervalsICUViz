@@ -173,6 +173,7 @@ export function getStream(
             },
           },
         ),
+      enabled: token.access_token != null,
     })),
   });
   let any = queries.map((q) => q.data).some((d) => d == undefined);

@@ -247,7 +247,7 @@ function dist(s: number, t: number): string {
 }
 
 export default function RunSuggestScreen() {
-  const { storedKey, storedAid } = useStoredKey();
+  const { storedKey, storedAid, storedToken } = useStoredKey();
   const [value, setValue] = useState<number | null>(null); // Initialize state for selected value
   const [open, setOpen] = useState(false); // State for dropdown visibility
   const items = [
@@ -258,7 +258,12 @@ export default function RunSuggestScreen() {
     { label: "Zone 5", value: 5 },
   ];
   if (storedKey == undefined || storedAid == undefined) {
-    return <Text>Loading</Text>;
+    return (
+      <Text>
+        {storedKey}
+        {storedAid}
+      </Text>
+    );
   }
   let activities = getActivities(0, 365, storedKey, storedAid);
   const dataLong = getWellnessRange(0, 28, storedKey, storedAid) ?? [];
@@ -269,7 +274,13 @@ export default function RunSuggestScreen() {
     activities == undefined ||
     settings == undefined
   ) {
-    return <Text>Loading</Text>;
+    return (
+      <Text>
+        {storedKey}
+        {storedAid}
+      </Text>
+    );
+    //return <Text>Loading</Text>;
   }
   activities = activities.filter((s) => s.type == "Run");
 
