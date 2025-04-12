@@ -7,7 +7,6 @@ import { useStoredKey } from "@/components/utils/_keyContext";
 import { useRouter } from "expo-router";
 import { tokenResponse } from "@/components/utils/_fitnessModel";
 import * as Linking from "expo-linking";
-import { startActivityAsync } from "expo-intent-launcher";
 
 export interface userSettings {
   stravaToken: tokenResponse;
@@ -127,16 +126,9 @@ export default function TabTwoScreen() {
 
   const handleRedirect = () => {
     try {
-      const redirUrl =
-        Platform.OS == "android"
-          ? "https://yrweather.expo.app"
-          : `${window.location.origin}/settings`;
+      const redirUrl = "https://yrweatherbackend.vercel.app/redirect";
       const url = makeUrl(redirUrl);
-      if (Platform.OS == "android") {
-        startActivityAsync(url);
-      } else {
-        Linking.openURL(url);
-      }
+      Linking.openURL(url);
     } catch (e) {
       console.log("Error saving aid key:", e);
     }
