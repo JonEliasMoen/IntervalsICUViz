@@ -1,11 +1,12 @@
-import { Button, StyleSheet, TextInput } from "react-native";
+import { Button, Platform, StyleSheet, TextInput } from "react-native";
 import { Text, View } from "@/components/Themed";
 import React, { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useStoredKey } from "@/components/utils/_keyContext";
-import { useRouter, useFocusEffect } from "expo-router";
+import { useRouter, useFocusEffect, RelativePathString } from "expo-router";
 import { tokenResponse } from "@/components/utils/_fitnessModel";
+import * as Linking from "expo-linking";
 
 export interface userSettings {
   stravaToken: tokenResponse;
@@ -49,6 +50,7 @@ export default function TabTwoScreen() {
     setStoredToken,
   } = useStoredKey();
   console.log(storedToken);
+
   const queryClient = useQueryClient();
   useEffect(() => {
     const loadApiKey = async () => {
@@ -102,24 +104,34 @@ export default function TabTwoScreen() {
       console.log("Error saving refresh key:", e);
     }
   };
+
   useEffect(() => {
-    const accessTokenRegex = /code=([^&]+)/;
-    const isMatch = window.location.href.match(accessTokenRegex);
-    if (isMatch) {
-      const code = isMatch[1];
-      console.log(code);
-      mutate(code);
-    }
-    if (storedToken != null) {
-      setAuthenticated(true);
-    }
+    const checkInitialDeepLink = async () => {
+      const initialUrl = await Linking.getInitialURL();
+      if (initialUrl) {
+        const parsedUrl = new URL(initialUrl);
+        const code = parsedUrl.searchParams.get("code");
+        if (code) {
+          console.log("Code from initial URL:", code);
+          mutate(code);
+        }
+      }
+    };
+    checkInitialDeepLink();
   }, []);
+
+  const makeUrl = (callbackUrl: string) => {
+    return `https://www.strava.com/oauth/authorize?client_id=108568&response_type=code&redirect_uri=${callbackUrl}&approval_prompt=force&scope=read_all,activity:read_all`;
+  };
+
   const handleRedirect = () => {
     try {
-      const callbackUrl = `${window.location.origin}/settings`;
-      router.replace(
-        `http://www.strava.com/oauth/authorize?client_id=108568&response_type=code&redirect_uri=${callbackUrl}&approval_prompt=force&scope=read_all,activity:read_all`,
-      );
+      const redirUrl =
+        Platform.OS == "android"
+          ? "com.joneliasmewoen.yrweather://"
+          : `${window.location.origin}/settings`;
+      const url = makeUrl(redirUrl);
+      Linking.openURL(url);
     } catch (e) {
       console.log("Error saving aid key:", e);
     }

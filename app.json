@@ -21,7 +21,16 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.joneliasmewoen.yrweather"
+      "package": "com.joneliasmewoen.yrweather",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": {
+            "scheme": "com.joneliasmewoen.yrweather",
+            "host": "callback"
+          }
+        }
+      ]
     },
     "web": {
       "bundler": "metro",
