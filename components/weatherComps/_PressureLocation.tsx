@@ -30,7 +30,6 @@ export function PressureLocation(props: { lat: number; long: number }) {
   let deltaP: number[] = airPressure
     .map((t, i, a) => {
       if (i >= start) {
-        console.log();
         return (t - a[i - start] + (t - a[i - 2])) * 0.5;
       }
     })
@@ -38,19 +37,19 @@ export function PressureLocation(props: { lat: number; long: number }) {
 
   console.log(deltaP);
   console.log(date);
-  let biggestV =
-    Math.abs(Math.min(...deltaP)) > Math.abs(Math.max(...deltaP))
-      ? Math.min(...deltaP)
-      : Math.max(...deltaP);
-
-  let biggestTimestamp = date[deltaP.findIndex((t) => t == biggestV) + start]
-    .toString()
-    .slice(0, 25);
+  let dIndex = deltaP.findIndex((t) => t == Math.min(...deltaP)) + start;
+  let decreaseText = "Decrease: " + date[dIndex].toString().slice(0, 21);
+  let inIndex = deltaP.findIndex((t) => t == Math.max(...deltaP)) + start;
+  let increaseText = "Increase: " + date[inIndex].toString().slice(0, 21);
+  let text =
+    inIndex < dIndex
+      ? [increaseText, decreaseText]
+      : [decreaseText, increaseText];
 
   return (
     <ChartComponentRange
-      title={"Air pressure drop "}
-      subtitle={biggestTimestamp}
+      title={"Air pressure"}
+      subtitle={text.join("\n")}
       progressFrom={Math.min(...deltaP)}
       progressTo={Math.max(...deltaP)}
       progressValue={deltaP[0]}

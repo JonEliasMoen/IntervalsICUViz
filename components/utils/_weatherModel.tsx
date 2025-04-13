@@ -268,7 +268,7 @@ export interface InstantDetails {
   wind_speed_percentile_90: number;
 }
 
-interface PrecipationDetails {
+export interface PrecipationDetails {
   precipitation_amount: number;
   precipitation_amount_max: number;
   precipitation_amount_min: number;

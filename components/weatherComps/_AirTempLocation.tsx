@@ -11,16 +11,13 @@ import {
 import {
   getWeather,
   InstantDetails,
+  PrecipationDetails,
   TimeSeriesEntry,
 } from "@/components/utils/_weatherModel";
 import ChartComponentRange from "@/components/components/_chatCompRange";
 
-function getRain(t: TimeSeriesEntry) {
-  return (
-    t.data.next_1_hours?.details.precipitation_amount ??
-    t.data.next_6_hours?.details.precipitation_amount ??
-    0
-  );
+function getRain(t: TimeSeriesEntry): PrecipationDetails | undefined {
+  return t.data.next_1_hours?.details;
 }
 
 function stats(values: number[] | undefined) {
@@ -80,7 +77,30 @@ export function AirTempLocation(props: { lat: number; long: number }) {
 
   const wind = summary("wind_speed", today);
   const wind2 = summary("wind_speed_of_gust", today);
-  const rain = stats(today?.map((n) => getRain(n)));
+  // @ts-ignore
+  const rain: PrecipationDetails[] = today
+    .map((n) => getRain(n))
+    .filter((n) => n != undefined);
+
+  const maxRain = rain
+    .map((t) => t.precipitation_amount_max)
+    .reduce((sum, value) => sum + value, 0);
+  const minRain = rain
+    .map((t) => t.precipitation_amount_min)
+    .reduce((sum, value) => sum + value, 0);
+  const expRain = rain
+    .map((t) => t.precipitation_amount)
+    .reduce((sum, value) => sum + value, 0);
+  const rainProb =
+    1 -
+    rain
+      .map((t) => 1 - t.probability_of_precipitation / 100)
+      .reduce((sum, value) => sum * value, 1);
+  const thunderProb =
+    1 -
+    rain
+      .map((t) => 1 - t.probability_of_thunder / 100)
+      .reduce((sum, value) => sum * value, 1);
 
   const colorsw = generateGradient(["#F5AF19", "#F12711"], 10);
   const colors = generateGradient(["#02c7fc", "#ff0404"], 6 * 2);
@@ -116,11 +136,19 @@ export function AirTempLocation(props: { lat: number; long: number }) {
       };
     },
   );
+  const rainText = [
+    "",
+    "Weak rain",
+    "Moderate rain",
+    "Heavy rain",
+    "Very heavy rain",
+    "Shower",
+  ];
   const zonesr: zone[] = [0, 0.5, 2, 6, 10, 18, 30].map((v, i, a) => {
     return {
       startVal: v,
       endVal: i != 9 ? a[i + 1] : v + 4,
-      text: `${v}-${i != 9 ? a[i + 1] : v + 4} mm `,
+      text: rainText[i],
       color: colorsw[i],
     };
   });
@@ -164,13 +192,22 @@ export function AirTempLocation(props: { lat: number; long: number }) {
         transform={(v) => v / 24}
         indicatorTextTransform={(n) => n.toFixed(2) + "m/s"}
       ></ChartComponentRange>
-      <ChartComponent
+      <ChartComponentRange
         title={"Rain"}
-        display={() => rain[2] != 0}
-        progress={rain[1]}
+        subtitle={
+          "RainProb: " +
+          (rainProb * 100).toFixed(0) +
+          "% ThunderProb: " +
+          (thunderProb * 100).toFixed(0) +
+          "%"
+        }
+        progressFrom={minRain / today.length}
+        progressValue={expRain / today.length}
+        progressTo={maxRain / today.length}
         zones={zonesr}
-        transform={(n) => n / 34}
-      ></ChartComponent>
+        transform={(n) => n / 30}
+        indicatorTextTransform={(n) => n.toFixed(2) + "mm/h"}
+      ></ChartComponentRange>
     </>
   );
 }

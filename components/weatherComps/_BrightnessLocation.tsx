@@ -33,7 +33,7 @@ export function BrightnessLocation(props: { lat: number; long: number }) {
 
   return (
     <ChartComponent
-      title={"Cloud Cover today"}
+      title={"Cloud Cover"}
       subtitle={
         "Average: " + avg.toFixed(0) + "% Now: " + now?.toFixed(0) + "%"
       }

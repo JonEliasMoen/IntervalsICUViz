@@ -108,25 +108,8 @@ export default function WeatherScreen() {
     return () => clearTimeout(timeout);
   }, [now]);
 
-  //
-  /*
-        <BrightnessLocation lat={loc.lat} long={loc.long}></BrightnessLocation>
-{loc.snowPlace?.map((t) => {
-        return <SnowDepthLocation loc={t}></SnowDepthLocation>;
-      })}
-
-      <PressureLocation lat={loc.lat} long={loc.long}></PressureLocation>
-
-
-      <SeaWaterTempLocation
-        lat={loc.lat}
-        long={loc.long}
-      ></SeaWaterTempLocation>
-      <SunRiseSetLocation lat={loc.lat} long={loc.long}></SunRiseSetLocation>
-      <TideLocation lat={loc.lat} long={loc.long}></TideLocation>
-   */
   return (
-    <ScrollView contentContainerStyle={styles.scrollViewContent}>
+    <ScrollView contentContainerStyle={styles.scrollViewContent} on>
       <View style={[styles.dcontainer]}>
         <DropDownPicker
           open={open}
@@ -147,10 +130,10 @@ export default function WeatherScreen() {
         long={loc.long}
         now={now}
       ></SunRiseSetLocation>
+      <TideLocation lat={loc.lat} long={loc.long} now={now}></TideLocation>
       <BrightnessLocation lat={loc.lat} long={loc.long}></BrightnessLocation>
       <PressureLocation lat={loc.lat} long={loc.long}></PressureLocation>
       <AirTempLocation lat={loc.lat} long={loc.long}></AirTempLocation>
-      <TideLocation lat={loc.lat} long={loc.long} now={now}></TideLocation>
 
       {loc.snowPlace?.map((t) => {
         return <SnowDepthLocation loc={t}></SnowDepthLocation>;
