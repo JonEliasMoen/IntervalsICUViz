@@ -120,13 +120,14 @@ export default function WeatherScreen() {
       <Button title={"-->"} onPress={inc} />
       <Button title={"<--"} onPress={dec} />
       <Text style={[styles.title]}>
-        {dateOffset(offset).toString().slice(0, 15)}
+        {dateOffset(-offset).toString().slice(0, 15)}
       </Text>
       <DropDown
         items={locationMap}
         setItem={setLocation}
         text={"Select a location"}
       ></DropDown>
+      <PressureLocation lat={loc.lat} long={loc.long}></PressureLocation>
       <SunRiseSetLocation
         lat={loc.lat}
         long={loc.long}
@@ -138,7 +139,6 @@ export default function WeatherScreen() {
         long={loc.long}
         dayOffset={offset}
       ></BrightnessLocation>
-      <PressureLocation lat={loc.lat} long={loc.long}></PressureLocation>
       <AirTempLocation
         lat={loc.lat}
         long={loc.long}

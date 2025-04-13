@@ -160,13 +160,6 @@ export function AirTempLocation(props: {
 
   return (
     <>
-      <ChartComponent
-        title={"Temp days forward"}
-        progress={0}
-        zones={zonesFF}
-        transform={(u) => u}
-        indicatorTextTransform={() => ""}
-      ></ChartComponent>
       <ChartComponentRange
         title={"Average temp"}
         subtitle={"Now: " + feltTempNow.toFixed(2) + "°C"}
@@ -177,6 +170,13 @@ export function AirTempLocation(props: {
         transform={(v) => (v + 25) / 50}
         indicatorTextTransform={(n) => n.toFixed(2) + "°C"}
       ></ChartComponentRange>
+      <ChartComponent
+        title={"Temp days forward"}
+        progress={0}
+        zones={zonesFF}
+        transform={(u) => u}
+        indicatorTextTransform={() => ""}
+      ></ChartComponent>
       <ChartComponentRange
         title={"Avg wind"}
         progressFrom={wind[0]}
