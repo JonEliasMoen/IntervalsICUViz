@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, View } from "react-native";
+import { Button, ScrollView, StyleSheet, View } from "react-native";
 import { SnowDepthLocation } from "@/components/weatherComps/_SnowDepthLocation";
 import { SeaWaterTempLocation } from "@/components/weatherComps/_SeaWaterTempLocation";
 import { AirTempLocation } from "@/components/weatherComps/_AirTempLocation";
@@ -6,15 +6,19 @@ import { TideLocation } from "@/components/weatherComps/_TideLocation";
 import DropDownPicker from "react-native-dropdown-picker";
 import React, { useEffect, useState } from "react";
 import { SunRiseSetLocation } from "@/components/weatherComps/_SunRiseSetLocation";
-import { location } from "@/components/utils/_weatherModel";
+import { getWeather, location } from "@/components/utils/_weatherModel";
 import { BrightnessLocation } from "@/components/weatherComps/_BrightnessLocation";
 import { PressureLocation } from "@/components/weatherComps/_PressureLocation";
-
+import DropDown from "@/components/components/_dropDown";
+import { Text } from "@/components/Themed";
+import { dateOffset } from "@/components/utils/_utils";
 export default function WeatherScreen() {
   const [value, setValue] = useState<number>(0); // Initialize state for selected value
   const [open, setOpen] = useState(false); // State for dropdown visibility
   let locationMap: location[] = [
     {
+      label: "Trondheim",
+      value: 0,
       lat: 63.446827,
       long: 10.421906,
       snowPlace: [
@@ -49,6 +53,8 @@ export default function WeatherScreen() {
       ],
     },
     {
+      label: "Oslo",
+      value: 1,
       lat: 59.9139,
       long: 10.7522,
       snowPlace: [
@@ -85,16 +91,6 @@ export default function WeatherScreen() {
   ];
   const [loc, setLocation] = useState(locationMap[0]);
 
-  useEffect(() => {
-    if (value !== null) {
-      setLocation(locationMap[value]);
-    }
-  }, [value]);
-
-  const items = [
-    { label: "Trondheim", value: 0 },
-    { label: "Oslo", value: 1 },
-  ];
   const [now, setCurrentTime] = useState(new Date());
   useEffect(() => {
     const updateCurrentTime = () => setCurrentTime(new Date());
@@ -107,33 +103,47 @@ export default function WeatherScreen() {
 
     return () => clearTimeout(timeout);
   }, [now]);
+  const [offset, setOffset] = useState<number>(0);
+  const barrier = (n: number) => {
+    setOffset(Math.min(Math.max(n, 0), 4));
+  };
+  const inc = () => {
+    barrier(offset + 1);
+  };
+  const dec = () => {
+    barrier(offset - 1);
+  };
+  console.log(offset);
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollViewContent} on>
-      <View style={[styles.dcontainer]}>
-        <DropDownPicker
-          open={open}
-          value={value}
-          items={items}
-          setOpen={setOpen}
-          setValue={setValue}
-          placeholder="Select Location"
-          dropDownContainerStyle={{
-            zIndex: 1000,
-            elevation: 1000,
-            backgroundColor: "white",
-          }}
-        />
-      </View>
+    <ScrollView contentContainerStyle={styles.scrollViewContent}>
+      <Button title={"-->"} onPress={inc} />
+      <Button title={"<--"} onPress={dec} />
+      <Text style={[styles.title]}>
+        {dateOffset(offset).toString().slice(0, 15)}
+      </Text>
+      <DropDown
+        items={locationMap}
+        setItem={setLocation}
+        text={"Select a location"}
+      ></DropDown>
       <SunRiseSetLocation
         lat={loc.lat}
         long={loc.long}
         now={now}
       ></SunRiseSetLocation>
       <TideLocation lat={loc.lat} long={loc.long} now={now}></TideLocation>
-      <BrightnessLocation lat={loc.lat} long={loc.long}></BrightnessLocation>
+      <BrightnessLocation
+        lat={loc.lat}
+        long={loc.long}
+        dayOffset={offset}
+      ></BrightnessLocation>
       <PressureLocation lat={loc.lat} long={loc.long}></PressureLocation>
-      <AirTempLocation lat={loc.lat} long={loc.long}></AirTempLocation>
+      <AirTempLocation
+        lat={loc.lat}
+        long={loc.long}
+        dayOffset={offset}
+      ></AirTempLocation>
 
       {loc.snowPlace?.map((t) => {
         return <SnowDepthLocation loc={t}></SnowDepthLocation>;
@@ -151,16 +161,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20, // To ensure scrolling area has enough space at the bottom
     backgroundColor: "white",
   },
-  dcontainer: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 1000, // Prioritize dropdown over other content
-    alignSelf: "center", // Ensures centering
-    width: "25%",
-  },
   container: {
-    flex: 1,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -171,6 +172,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     textAlign: "center",
     fontWeight: "bold",
+    marginBottom: 10,
   },
   separator: {
     marginVertical: 30,

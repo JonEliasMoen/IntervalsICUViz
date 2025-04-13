@@ -10,6 +10,11 @@ export function isoDateOffset(n: number) {
   date.setDate(date.getDate() - n);
   return date.toISOString().slice(0, 10);
 }
+export function dateOffset(n: number) {
+  let date = new Date();
+  date.setDate(date.getDate() - n);
+  return date;
+}
 
 export function secondsSinceStartOfDay(date: Date): number {
   const startOfDay = new Date(

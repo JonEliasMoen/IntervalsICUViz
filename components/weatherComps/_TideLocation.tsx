@@ -195,7 +195,6 @@ function findHarbor(lat: number, long: number) {
   let dist = locations.map((u) =>
     Math.sqrt(Math.pow(u[0] - lat, 2) + Math.pow(u[1] - long, 2)),
   );
-  console.log(dist);
   return harbors[dist.findIndex((u) => u == Math.min(...dist)) + 1];
 }
 

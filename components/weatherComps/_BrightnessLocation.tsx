@@ -4,14 +4,18 @@ import { getWeather } from "@/components/utils/_weatherModel";
 import { groupByDay } from "@/components/weatherComps/weatherFunc";
 import { mean } from "simple-statistics";
 
-export function BrightnessLocation(props: { lat: number; long: number }) {
+export function BrightnessLocation(props: {
+  lat: number;
+  long: number;
+  dayOffset: number;
+}) {
   const data = getWeather(props.lat, props.long);
   if (data == null) {
     return <></>;
   }
   const gradientArray = generateGradient(["#00d0ff", "#002d37"], 101);
   const dayMap = groupByDay(data.properties.timeseries);
-  const today = dayMap[0];
+  const today = dayMap[props.dayOffset];
   const length = today.length;
   const zones = today.map((t, i) => {
     const v = Math.round(t.data.instant.details.cloud_area_fraction);

@@ -35,8 +35,6 @@ export function PressureLocation(props: { lat: number; long: number }) {
     })
     .filter((t) => t != null);
 
-  console.log(deltaP);
-  console.log(date);
   let dIndex = deltaP.findIndex((t) => t == Math.min(...deltaP)) + start;
   let decreaseText = "Decrease: " + date[dIndex].toString().slice(0, 21);
   let inIndex = deltaP.findIndex((t) => t == Math.max(...deltaP)) + start;

@@ -2,6 +2,8 @@ import { fetchToJson, isoDateOffset } from "@/components/utils/_utils";
 import { useQuery } from "@tanstack/react-query";
 
 export interface location {
+  label: string;
+  value: number;
   lat: number;
   long: number;
   snowPlace?: snowPlace[];

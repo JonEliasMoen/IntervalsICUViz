@@ -37,8 +37,6 @@ interface strainMonotony {
 export function strainMonotony(data: wellness[]): strainMonotony {
   let length = 7;
   let load = data.map((t) => t.ctlLoad).filter((t) => t != undefined);
-  console.log("load", load);
-  console.log(load.slice(data.length - sShort));
   let monotony =
     mean(load.slice(data.length - sShort)) /
     standardDeviation(load.slice(data.length - sShort));

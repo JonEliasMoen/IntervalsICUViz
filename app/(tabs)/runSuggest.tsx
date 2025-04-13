@@ -15,6 +15,7 @@ import { mean, standardDeviation } from "simple-statistics";
 import { useStoredKey } from "@/components/utils/_keyContext";
 import DropDownPicker from "react-native-dropdown-picker";
 import { strainMonotony, strainMonotonyList } from "@/app/(tabs)/index";
+import DropDown from "@/components/components/_dropDown";
 
 export function convertToRanges(arr: number[]): Boundaries[] {
   if (arr.length === 0) return [];
@@ -84,7 +85,6 @@ function calculateMonotonyLoadRange(
     .filter((t) => t.monotony < monoBound.max && t.monotony > monoBound.min)
     .filter((t) => t.acwr < strBound.max && t.acwr > strBound.min)
     .map((t) => t.load);
-  console.log(data);
 
   return convertToRanges(loads);
 }
@@ -219,13 +219,11 @@ function specZone(
         return t == sport;
       }) != null,
   )[0];
-  console.log(setting);
   let zl = z2 == -1 ? z - 1 : z2 - 1;
   if (setting != null && setting.pace_zones != null) {
     let zone = setting.pace_zones[z];
     let zoneL = zl != -1 ? setting.pace_zones[zl] : 50;
     let tPace = setting?.threshold_pace;
-    console.log(zone, zoneL);
     return {
       min: (zoneL / 100) * tPace,
       max: (zone / 100) * tPace,
@@ -248,8 +246,7 @@ function dist(s: number, t: number): string {
 
 export default function RunSuggestScreen() {
   const { storedKey, storedAid, storedToken } = useStoredKey();
-  const [value, setValue] = useState<number | null>(null); // Initialize state for selected value
-  const [open, setOpen] = useState(false); // State for dropdown visibility
+  const [value, setValue] = useState<number>(2); // Initialize state for selected value
   const items = [
     { label: "Zone 1", value: 1 },
     { label: "Zone 2", value: 2 },
@@ -280,13 +277,12 @@ export default function RunSuggestScreen() {
         {storedAid}
       </Text>
     );
-    //return <Text>Loading</Text>;
   }
   activities = activities.filter((s) => s.type == "Run");
 
   let tol = dataWeek.map((s) => s.ctl);
   let load = dataWeek.map((s) => s.atl);
-  let zoneNr = value != null ? value - 1 : 1;
+  let zoneNr = value - 1;
   let zone = specZone(settings, "Run", zoneNr);
 
   if (zone == undefined) {
@@ -301,21 +297,11 @@ export default function RunSuggestScreen() {
   let res = fitNPred(dataLong, activities, zone, neededLoad);
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
-      <View style={[styles.dcontainer]}>
-        <DropDownPicker
-          open={open}
-          value={value}
-          items={items}
-          setOpen={setOpen}
-          setValue={setValue}
-          placeholder="Select a zone"
-          dropDownContainerStyle={{
-            zIndex: 1000,
-            elevation: 1000,
-            backgroundColor: "white",
-          }}
-        />
-      </View>
+      <DropDown
+        items={items}
+        setItem={setValue}
+        text={"Select a zone"}
+      ></DropDown>
       <View style={styles.container}>
         {res.length == 0 && <Text>Dont Run</Text>}
         {res.map((t, i) => {

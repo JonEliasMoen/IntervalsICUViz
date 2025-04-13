@@ -13,20 +13,23 @@ function until(current: number, rise: number, set: number, noon: number) {
   if (current > set) {
     return "Sunrise " + secondsToHHMM(24 * 3600 - current + rise);
   }
+  if (current < rise) {
+    return "Sunrise " + secondsToHHMM(rise - current);
+  }
   if (current < noon) {
     return "Noon " + secondsToHHMM(noon - current);
   }
   if (current < set) {
     return "Sunset " + secondsToHHMM(set - current);
   }
-  if (current < rise) {
-    return "Sunrise" + secondsToHHMM(rise - current);
-  }
   return "0";
 }
 
 export function toPercent(v: number) {
   return Math.round(Math.abs(v) * 100) + "%";
+}
+export function toPercentNotAbs(v: number) {
+  return Math.round(v * 100) + "%";
 }
 
 export function SunRiseSetLocation(props: {
@@ -80,7 +83,7 @@ export function SunRiseSetLocation(props: {
       progress={current}
       zones={zones}
       indicatorTextTransform={(n) =>
-        hourToString(n / 3600) + " " + toPercent(data.current)
+        hourToString(n / 3600) + " " + toPercentNotAbs(data.current)
       }
       transform={(n) => n / 86400}
     ></ChartComponent>

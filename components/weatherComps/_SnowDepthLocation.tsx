@@ -21,7 +21,6 @@ export function averagePrep(
     let dist = Math.sqrt(Math.pow(xy[0] - long, 2) + Math.pow(xy[1] - lat, 2));
     return dist < 0.00000899 * 1000 * 2;
   });
-  console.log(dt);
   let dtt = dt.map((feature) => {
     return (
       feature.properties.newest_prep_days +

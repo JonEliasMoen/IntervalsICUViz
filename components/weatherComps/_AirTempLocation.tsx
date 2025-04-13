@@ -15,6 +15,7 @@ import {
   TimeSeriesEntry,
 } from "@/components/utils/_weatherModel";
 import ChartComponentRange from "@/components/components/_chatCompRange";
+import ddDown from "@/components/components/_ddDown";
 
 function getRain(t: TimeSeriesEntry): PrecipationDetails | undefined {
   return t.data.next_1_hours?.details;
@@ -51,13 +52,17 @@ function getFeltTempArrayMapped(data: TimeSeriesEntry[]) {
 
   return [feltTemp, sfeltTemp, forecast];
 }
-export function AirTempLocation(props: { lat: number; long: number }) {
+export function AirTempLocation(props: {
+  lat: number;
+  long: number;
+  dayOffset: number;
+}) {
   const data = getWeather(props.lat, props.long);
   if (data == null) {
     return <></>;
   }
   const dayMap = groupByDay(data.properties.timeseries);
-  const today = dayMap[0];
+  const today = dayMap[props.dayOffset];
   const fData = getFeltTempArrayMapped(today);
   const feltTemp = fData[0];
   const feltTempNow = feelTempNow(today[0].data.instant.details);
@@ -153,8 +158,6 @@ export function AirTempLocation(props: { lat: number; long: number }) {
     };
   });
 
-  console.log(rain);
-  console.log(data);
   return (
     <>
       <ChartComponent
