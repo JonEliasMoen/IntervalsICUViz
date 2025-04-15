@@ -11,8 +11,6 @@ export class MultivariateLinearRegression {
 
   // Fit the model to the data
   fit(X: number[][], y: number[]): void {
-    const n = X.length;
-    const m = X[0].length;
     const XWithIntercept = this.addIntercept(X); // Add intercept column to X
 
     // Convert to matrices

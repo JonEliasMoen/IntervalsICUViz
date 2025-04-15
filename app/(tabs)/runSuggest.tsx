@@ -81,11 +81,12 @@ function calculateMonotonyLoadRange(
       acwr: mdata.acwr,
     });
   }
+  console.log(data);
   const loads = data
     .filter((t) => t.monotony < monoBound.max && t.monotony > monoBound.min)
     .filter((t) => t.acwr < strBound.max && t.acwr > strBound.min)
     .map((t) => t.load);
-
+  console.log(loads);
   return convertToRanges(loads);
 }
 
@@ -176,9 +177,10 @@ export function fitNPred(
   let loadRanges = calculateMonotonyLoadRange(
     load,
     lBound,
-    { min: 0.8, max: 2 },
-    { min: 0.8, max: 1.3 },
+    { min: 0, max: 2 },
+    { min: 0, max: 1.3 },
   );
+  console.log(vBound);
   let lrange: Boundaries[];
   if (loadRanges == undefined || loadRanges.length == 0) {
     return [];
@@ -191,7 +193,12 @@ export function fitNPred(
 
   let X = filtered.map((s) => [s.moving_time, s.pace]);
   let Y = filtered.map((s) => s.icu_training_load);
+  console.log(X);
   const mlr = new MultivariateLinearRegression();
+  if (X.length == 0 || Y.length == 0) {
+    return [];
+  }
+  console.log(X, Y);
   mlr.fit(X, Y);
 
   return lrange.map((t) => {
@@ -243,11 +250,15 @@ function dist(s: number, t: number): string {
   t = Math.max(0, t);
   return ((s * t) / 1000).toFixed(2) + " km";
 }
+export interface zone {
+  label: string;
+  value: number;
+}
 
 export default function RunSuggestScreen() {
   const { storedKey, storedAid, storedToken } = useStoredKey();
-  const [value, setValue] = useState<number>(2); // Initialize state for selected value
-  const items = [
+  const [value, setValue] = useState<zone>({ label: "Zone 1", value: 1 }); // Initialize state for selected value
+  const items: zone[] = [
     { label: "Zone 1", value: 1 },
     { label: "Zone 2", value: 2 },
     { label: "Zone 3", value: 3 },
@@ -282,7 +293,8 @@ export default function RunSuggestScreen() {
 
   let tol = dataWeek.map((s) => s.ctl);
   let load = dataWeek.map((s) => s.atl);
-  let zoneNr = value - 1;
+  console.log("value", value);
+  let zoneNr = value.value - 1;
   let zone = specZone(settings, "Run", zoneNr);
 
   if (zone == undefined) {
@@ -293,7 +305,7 @@ export default function RunSuggestScreen() {
       </Text>
     );
   }
-  let neededLoad = findDoable(0, load, tol, 7, 42, 1, 1.3);
+  let neededLoad = findDoable(0, load, tol, 7, 42, 1, 1.15);
   let res = fitNPred(dataLong, activities, zone, neededLoad);
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
@@ -332,7 +344,7 @@ export default function RunSuggestScreen() {
               <Text>
                 Load:{" "}
                 {(load[load.length - 1] / tol[tol.length - 1]).toPrecision(2)} -
-                (1-1.3)
+                (1-1.15)
               </Text>
             </>
           );
