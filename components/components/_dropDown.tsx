@@ -10,7 +10,7 @@ export function DropDown(props: {
   const [open, setOpen] = useState(false); // State for dropdown visibility
   const [value, setValue] = useState<number>(0); // Initialize state for selected value
   useEffect(() => {
-    if (value !== null) {
+    if (value !== null && value < props.items.length) {
       props.setItem(props.items[value]);
     }
   }, [value]);

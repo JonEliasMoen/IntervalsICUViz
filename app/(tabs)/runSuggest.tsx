@@ -11,9 +11,8 @@ import {
   settings,
   wellness,
 } from "@/components/utils/_fitnessModel";
-import { mean, standardDeviation } from "simple-statistics";
+import MultiRangeSlider, { ChangeResult } from "multi-range-slider-react";
 import { useStoredKey } from "@/components/utils/_keyContext";
-import DropDownPicker from "react-native-dropdown-picker";
 import { strainMonotony, strainMonotonyList } from "@/app/(tabs)/index";
 import DropDown from "@/components/components/_dropDown";
 
@@ -258,12 +257,18 @@ export interface zone {
 export default function RunSuggestScreen() {
   const { storedKey, storedAid, storedToken } = useStoredKey();
   const [value, setValue] = useState<zone>({ label: "Zone 1", value: 1 }); // Initialize state for selected value
+  const [range, setRange] = useState<ChangeResult>({
+    min: 0,
+    max: 0,
+    minValue: 1,
+    maxValue: 1.15,
+  }); // Initialize state for selected value
   const items: zone[] = [
-    { label: "Zone 1", value: 1 },
-    { label: "Zone 2", value: 2 },
-    { label: "Zone 3", value: 3 },
-    { label: "Zone 4", value: 4 },
-    { label: "Zone 5", value: 5 },
+    { label: "Zone 1", value: 0 },
+    { label: "Zone 2", value: 1 },
+    { label: "Zone 3", value: 2 },
+    { label: "Zone 4", value: 3 },
+    { label: "Zone 5", value: 4 },
   ];
   if (storedKey == undefined || storedAid == undefined) {
     return (
@@ -293,8 +298,9 @@ export default function RunSuggestScreen() {
 
   let tol = dataWeek.map((s) => s.ctl);
   let load = dataWeek.map((s) => s.atl);
-  console.log("value", value);
-  let zoneNr = value.value - 1;
+  console.log(value);
+  let zoneNr = value.value ?? 0;
+  console.log(value.value, zoneNr);
   let zone = specZone(settings, "Run", zoneNr);
 
   if (zone == undefined) {
@@ -305,7 +311,15 @@ export default function RunSuggestScreen() {
       </Text>
     );
   }
-  let neededLoad = findDoable(0, load, tol, 7, 42, 1, 1.15);
+  let neededLoad = findDoable(
+    0,
+    load,
+    tol,
+    7,
+    42,
+    range.minValue,
+    range.maxValue,
+  );
   let res = fitNPred(dataLong, activities, zone, neededLoad);
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
@@ -321,12 +335,12 @@ export default function RunSuggestScreen() {
             <>
               <Text>Run: {i + 1}</Text>
               <Text>
-                Speed: {hourToString(conv(zone.min))}-
+                Speed: Z{zoneNr + 1} {hourToString(conv(zone.min))}-
                 {hourToString(conv(zone.max))}
                 /km
               </Text>
               <Text>
-                Speed: {convertMStoKMH(zone.min).toFixed(1)}-
+                Speed: Z{zoneNr + 1} {convertMStoKMH(zone.min).toFixed(1)}-
                 {convertMStoKMH(zone.max).toFixed(1)}
                 km/h
               </Text>
@@ -342,14 +356,21 @@ export default function RunSuggestScreen() {
                 LoadRange: {t.load.min} - {t.load.max}
               </Text>
               <Text>
-                Load:{" "}
-                {(load[load.length - 1] / tol[tol.length - 1]).toPrecision(2)} -
-                (1-1.15)
+                Load: {(load[load.length - 1] / tol[tol.length - 1]).toFixed(2)}{" "}
+                - ({range.minValue}-{range.maxValue})
               </Text>
             </>
           );
         })}
       </View>
+      <MultiRangeSlider
+        minValue={1}
+        maxValue={1.15}
+        min={0.8}
+        step={0.01}
+        max={1.3}
+        onChange={setRange}
+      ></MultiRangeSlider>
     </ScrollView>
   );
 }

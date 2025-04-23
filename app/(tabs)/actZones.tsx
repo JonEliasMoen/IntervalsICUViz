@@ -361,19 +361,23 @@ export default function ZoneScreen() {
           .filter((s) => !Number.isNaN(summary[s][0]))
           .map((s) => {
             let zones = toPrecent(summary[s]);
-            let needed = solve(summary[s], 0.8) / 60;
-            let solved =
-              (needed > 0 ? "" : "-") + hourToString(Math.abs(needed));
+            let distr = [0.8, 0.15, 0.05]; // Pyramidical
+            let res = zones.map((t, i) => solve(summary[s], distr[i], i) / 60);
+            let pi = Math.log10((zones[0] / zones[1]) * zones[2] * 100);
+            let needed = res.find((t) => t > 0) ?? 0;
+            let zoneText = "Z" + (res.findIndex((t) => t > 0) + 1);
+            let solved = zoneText + " " + hourToString(Math.abs(needed));
             return (
               <ChartComponent
-                title={
-                  type +
-                  " " +
-                  nameMap[types.indexOf(s)].toString() +
-                  " " +
-                  solved.toString()
-                }
+                title={nameMap[types.indexOf(s)].toString()}
                 progress={0.8}
+                subtitle={
+                  solved.toString() +
+                  " PI=" +
+                  pi.toFixed(2) +
+                  " " +
+                  zones.map((t) => Math.round(t * 100)).join("/")
+                }
                 zones={[
                   {
                     text: "Polarized",
