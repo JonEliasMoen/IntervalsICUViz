@@ -332,3 +332,60 @@ export function getWeather(lat: number, long: number) {
   );
   return data;
 }
+
+interface PollenApiResponse {
+  message: string;
+  lat: number;
+  lng: number;
+  data: PollenDataPoint[];
+}
+
+interface PollenDataPoint {
+  time: number;
+  Species: SpeciesData;
+  Risk: PollenRisk;
+  Count: PollenCount;
+  updatedAt: string;
+}
+
+interface SpeciesData {
+  Grass: Record<string, number>;
+  Others: number;
+  Tree: Record<string, number>;
+  Weed: Record<string, number>;
+}
+
+interface PollenRisk {
+  grass_pollen: PollenLevel;
+  tree_pollen: PollenLevel;
+  weed_pollen: PollenLevel;
+}
+
+interface PollenCount {
+  grass_pollen: number;
+  tree_pollen: number;
+  weed_pollen: number;
+}
+
+type PollenLevel = "Low" | "Moderate" | "High" | "Very High";
+
+export function getHayFever(
+  lat: number,
+  long: number,
+): PollenApiResponse | undefined {
+  const date = isoDateOffset(0);
+  const { data: data } = useQuery(["hayfevr", date, lat, long], () =>
+    fetchToJson<PollenApiResponse>(
+      `https://api.tadata.no/forecast/pollen/by-lat-lng?lat=${lat}&lng=${long}`,
+      {
+        method: "GET",
+        headers: {
+          "Tadata-Forward-To": "ambee",
+          "Tadata-Client-Id": "jon39334@gmail.com",
+          "Tadata-Api-Key": "38c60675-db2f-4d45-9c6e-f0d9d83aa7c2",
+        },
+      },
+    ),
+  );
+  return data;
+}

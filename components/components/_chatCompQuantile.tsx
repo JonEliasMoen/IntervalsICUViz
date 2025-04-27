@@ -1,15 +1,41 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { mean, standardDeviation } from "simple-statistics";
+import quantile from "@stdlib/stats-base-dists-normal-quantile";
 
-export interface zone {
+export interface zoneQ {
   text: string;
   startVal: number;
   endVal: number;
   color: string;
+  normal?: boolean;
 }
+function normalQuantile(value: number, mean: number, std: number): number {
+  // Standard normal CDF (cumulative distribution function)
+  function erf(x: number): number {
+    // Approximation of the error function using a numerical method
+    const t = 1 / (1 + 0.3275911 * Math.abs(x));
+    const tau =
+      t *
+      (0.254829592 +
+        t *
+          (-0.284496736 +
+            t * (1.421413741 + t * (-1.453152027 + t * 1.061405429))));
+    const sign = x >= 0 ? 1 : -1;
+    return sign * (1 - tau * Math.exp(-x * x));
+  }
 
+  // Standard normal CDF for a given x
+  function normalCDF(x: number): number {
+    return 0.5 * (1 + erf(x / Math.sqrt(2)));
+  }
+
+  // Compute the quantile using the inverse CDF
+  const zScore = (value - mean) / std;
+  return normalCDF(zScore);
+}
 export function Zones(
-  zones: zone[],
+  zones: zoneQ[],
   valTrans: (n: number) => number,
   title: string,
 ) {
@@ -31,22 +57,48 @@ export function Zones(
   );
 }
 
-export function ChartComponent(props: {
+export function ChartComponentQuantile(props: {
   title: string;
-  subtitle?: string | null;
   display?: () => boolean;
   progress: number;
-  zones: zone[];
-  transform: (n: number) => number;
-  indicatorTextTransform?: (n: number) => string | number;
+  values: number[];
+  zones: zoneQ[];
+  indicatorTextTransform?: (n: number, q: number) => string | number;
 }) {
-  let value = props.transform(props.progress);
-  console.log(props.title);
+  let q = [props.zones[0].startVal, props.zones[props.zones.length - 1].endVal];
+
+  let zn = props.zones.find((t) => t.normal == true);
+  let qn = [zn?.startVal ?? 0.25, zn?.endVal ?? 0.75];
+  console.log(props.title, zn, qn);
+  let hmean = mean(props.values);
+  let hstd = standardDeviation(props.values);
+  let transform = (n: number) => {
+    // Quantile => 0-1
+    //return n;
+    let vDif = q[1] - q[0];
+    return vDif != 0 ? (n - q[0]) / vDif : 0;
+  };
+  let tr = (n: number) => {
+    // number => Quantile
+    return normalQuantile(n, hmean, hstd);
+  };
+  let hq = (n: number) => {
+    // quantile => number
+    return quantile(n, hmean, hstd);
+  };
+
+  console.log("50", tr(hq(0.5)));
+  let subtitle =
+    "Normal range: " +
+    hmean.toFixed(2) +
+    "±" +
+    (hq(qn[1]) - hq(0.5)).toFixed(2);
+  let vquantile = tr(props.progress);
+  let value = transform(vquantile);
   let text =
     props.zones.find(
       (zone) =>
-        value >= props.transform(zone.startVal) &&
-        value <= props.transform(zone.endVal),
+        value >= transform(zone.startVal) && value <= transform(zone.endVal),
     )?.text ?? "";
   let progress = value - 0.5;
   let display = props.display != null ? props.display() : true;
@@ -54,11 +106,9 @@ export function ChartComponent(props: {
   return (
     <View style={[styles.container, display ? {} : { display: "none" }]}>
       <Text style={styles.statusText}>{titleText + text}</Text>
-      {props.subtitle != null && (
-        <Text style={styles.subText}>{props.subtitle}</Text>
-      )}
+      {subtitle != null && <Text style={styles.subText}>{subtitle}</Text>}
       <View style={styles.progressBarContainer}>
-        {Zones(props.zones, props.transform, props.title + props.progress)}
+        {Zones(props.zones, transform, props.title)}
       </View>
       <View
         style={[
@@ -82,7 +132,7 @@ export function ChartComponent(props: {
           ? props.progress != null
             ? props.progress.toFixed(2).toString()
             : props.progress
-          : props.indicatorTextTransform(props.progress)}
+          : props.indicatorTextTransform(props.progress, vquantile)}
       </Text>
     </View>
   );
@@ -150,4 +200,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ChartComponent;
+export default ChartComponentQuantile;

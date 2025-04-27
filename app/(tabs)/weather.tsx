@@ -1,5 +1,6 @@
 import { Button, ScrollView, StyleSheet, View } from "react-native";
 import { SnowDepthLocation } from "@/components/weatherComps/_SnowDepthLocation";
+import { HayfeverLocation } from "@/components/weatherComps/_HayfeverLocation";
 import { SeaWaterTempLocation } from "@/components/weatherComps/_SeaWaterTempLocation";
 import { AirTempLocation } from "@/components/weatherComps/_AirTempLocation";
 import { TideLocation } from "@/components/weatherComps/_TideLocation";
@@ -152,6 +153,7 @@ export default function WeatherScreen() {
         lat={loc.lat}
         long={loc.long}
       ></SeaWaterTempLocation>
+      <HayfeverLocation lat={loc.lat} long={loc.long}></HayfeverLocation>
     </ScrollView>
   );
 }

@@ -16,7 +16,8 @@ export interface wellness {
   weight: number;
   sportInfo: sportInfo[];
   ctlLoad: number;
-
+  sleepScore: number;
+  vo2max: number;
   [key: string]: any; // This allows for any other unknown properties
 }
 
@@ -55,6 +56,7 @@ export function getSettings(
       enabled: !!apiKey && !!aid,
     },
   );
+  console.log(data);
   return data;
 }
 

@@ -7,6 +7,7 @@ import quantile from "@stdlib/stats-base-dists-normal-quantile";
 import { hourToString, sLong, sShort } from "@/components/utils/_utils";
 import { useStoredKey } from "@/components/utils/_keyContext";
 import { getWellnessRange, wellness } from "@/components/utils/_fitnessModel";
+import { ChartComponentQuantile } from "@/components/components/_chatCompQuantile";
 
 interface wattResult {
   wattPerKg: number;
@@ -73,7 +74,7 @@ export default function TabOneScreen() {
   const { storedKey, storedAid } = useStoredKey();
   const dataLong = getWellnessRange(0, 42, storedKey, storedAid) ?? [];
   const dataWeek = dataLong.slice(dataLong.length - 9);
-
+  const dataMonth = dataLong.slice(dataLong.length - 7 * 4);
   if (dataLong.length == 0 && dataLong != undefined) {
     return <Text>Loading</Text>;
   }
@@ -90,25 +91,41 @@ export default function TabOneScreen() {
       .filter((s) => s.sleepSecs != 0 && s.sleepSecs != null)
       .map((s) => s.sleepSecs)
       .at(-1) ?? 0;
+  const sleepScore =
+    dataWeek
+      .filter((s) => s.sleepScore != 0 && s.sleepScore != null)
+      .map((s) => s.sleepScore)
+      .at(-1) ?? 0;
+  const vo2max =
+    dataWeek
+      .filter((s) => s.vo2max != 0 && s.vo2max != null)
+      .map((s) => s.vo2max)
+      .at(-1) ?? 0;
 
-  let hrv = dataWeek
+  let hrv = dataMonth
     .filter((s) => s.hrv != 0 && s.hrv != null)
     .map((t) => t.hrv);
   if (hrv.length == 0) {
     hrv = [90, 100];
   }
+  let restingHr = dataMonth
+    .filter((s) => s.restingHR != 0 && s.restingHR != null)
+    .map((t) => t.restingHR);
+  if (restingHr.length == 0) {
+    restingHr = [90, 100];
+  }
+  let weight = dataMonth
+    .filter((s) => s.weight != 0 && s.weight != null)
+    .map((t) => t.weight);
+  if (weight.length == 0) {
+    restingHr = [90, 100];
+  }
+
   let form = data != undefined ? Math.round(data.ctl - data.atl) : 0;
   let formPer =
     data != undefined
       ? Math.round(((data.ctl - data.atl) * 100) / data.ctl)
       : 0;
-
-  let hmean = mean(hrv);
-  let hstd = standardDeviation(hrv);
-  let hq = (q: number) => {
-    return quantile(q, hmean, hstd);
-  };
-
   let rideEftp = wattPer("Ride", dataWeek);
   let runEftp = wattPer("Run", dataWeek);
   return (
@@ -182,40 +199,90 @@ export default function TabOneScreen() {
         ]}
         transform={(n) => n / 2.0}
       ></ChartComponent>
-      <ChartComponent
-        title={"HRV"}
+      <ChartComponentQuantile
+        values={hrv}
+        title={"HRV (rMSSD)"}
         display={() => hrv[hrv.length - 1] != null}
         progress={hrv[hrv.length - 1] ?? 0}
         zones={[
           {
             text: "Low",
-            startVal: hq(0.05),
-            endVal: hq(0.1),
+            startVal: 0,
+            endVal: 0.1,
             color: "rgb(255,0,0)",
           },
           {
             text: "Below",
-            startVal: hq(0.1),
-            endVal: hq(0.2),
+            startVal: 0.1,
+            endVal: 0.2,
             color: "#FFCB0E80",
           },
           {
             text: "Normal",
-            startVal: hq(0.2),
-            endVal: hq(0.85),
+            startVal: 0.2,
+            endVal: 0.85,
             color: "#009E0066",
+            normal: true,
           },
           {
             text: "Elevated",
-            startVal: hq(0.85),
-            endVal: hq(0.95),
+            startVal: 0.85,
+            endVal: 1,
             color: "#FFCB0E80",
           },
         ]}
-        transform={(n) =>
-          hq(0.95) - hq(0.05) != 0 ? (n - hq(0.05)) / (hq(0.95) - hq(0.05)) : 0
+        indicatorTextTransform={(t, q) =>
+          Math.round(t) + "ms " + Math.round(q * 100) + "%"
         }
-      ></ChartComponent>
+      ></ChartComponentQuantile>
+      <ChartComponentQuantile
+        values={restingHr}
+        title={"Resting hr"}
+        display={() => restingHr[restingHr.length - 1] != null}
+        progress={restingHr[restingHr.length - 1] ?? 0}
+        zones={[
+          { text: "Low", startVal: 0, endVal: 0.1, color: "rgb(255,0,0)" },
+          { text: "Below", startVal: 0.1, endVal: 0.2, color: "#FFCB0E80" },
+          {
+            text: "Normal",
+            startVal: 0.2,
+            endVal: 0.85,
+            color: "#009E0066",
+            normal: true,
+          },
+          { text: "Elevated", startVal: 0.85, endVal: 1, color: "#FFCB0E80" },
+        ]}
+        indicatorTextTransform={(t, q) =>
+          Math.round(t) + "bpm " + Math.round(q * 100) + "%"
+        }
+      ></ChartComponentQuantile>
+      <ChartComponentQuantile
+        values={weight}
+        title={"Weight"}
+        display={() => weight[weight.length - 1] != null}
+        progress={weight[weight.length - 1]}
+        zones={[
+          { text: "Very Low", startVal: 0, endVal: 0.1, color: "rgb(255,0,0)" },
+          { text: "Low", startVal: 0.1, endVal: 0.25, color: "#FFCB0E80" },
+          {
+            text: "Normal",
+            startVal: 0.25,
+            endVal: 0.75,
+            color: "#009E0066",
+            normal: true,
+          },
+          { text: "High", startVal: 0.75, endVal: 0.9, color: "#FFCB0E80" },
+          {
+            text: "Very High",
+            startVal: 0.9,
+            endVal: 1,
+            color: "rgb(255,0,0)",
+          },
+        ]}
+        indicatorTextTransform={(t, q) =>
+          t.toFixed(2) + "kg " + Math.round(q * 100) + "%"
+        }
+      ></ChartComponentQuantile>
       <ChartComponent
         title={`Ramprate q`}
         progress={data.rampRate}
@@ -355,6 +422,45 @@ export default function TabOneScreen() {
         transform={(n) => (n - 4) / 6}
       ></ChartComponent>
       <ChartComponent
+        title={"Sleep Score"}
+        display={() => sleepScore != 0 && sleepScore != null}
+        progress={sleepScore != null ? Math.round(sleepScore) : 0}
+        indicatorTextTransform={(n) => Math.round(n) + "%"}
+        zones={[
+          {
+            text: "Very Poor",
+            startVal: 0,
+            endVal: 59,
+            color: "#ff0404",
+          },
+          {
+            text: "Poor",
+            startVal: 60,
+            endVal: 69,
+            color: "#FFCB0E80",
+          },
+          {
+            text: "Fair",
+            startVal: 70,
+            endVal: 79,
+            color: "#C8F509A8",
+          },
+          {
+            text: "Good",
+            startVal: 80,
+            endVal: 89,
+            color: "#009E0057",
+          },
+          {
+            text: "Excellent",
+            startVal: 90,
+            endVal: 100,
+            color: "#009E0099",
+          },
+        ]}
+        transform={(n) => n / 100}
+      ></ChartComponent>
+      <ChartComponent
         title={"Form"}
         progress={-form}
         zones={[
@@ -430,6 +536,64 @@ export default function TabOneScreen() {
         transform={(n) => (n + 30) / 90}
         indicatorTextTransform={(n) =>
           n != null ? -n.toPrecision(3).toString() + "%" : ""
+        }
+      ></ChartComponent>
+      <ChartComponent
+        title={"Vo2max (25-29 years)"}
+        progress={vo2max}
+        zones={[
+          {
+            text: "Very Poor",
+            startVal: 20,
+            endVal: 31,
+            color: "rgba(180,31,31,0.3)",
+          },
+          {
+            text: "Poor",
+            startVal: 31,
+            endVal: 35,
+            color: "rgba(255,69,0,0.4)",
+          },
+          {
+            text: "Fair",
+            startVal: 35,
+            endVal: 42,
+            color: "rgba(255,165,0,0.5)",
+          },
+          {
+            text: "Average",
+            startVal: 42,
+            endVal: 48,
+            color: "rgba(255,215,0,0.6)",
+          },
+          {
+            text: "Good",
+            startVal: 48,
+            endVal: 53,
+            color: "rgba(0,128,0,0.6)",
+          },
+          {
+            text: "Very good",
+            startVal: 53,
+            endVal: 59,
+            color: "rgba(0,100,0,0.6)",
+          },
+          {
+            text: "Excellent",
+            startVal: 59,
+            endVal: 70,
+            color: "rgba(65,105,225,0.7)",
+          },
+          {
+            text: "Elite",
+            startVal: 70,
+            endVal: 95,
+            color: "rgba(138,43,226,0.7)",
+          },
+        ]}
+        transform={(n) => (n - 20) / (95 - 29)}
+        indicatorTextTransform={(n) =>
+          n != null ? Math.round(n).toString() + "mL/kg/min" : ""
         }
       ></ChartComponent>
       <ChartComponent
