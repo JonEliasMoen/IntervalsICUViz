@@ -101,6 +101,11 @@ export default function TabOneScreen() {
       .filter((s) => s.vo2max != 0 && s.vo2max != null)
       .map((s) => s.vo2max)
       .at(-1) ?? 0;
+  const restingHrI =
+    dataWeek
+      .filter((s) => s.restingHR != 0 && s.restingHR != null)
+      .map((s) => s.restingHR)
+      .at(-1) ?? 0;
 
   let hrv = dataMonth
     .filter((s) => s.hrv != 0 && s.hrv != null)
@@ -241,16 +246,14 @@ export default function TabOneScreen() {
         display={() => restingHr[restingHr.length - 1] != null}
         progress={restingHr[restingHr.length - 1] ?? 0}
         zones={[
-          { text: "Low", startVal: 0, endVal: 0.1, color: "rgb(255,0,0)" },
-          { text: "Below", startVal: 0.1, endVal: 0.2, color: "#FFCB0E80" },
+          { text: "Low", startVal: 0, endVal: 0.2, color: "#FFCB0E80" },
+          { text: "Normal", startVal: 0.2, endVal: 0.6, color: "#009E0066" },
           {
-            text: "Normal",
-            startVal: 0.2,
-            endVal: 0.85,
-            color: "#009E0066",
-            normal: true,
+            text: "Elevated",
+            startVal: 0.6,
+            endVal: 0.8,
+            color: "rgb(255,0,0)",
           },
-          { text: "Elevated", startVal: 0.85, endVal: 1, color: "#FFCB0E80" },
         ]}
         indicatorTextTransform={(t, q) =>
           Math.round(t) + "bpm " + Math.round(q * 100) + "%"
@@ -594,6 +597,64 @@ export default function TabOneScreen() {
         transform={(n) => (n - 20) / (95 - 29)}
         indicatorTextTransform={(n) =>
           n != null ? Math.round(n).toString() + "mL/kg/min" : ""
+        }
+      ></ChartComponent>
+      <ChartComponent
+        title={"Resting hr (26-35 years)"}
+        progress={restingHrI}
+        zones={[
+          {
+            text: "Poor",
+            startVal: 80,
+            endVal: 82,
+            color: "rgba(180,31,31,0.3)",
+          },
+          {
+            text: "Below Average",
+            startVal: 82,
+            endVal: 74,
+            color: "rgba(255,69,0,0.4)",
+          },
+          {
+            text: "Average",
+            startVal: 74,
+            endVal: 71,
+            color: "rgba(255,215,0,0.6)",
+          },
+          {
+            text: "Good",
+            startVal: 71,
+            endVal: 66,
+            color: "rgba(0,128,0,0.6)",
+          },
+          {
+            text: "Great",
+            startVal: 66,
+            endVal: 62,
+            color: "rgba(0,100,0,0.6)",
+          },
+          {
+            text: "Excellent",
+            startVal: 62,
+            endVal: 55,
+            color: "rgba(65,105,225,0.7)",
+          },
+          {
+            text: "Athlete",
+            startVal: 55,
+            endVal: 49,
+            color: "rgba(30,144,255,0.7)",
+          },
+          {
+            text: "Elite",
+            startVal: 49,
+            endVal: 40,
+            color: "rgba(138,43,226,0.7)",
+          },
+        ]}
+        transform={(n) => 1 - (n - 40) / (80 - 40)}
+        indicatorTextTransform={(n) =>
+          n != null ? Math.round(n).toString() + "bpm" : ""
         }
       ></ChartComponent>
       <ChartComponent
