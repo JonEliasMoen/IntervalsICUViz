@@ -41,7 +41,6 @@ export function ChartComponent(props: {
   indicatorTextTransform?: (n: number) => string | number;
 }) {
   let value = props.transform(props.progress);
-  console.log(props.title);
   let text =
     props.zones.find(
       (zone) =>

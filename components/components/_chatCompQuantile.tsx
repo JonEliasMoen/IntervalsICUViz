@@ -69,7 +69,6 @@ export function ChartComponentQuantile(props: {
 
   let zn = props.zones.find((t) => t.normal == true);
   let qn = [zn?.startVal ?? 0.25, zn?.endVal ?? 0.75];
-  console.log(props.title, zn, qn);
   let hmean = mean(props.values);
   let hstd = standardDeviation(props.values);
   let transform = (n: number) => {
@@ -87,7 +86,6 @@ export function ChartComponentQuantile(props: {
     return quantile(n, hmean, hstd);
   };
 
-  console.log("50", tr(hq(0.5)));
   let subtitle =
     "Normal range: " +
     hmean.toFixed(2) +

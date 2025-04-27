@@ -6,7 +6,13 @@ import { mean, standardDeviation } from "simple-statistics";
 import quantile from "@stdlib/stats-base-dists-normal-quantile";
 import { hourToString, sLong, sShort } from "@/components/utils/_utils";
 import { useStoredKey } from "@/components/utils/_keyContext";
-import { getWellnessRange, wellness } from "@/components/utils/_fitnessModel";
+import {
+  activity,
+  getActivities,
+  getWellnessRange,
+  groupByWeek,
+  wellness,
+} from "@/components/utils/_fitnessModel";
 import { ChartComponentQuantile } from "@/components/components/_chatCompQuantile";
 
 interface wattResult {
@@ -69,10 +75,34 @@ export function strainMonotonyList(load: number[]): strainMonotony {
     strainL: strainL,
   };
 }
+export function groupbyWeekDistance(acts: activity[], sport: string): number[] {
+  let facts = acts.filter((t) => t.type == sport);
+  let wacts = groupByWeek(facts);
+  /*  let test = wacts
+    .map((t) =>
+      t
+        .map((a) => {
+          return a.distance / 1000;
+        })
+        .reduce((a, b) => a + b),
+    )
+    .map((t, i, a) => t / (a[i + 1] ?? 1));
+  console.log("test", test.slice(0, test.length - 1));
+  return test;*/
+  return wacts.map((t) =>
+    t
+      .map((a) => {
+        return a.distance / 1000;
+      })
+      .reduce((a, b) => a + b),
+  );
+}
 
 export default function TabOneScreen() {
   const { storedKey, storedAid } = useStoredKey();
   const dataLong = getWellnessRange(0, 42, storedKey, storedAid) ?? [];
+  const acts = getActivities(0, 42, storedKey, storedAid);
+
   const dataWeek = dataLong.slice(dataLong.length - 9);
   const dataMonth = dataLong.slice(dataLong.length - 7 * 4);
   if (dataLong.length == 0 && dataLong != undefined) {
@@ -81,28 +111,32 @@ export default function TabOneScreen() {
   if (dataWeek.length == 0 && dataWeek != undefined) {
     return <Text>Loading</Text>;
   }
+  if (acts == undefined) {
+    return <Text>Loading</Text>;
+  }
+  let distances = groupbyWeekDistance(acts, "Run").slice(0, 3);
   let sAcwr = strainMonotony(dataLong.slice(dataLong.length - 28));
   let acwr = dataLong.map((t) => t.atl / t.ctl);
 
   const data = dataWeek[dataWeek.length - 1];
 
   const sleep =
-    dataWeek
+    dataLong
       .filter((s) => s.sleepSecs != 0 && s.sleepSecs != null)
       .map((s) => s.sleepSecs)
       .at(-1) ?? 0;
   const sleepScore =
-    dataWeek
+    dataLong
       .filter((s) => s.sleepScore != 0 && s.sleepScore != null)
       .map((s) => s.sleepScore)
       .at(-1) ?? 0;
   const vo2max =
-    dataWeek
+    dataLong
       .filter((s) => s.vo2max != 0 && s.vo2max != null)
       .map((s) => s.vo2max)
       .at(-1) ?? 0;
   const restingHrI =
-    dataWeek
+    dataLong
       .filter((s) => s.restingHR != 0 && s.restingHR != null)
       .map((s) => s.restingHR)
       .at(-1) ?? 0;
@@ -144,7 +178,7 @@ export default function TabOneScreen() {
             text: "Very Low (0-0.8)",
             startVal: 0.0,
             endVal: 0.8,
-            color: "rgb(255,0,0)", // Red
+            color: "#D627284D", // Red
           },
           {
             text: "Low",
@@ -168,11 +202,46 @@ export default function TabOneScreen() {
             text: "Very High (2-3)",
             startVal: 2.0,
             endVal: 3.0, // Arbitrary upper bound
-            color: "rgb(255,0,0)", // Red
+            color: "#D627284D", // Red
           },
         ]}
         transform={(n) => n / 3}
       />
+      <ChartComponentQuantile
+        title={"Distance running"}
+        values={distances}
+        progress={distances[0]}
+        zones={[
+          // Low weekly distance -> bad (red)
+          { text: "Low", startVal: 0, endVal: 0.2, color: "#D627284D" },
+
+          // Below average -> not great (orange)
+          {
+            text: "Below Average",
+            startVal: 0.2,
+            endVal: 0.4,
+            color: "#FFCB0E80",
+          },
+
+          // Normal -> okay/good (light green)
+          {
+            text: "Normal",
+            startVal: 0.4,
+            endVal: 0.7,
+            color: "#009E0066",
+            normal: true,
+          },
+
+          // High -> better (green)
+          { text: "High", startVal: 0.7, endVal: 0.9, color: "#FFCB0E80" },
+
+          // Very High -> very good, but could also be caution if *extreme*
+          { text: "Very High", startVal: 0.9, endVal: 1, color: "#D627284D" }, // dark green
+        ]}
+        indicatorTextTransform={(t, q) =>
+          t.toFixed(2) + "km " + Math.round(q * 100) + "%"
+        }
+      ></ChartComponentQuantile>
       <ChartComponent
         title={"Strain ACWR"}
         progress={sAcwr.acwr}
@@ -214,7 +283,7 @@ export default function TabOneScreen() {
             text: "Low",
             startVal: 0,
             endVal: 0.1,
-            color: "rgb(255,0,0)",
+            color: "#D627284D",
           },
           {
             text: "Below",
@@ -225,15 +294,15 @@ export default function TabOneScreen() {
           {
             text: "Normal",
             startVal: 0.2,
-            endVal: 0.85,
+            endVal: 0.7,
             color: "#009E0066",
             normal: true,
           },
           {
             text: "Elevated",
-            startVal: 0.85,
+            startVal: 0.7,
             endVal: 1,
-            color: "#FFCB0E80",
+            color: "#1F77B44D",
           },
         ]}
         indicatorTextTransform={(t, q) =>
@@ -246,13 +315,13 @@ export default function TabOneScreen() {
         display={() => restingHr[restingHr.length - 1] != null}
         progress={restingHr[restingHr.length - 1] ?? 0}
         zones={[
-          { text: "Low", startVal: 0, endVal: 0.2, color: "#FFCB0E80" },
+          { text: "Low", startVal: 0, endVal: 0.2, color: "#1F77B44D" },
           { text: "Normal", startVal: 0.2, endVal: 0.6, color: "#009E0066" },
           {
             text: "Elevated",
             startVal: 0.6,
             endVal: 0.8,
-            color: "rgb(255,0,0)",
+            color: "#D627284D",
           },
         ]}
         indicatorTextTransform={(t, q) =>
@@ -265,7 +334,7 @@ export default function TabOneScreen() {
         display={() => weight[weight.length - 1] != null}
         progress={weight[weight.length - 1]}
         zones={[
-          { text: "Very Low", startVal: 0, endVal: 0.1, color: "rgb(255,0,0)" },
+          { text: "Very Low", startVal: 0, endVal: 0.1, color: "#D627284D" },
           { text: "Low", startVal: 0.1, endVal: 0.25, color: "#FFCB0E80" },
           {
             text: "Normal",
@@ -279,7 +348,7 @@ export default function TabOneScreen() {
             text: "Very High",
             startVal: 0.9,
             endVal: 1,
-            color: "rgb(255,0,0)",
+            color: "#D627284D",
           },
         ]}
         indicatorTextTransform={(t, q) =>
@@ -434,7 +503,7 @@ export default function TabOneScreen() {
             text: "Very Poor",
             startVal: 0,
             endVal: 59,
-            color: "#ff0404",
+            color: "#D627284D",
           },
           {
             text: "Poor",

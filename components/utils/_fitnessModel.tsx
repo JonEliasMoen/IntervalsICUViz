@@ -1,5 +1,10 @@
-import { fetchToJson, isoDateOffset } from "@/components/utils/_utils";
+import {
+  fetchToJson,
+  getWeekNumber,
+  isoDateOffset,
+} from "@/components/utils/_utils";
 import { useMutation, useQueries, useQuery } from "@tanstack/react-query";
+import { TimeSeriesEntry } from "@/components/utils/_weatherModel";
 
 export interface sportInfo {
   type: string;
@@ -106,6 +111,26 @@ export interface activity {
   icu_training_load: number;
   moving_time: number;
   pace: number;
+  distance: number;
+}
+export function groupByWeek(data: activity[]): activity[][] {
+  let myMap = new Array<Array<activity>>();
+  let index = new Array<number>();
+  data.forEach((d) => {
+    const date = new Date(d.start_date_local);
+    const key = getWeekNumber(date);
+    const i = index.findIndex((k) => k == key);
+    if (i != -1) {
+      const data = myMap[i];
+      if (data != undefined) {
+        myMap[i] = [...data, d];
+      }
+    } else {
+      index = [...index, key];
+      myMap.push([d]);
+    }
+  });
+  return myMap;
 }
 
 export function getActivities(
@@ -132,6 +157,7 @@ export function getActivities(
       enabled: !!apiKey && !!aid,
     },
   );
+  console.log(data);
   return data;
 }
 export interface athlete {
