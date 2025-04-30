@@ -11,10 +11,10 @@ import {
   settings,
   wellness,
 } from "@/components/utils/_fitnessModel";
-import MultiRangeSlider, { ChangeResult } from "multi-range-slider-react";
 import { useStoredKey } from "@/components/utils/_keyContext";
-import { strainMonotony, strainMonotonyList } from "@/app/(tabs)/index";
+import { strainMonotonyList } from "@/app/(tabs)/index";
 import DropDown from "@/components/components/_dropDown";
+import Slider from "@react-native-community/slider";
 
 export function convertToRanges(arr: number[]): Boundaries[] {
   if (arr.length === 0) return [];
@@ -112,6 +112,8 @@ function calculateX1Boundaries(
   // Calculate the boundaries for x1 based on yMin
   const x1MinFromYMin = (yMin - w0 - w2 * x2Max) / w1;
   const x1MaxFromYMin = (yMin - w0 - w2 * x2Min) / w1;
+  const x1MinFromYMin = (yMin - w0 - w2 * x2Max) / w1;
+  const x1MaxFromYMin = (yMin - w0 - w2 * x2Min) / w1;
 
   // Calculate the boundaries for x1 based on yMax
   const x1MinFromYMax = (yMax - w0 - w2 * x2Max) / w1;
@@ -166,12 +168,40 @@ function findDoable(
   };
 }
 
+export function getModel(facts: activity[], vBound: Boundaries): number[] {
+  let filtered = facts
+    .filter((f) => vBound.min < f.pace)
+    .filter((f) => f.pace < vBound.max);
+
+  // ax + cz + b= l
+  // sove for x.
+  // x = (l - cz + b) / a
+  let X = filtered.map((s) => [s.moving_time, s.pace]);
+  let Y = filtered.map((s) => s.icu_training_load);
+  const mlr = new MultivariateLinearRegression();
+  if (X.length == 0 || Y.length == 0) {
+    return [];
+  }
+  console.log(X, Y);
+  mlr.fit(X, Y);
+  return mlr.aweights.map((l) => l[0]);
+}
+
+export function predictTime(w: number[], load: number, pace: number): number {
+  const [w1, w2, w0] = w; // Bias term is last lmao
+  // w1*t + w2*p +w0 = load
+  return (load - w2 * pace - w0) / w1;
+}
+
 export function fitNPred(
   dataWeek: wellness[],
-  facts: activity[],
+  weights: number[],
   vBound: Boundaries,
   lBound: Boundaries,
 ): finalRes[] {
+  if (weights.length == 0) {
+    return [];
+  }
   let load = dataWeek.map((t) => t.ctlLoad).filter((t) => t != undefined);
   let loadRanges = calculateMonotonyLoadRange(
     load,
@@ -186,28 +216,12 @@ export function fitNPred(
   } else {
     lrange = loadRanges;
   }
-  let filtered = facts
-    .filter((f) => vBound.min < f.pace)
-    .filter((f) => f.pace < vBound.max);
-
-  let X = filtered.map((s) => [s.moving_time, s.pace]);
-  let Y = filtered.map((s) => s.icu_training_load);
-  console.log(X);
-  const mlr = new MultivariateLinearRegression();
-  if (X.length == 0 || Y.length == 0) {
-    return [];
-  }
-  console.log(X, Y);
-  mlr.fit(X, Y);
 
   return lrange.map((t) => {
     return {
-      time: calculateX1Boundaries(
-        mlr.aweights.map((l) => l[0]),
-        t,
-        vBound,
-      ),
+      time: calculateX1Boundaries(weights, t, vBound),
       load: t,
+      weights: weights,
     };
   });
 }
@@ -241,14 +255,36 @@ function conv(s: number): number {
   return 1000 / (s * 60); // m/s => m/km
 }
 
+function mpsToSecPerKm(speedMps: number): number {
+  return (1 / speedMps) * 1000;
+}
+
 function convertMStoKMH(metersPerSecond: number): number {
   return metersPerSecond * 3.6;
+}
+
+function estimateRunningTime(
+  settings: settings, // seconds per km
+  pace: number,
+  load: number, // km
+): number {
+  let setting = settings.sportSettings.filter(
+    (t) =>
+      t.types.find((t) => {
+        return t == "Run";
+      }) != null,
+  )[0];
+  let thresholdPace = mpsToSecPerKm(setting.threshold_pace);
+  const timeSeconds =
+    (load / 100 / Math.pow(thresholdPace / mpsToSecPerKm(pace), 2)) * 3600;
+  return timeSeconds;
 }
 
 function dist(s: number, t: number): string {
   t = Math.max(0, t);
   return ((s * t) / 1000).toFixed(2) + " km";
 }
+
 export interface zone {
   label: string;
   value: number;
@@ -257,12 +293,7 @@ export interface zone {
 export default function RunSuggestScreen() {
   const { storedKey, storedAid, storedToken } = useStoredKey();
   const [value, setValue] = useState<zone>({ label: "Zone 1", value: 1 }); // Initialize state for selected value
-  const [range, setRange] = useState<ChangeResult>({
-    min: 0,
-    max: 0,
-    minValue: 1,
-    maxValue: 1.15,
-  }); // Initialize state for selected value
+  const [range, setRange] = useState<number>(1.1);
   const items: zone[] = [
     { label: "Zone 1", value: 0 },
     { label: "Zone 2", value: 1 },
@@ -278,7 +309,7 @@ export default function RunSuggestScreen() {
       </Text>
     );
   }
-  let activities = getActivities(0, 365, storedKey, storedAid);
+  let activities = getActivities(0, 60, storedKey, storedAid);
   const dataLong = getWellnessRange(0, 28, storedKey, storedAid) ?? [];
   const dataWeek = dataLong.slice(dataLong.length - 7);
   const settings = getSettings(storedKey, storedAid);
@@ -311,16 +342,13 @@ export default function RunSuggestScreen() {
       </Text>
     );
   }
-  let neededLoad = findDoable(
-    0,
-    load,
-    tol,
-    7,
-    42,
-    range.minValue,
-    range.maxValue,
-  );
-  let res = fitNPred(dataLong, activities, zone, neededLoad);
+  let neededLoad = findDoable(0, load, tol, 7, 42, 1, 1.25);
+  let model = getModel(activities, zone);
+  let res = fitNPred(dataLong, model, zone, neededLoad);
+  let sload = findDoable(0, load, tol, 7, 42, 1, range).max;
+  let time = predictTime(model, sload, (zone.min + zone.max) / 2);
+  let time2 =
+    estimateRunningTime(settings, (zone.min + zone.max) / 2, sload) / 60 / 60;
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <DropDown
@@ -357,20 +385,27 @@ export default function RunSuggestScreen() {
               </Text>
               <Text>
                 Load: {(load[load.length - 1] / tol[tol.length - 1]).toFixed(2)}{" "}
-                - ({range.minValue}-{range.maxValue})
+                - ({1}-{1.2})
               </Text>
             </>
           );
         })}
       </View>
-      <MultiRangeSlider
-        minValue={1}
-        maxValue={1.15}
-        min={0.8}
-        step={0.01}
-        max={1.3}
-        onChange={setRange}
-      ></MultiRangeSlider>
+      <View style={styles.dcontainerLow}>
+        <Text>Acwr: {range.toFixed(2)}</Text>
+        <Text>Load: {sload.toFixed(2)}</Text>
+        <Text>Time: {hourToString(time / 60 / 60)}</Text>
+        <Text>Distance: {dist((zone.min + zone.max) / 2, time)}</Text>
+        <Slider
+          style={{ width: 400, height: 40 }}
+          minimumValue={1}
+          maximumValue={1.2}
+          value={1.1}
+          minimumTrackTintColor="#000000"
+          maximumTrackTintColor="#FFFFFF"
+          onValueChange={(value) => setRange(value)}
+        />
+      </View>
     </ScrollView>
   );
 }
@@ -395,6 +430,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     zIndex: 1000, // Prioritize dropdown over other content
+    alignSelf: "center", // Ensures centering
+    width: "25%",
+  },
+  dcontainerLow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1, // Prioritize dropdown over other content
     alignSelf: "center", // Ensures centering
     width: "25%",
   },
