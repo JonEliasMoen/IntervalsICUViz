@@ -1,14 +1,11 @@
 import React, { useState } from "react";
 import { Text } from "@/components/Themed";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { hourToString } from "@/components/utils/_utils";
-import { MultivariateLinearRegression } from "@/components/utils/mlr";
+import { hourToString, sLong } from "@/components/utils/_utils";
 import {
-  activity,
-  getActivities,
   getSettings,
   getWellnessRange,
-  settings,
+  SportSettings,
   wellness,
 } from "@/components/utils/_fitnessModel";
 import { useStoredKey } from "@/components/utils/_keyContext";
@@ -62,18 +59,19 @@ type desc = {
 };
 
 function calculateMonotonyLoadRange(
-  past7Days: number[],
+  pastLoad: number[],
   loadBound: Boundaries,
   monoBound: Boundaries,
   strBound: Boundaries,
 ): Boundaries[] {
-  const cLoad = JSON.parse(JSON.stringify(past7Days));
+  const cLoad = JSON.parse(JSON.stringify(pastLoad));
   const today = cLoad[cLoad.length - 1];
   const data: desc[] = [];
 
   for (let i = Math.floor(loadBound.min); i <= Math.ceil(loadBound.max); i++) {
     cLoad[cLoad.length - 1] = today + i;
     let mdata = strainMonotonyList(cLoad);
+    console.log(i, cLoad, mdata);
     data.push({
       load: Math.round(i),
       monotony: mdata.monotony,
@@ -90,7 +88,7 @@ function calculateMonotonyLoadRange(
 }
 
 function calculateX1Boundaries(
-  w: number[],
+  tpace: number,
   y2: Boundaries,
   x2: Boundaries,
 ): Boundaries {
@@ -100,24 +98,18 @@ function calculateX1Boundaries(
       max: 0,
     };
   }
-  const [w1, w2, w0] = w; // Bias term is last lmao
   const yMin = y2.min;
   const yMax = y2.max;
   const x2Min = x2.min;
   const x2Max = x2.max;
-  if (w1 === 0) {
-    throw new Error("w1 cannot be zero to avoid division by zero.");
-  }
 
   // Calculate the boundaries for x1 based on yMin
-  const x1MinFromYMin = (yMin - w0 - w2 * x2Max) / w1;
-  const x1MaxFromYMin = (yMin - w0 - w2 * x2Min) / w1;
-  const x1MinFromYMin = (yMin - w0 - w2 * x2Max) / w1;
-  const x1MaxFromYMin = (yMin - w0 - w2 * x2Min) / w1;
+  const x1MinFromYMin = estimateRunningTime(tpace, x2Max, yMin);
+  const x1MaxFromYMin = estimateRunningTime(tpace, x2Min, yMin);
 
-  // Calculate the boundaries for x1 based on yMax
-  const x1MinFromYMax = (yMax - w0 - w2 * x2Max) / w1;
-  const x1MaxFromYMax = (yMax - w0 - w2 * x2Min) / w1;
+  // Calculate the boundaries for x1 based on yMin
+  const x1MinFromYMax = estimateRunningTime(tpace, x2Max, yMax);
+  const x1MaxFromYMax = estimateRunningTime(tpace, x2Min, yMax);
 
   // Determine the final boundaries
   const x1MinFinal = Math.min(x1MinFromYMin, x1MinFromYMax);
@@ -138,24 +130,24 @@ function findDoable(
   lowerDiscount: number,
   higherDiscount: number,
 ): Boundaries {
+  const lastTol = tol[tol.length - 1];
+  const lastLoad = load[tol.length - 1];
+  const yLoad = load[load.length - 2];
+  const yTol = tol[tol.length - 2];
+
   const alpha = 1 - Math.exp(-Math.log(2) / S);
   const beta = 1 - Math.exp(-Math.log(2) / L);
 
   for (let z = 0; z < dt; z++) {
-    load.push((1 - alpha) * load[load.length - 1]);
-    tol.push((1 - beta) * tol[tol.length - 1]);
+    load.push((1 - alpha) * lastLoad);
+    tol.push((1 - beta) * lastTol);
   }
 
-  const last = load[load.length - 1] / tol[tol.length - 1];
-  const d =
-    ((alpha - 1) * load[load.length - 2] + load[load.length - 1]) / alpha;
+  const d = ((alpha - 1) * yLoad + lastLoad) / alpha;
 
   const res: number[] = [];
   for (const t of [lowerDiscount, higherDiscount]) {
-    let x =
-      alpha * (load[load.length - 2] - d) +
-      t * (beta * d - beta * tol[tol.length - 2] + tol[tol.length - 2]) -
-      load[load.length - 2];
+    let x = alpha * (yLoad - d) + t * (beta * d - beta * yTol + yTol) - yLoad;
     x /= alpha - t * beta;
     res.push(x);
   }
@@ -168,47 +160,20 @@ function findDoable(
   };
 }
 
-export function getModel(facts: activity[], vBound: Boundaries): number[] {
-  let filtered = facts
-    .filter((f) => vBound.min < f.pace)
-    .filter((f) => f.pace < vBound.max);
-
-  // ax + cz + b= l
-  // sove for x.
-  // x = (l - cz + b) / a
-  let X = filtered.map((s) => [s.moving_time, s.pace]);
-  let Y = filtered.map((s) => s.icu_training_load);
-  const mlr = new MultivariateLinearRegression();
-  if (X.length == 0 || Y.length == 0) {
-    return [];
-  }
-  console.log(X, Y);
-  mlr.fit(X, Y);
-  return mlr.aweights.map((l) => l[0]);
-}
-
-export function predictTime(w: number[], load: number, pace: number): number {
-  const [w1, w2, w0] = w; // Bias term is last lmao
-  // w1*t + w2*p +w0 = load
-  return (load - w2 * pace - w0) / w1;
-}
-
 export function fitNPred(
-  dataWeek: wellness[],
-  weights: number[],
+  wellnessData: wellness[],
+  setting: SportSettings,
   vBound: Boundaries,
   lBound: Boundaries,
 ): finalRes[] {
-  if (weights.length == 0) {
-    return [];
-  }
-  let load = dataWeek.map((t) => t.ctlLoad).filter((t) => t != undefined);
+  let load = wellnessData.map((t) => t.ctlLoad).filter((t) => t != undefined);
   let loadRanges = calculateMonotonyLoadRange(
     load,
     lBound,
-    { min: 0, max: 2 },
-    { min: 0, max: 1.3 },
+    { min: 0, max: 99 },
+    { min: 0, max: 99 },
   );
+  console.log(loadRanges);
   console.log(vBound);
   let lrange: Boundaries[];
   if (loadRanges == undefined || loadRanges.length == 0) {
@@ -219,36 +184,26 @@ export function fitNPred(
 
   return lrange.map((t) => {
     return {
-      time: calculateX1Boundaries(weights, t, vBound),
+      time: calculateX1Boundaries(setting.threshold_pace, t, vBound),
       load: t,
-      weights: weights,
     };
   });
 }
 
 // z is like z0, z1 here.
 function specZone(
-  settings: settings,
-  sport: string,
+  setting: SportSettings,
   z: number,
   z2: number = -1,
-): Boundaries | undefined {
-  let setting = settings.sportSettings.filter(
-    (t) =>
-      t.types.find((t) => {
-        return t == sport;
-      }) != null,
-  )[0];
+): Boundaries {
   let zl = z2 == -1 ? z - 1 : z2 - 1;
-  if (setting != null && setting.pace_zones != null) {
-    let zone = setting.pace_zones[z];
-    let zoneL = zl != -1 ? setting.pace_zones[zl] : 50;
-    let tPace = setting?.threshold_pace;
-    return {
-      min: (zoneL / 100) * tPace,
-      max: (zone / 100) * tPace,
-    };
-  }
+  let zone = setting.pace_zones[z];
+  let zoneL = zl != -1 ? setting.pace_zones[zl] : 50;
+  let tPace = setting?.threshold_pace;
+  return {
+    min: (zoneL / 100) * tPace,
+    max: (zone / 100) * tPace,
+  };
 }
 
 function conv(s: number): number {
@@ -264,17 +219,11 @@ function convertMStoKMH(metersPerSecond: number): number {
 }
 
 function estimateRunningTime(
-  settings: settings, // seconds per km
+  tpace: number, // seconds per km
   pace: number,
   load: number, // km
 ): number {
-  let setting = settings.sportSettings.filter(
-    (t) =>
-      t.types.find((t) => {
-        return t == "Run";
-      }) != null,
-  )[0];
-  let thresholdPace = mpsToSecPerKm(setting.threshold_pace);
+  let thresholdPace = mpsToSecPerKm(tpace);
   const timeSeconds =
     (load / 100 / Math.pow(thresholdPace / mpsToSecPerKm(pace), 2)) * 3600;
   return timeSeconds;
@@ -292,6 +241,8 @@ export interface zone {
 
 export default function RunSuggestScreen() {
   const { storedKey, storedAid, storedToken } = useStoredKey();
+  const MAXACWR: number = 1.25;
+
   const [value, setValue] = useState<zone>({ label: "Zone 1", value: 1 }); // Initialize state for selected value
   const [range, setRange] = useState<number>(1.1);
   const items: zone[] = [
@@ -309,15 +260,9 @@ export default function RunSuggestScreen() {
       </Text>
     );
   }
-  let activities = getActivities(0, 60, storedKey, storedAid);
-  const dataLong = getWellnessRange(0, 28, storedKey, storedAid) ?? [];
-  const dataWeek = dataLong.slice(dataLong.length - 7);
+  const dataLong = getWellnessRange(0, sLong, storedKey, storedAid) ?? [];
   const settings = getSettings(storedKey, storedAid);
-  if (
-    dataWeek == undefined ||
-    activities == undefined ||
-    settings == undefined
-  ) {
+  if (dataLong == undefined || settings == undefined) {
     return (
       <Text>
         {storedKey}
@@ -325,16 +270,14 @@ export default function RunSuggestScreen() {
       </Text>
     );
   }
-  activities = activities.filter((s) => s.type == "Run");
 
-  let tol = dataWeek.map((s) => s.ctl);
-  let load = dataWeek.map((s) => s.atl);
-  console.log(value);
-  let zoneNr = value.value ?? 0;
-  console.log(value.value, zoneNr);
-  let zone = specZone(settings, "Run", zoneNr);
-
-  if (zone == undefined) {
+  let runsetting = settings.sportSettings.filter(
+    (t) =>
+      t.types.find((t) => {
+        return t == "Run";
+      }) != null,
+  )[0];
+  if (runsetting == undefined) {
     return (
       <Text>
         This page does not work without pace zones in intervals.icu settings for
@@ -342,13 +285,19 @@ export default function RunSuggestScreen() {
       </Text>
     );
   }
-  let neededLoad = findDoable(0, load, tol, 7, 42, 1, 1.25);
-  let model = getModel(activities, zone);
-  let res = fitNPred(dataLong, model, zone, neededLoad);
+  console.log(value);
+  let zoneNr = value.value ?? 0;
+  console.log(value.value, zoneNr);
+  let zone = specZone(runsetting, zoneNr);
+
+  let tol = dataLong.map((s) => s.ctl);
+  let load = dataLong.map((s) => s.atl);
+  let neededLoad = findDoable(0, load, tol, 7, 42, 1, MAXACWR);
+  let res = fitNPred(dataLong, runsetting, zone, neededLoad);
   let sload = findDoable(0, load, tol, 7, 42, 1, range).max;
-  let time = predictTime(model, sload, (zone.min + zone.max) / 2);
-  let time2 =
-    estimateRunningTime(settings, (zone.min + zone.max) / 2, sload) / 60 / 60;
+  let middlePace = (zone.min + zone.max) / 2;
+  let time =
+    estimateRunningTime(runsetting.threshold_pace, middlePace, sload) / 60 / 60;
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <DropDown
@@ -385,7 +334,7 @@ export default function RunSuggestScreen() {
               </Text>
               <Text>
                 Load: {(load[load.length - 1] / tol[tol.length - 1]).toFixed(2)}{" "}
-                - ({1}-{1.2})
+                - ({1}-{MAXACWR})
               </Text>
             </>
           );
@@ -394,12 +343,12 @@ export default function RunSuggestScreen() {
       <View style={styles.dcontainerLow}>
         <Text>Acwr: {range.toFixed(2)}</Text>
         <Text>Load: {sload.toFixed(2)}</Text>
-        <Text>Time: {hourToString(time / 60 / 60)}</Text>
-        <Text>Distance: {dist((zone.min + zone.max) / 2, time)}</Text>
+        <Text>Time: {hourToString(time)}</Text>
+        <Text>Distance: {dist(middlePace, time * 3600)}</Text>
         <Slider
           style={{ width: 400, height: 40 }}
           minimumValue={1}
-          maximumValue={1.2}
+          maximumValue={MAXACWR}
           value={1.1}
           minimumTrackTintColor="#000000"
           maximumTrackTintColor="#FFFFFF"
