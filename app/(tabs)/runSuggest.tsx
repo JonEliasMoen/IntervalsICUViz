@@ -9,7 +9,7 @@ import {
   wellness,
 } from "@/components/utils/_fitnessModel";
 import { useStoredKey } from "@/components/utils/_keyContext";
-import { strainMonotonyList } from "@/app/(tabs)/index";
+import { strainMonotony, strainMonotonyList } from "@/app/(tabs)/index";
 import DropDown from "@/components/components/_dropDown";
 import Slider from "@react-native-community/slider";
 
@@ -58,25 +58,34 @@ type desc = {
   acwr: number;
 };
 
+const MAXACWR: number = 1.25;
+const MAXMONOTONY: number = 1.5;
+const MINMONOTONY: number = 1;
+const MAXSTRAINACWR: number = 1.5;
+const MINSTRAINACWR: number = 1.1;
+const SHORT = 7;
+const LONG = 42;
+
+function getStrainMonFromLoad(pastLoad: number[], load: number) {
+  const cLoad = JSON.parse(JSON.stringify(pastLoad));
+  cLoad[cLoad.length - 1] += load;
+  const mData = strainMonotonyList(cLoad);
+  return {
+    load: Math.round(load),
+    monotony: mData.monotony,
+    acwr: mData.acwr,
+  };
+}
+
 function calculateMonotonyLoadRange(
   pastLoad: number[],
   loadBound: Boundaries,
   monoBound: Boundaries,
   strBound: Boundaries,
 ): Boundaries[] {
-  const cLoad = JSON.parse(JSON.stringify(pastLoad));
-  const today = cLoad[cLoad.length - 1];
   const data: desc[] = [];
-
   for (let i = Math.floor(loadBound.min); i <= Math.ceil(loadBound.max); i++) {
-    cLoad[cLoad.length - 1] = today + i;
-    let mdata = strainMonotonyList(cLoad);
-    console.log(i, cLoad, mdata);
-    data.push({
-      load: Math.round(i),
-      monotony: mdata.monotony,
-      acwr: mdata.acwr,
-    });
+    data.push(getStrainMonFromLoad(pastLoad, i));
   }
   console.log(data);
   const loads = data
@@ -87,37 +96,37 @@ function calculateMonotonyLoadRange(
   return convertToRanges(loads);
 }
 
-function calculateX1Boundaries(
+function calculateTimeBoundary(
   tpace: number,
-  y2: Boundaries,
-  x2: Boundaries,
+  load: Boundaries,
+  pace: Boundaries,
 ): Boundaries {
-  if (y2 == undefined) {
+  if (load == undefined) {
     return {
       min: 0,
       max: 0,
     };
   }
-  const yMin = y2.min;
-  const yMax = y2.max;
-  const x2Min = x2.min;
-  const x2Max = x2.max;
+  const lMin = load.min;
+  const lMax = load.max;
+  const pMin = pace.min;
+  const pMax = pace.max;
 
-  // Calculate the boundaries for x1 based on yMin
-  const x1MinFromYMin = estimateRunningTime(tpace, x2Max, yMin);
-  const x1MaxFromYMin = estimateRunningTime(tpace, x2Min, yMin);
+  // Calculate the boundaries for t based on lmin
+  const tMinFromlMin = estimateRunningTime(tpace, pMax, lMin);
+  const tMaxFromlMin = estimateRunningTime(tpace, pMin, lMin);
 
-  // Calculate the boundaries for x1 based on yMin
-  const x1MinFromYMax = estimateRunningTime(tpace, x2Max, yMax);
-  const x1MaxFromYMax = estimateRunningTime(tpace, x2Min, yMax);
+  // Calculate the boundaries for t based on lmin
+  const tMinFromlMax = estimateRunningTime(tpace, pMax, lMax);
+  const tMaxFromlMax = estimateRunningTime(tpace, pMin, lMax);
 
   // Determine the final boundaries
-  const x1MinFinal = Math.min(x1MinFromYMin, x1MinFromYMax);
-  const x1MaxFinal = Math.max(x1MaxFromYMin, x1MaxFromYMax);
+  const tMinFinal = Math.min(tMinFromlMin, tMinFromlMax);
+  const tMaxFinal = Math.max(tMaxFromlMin, tMaxFromlMax);
 
   return {
-    min: Math.max(x1MinFinal, 0),
-    max: Math.max(x1MaxFinal, 0),
+    min: Math.max(tMinFinal, 0),
+    max: Math.max(tMaxFinal, 0),
   };
 }
 
@@ -125,11 +134,11 @@ function findDoable(
   dt: number,
   load: number[],
   tol: number[],
-  S: number,
-  L: number,
   lowerDiscount: number,
   higherDiscount: number,
 ): Boundaries {
+  const S = SHORT;
+  const L = LONG;
   const lastTol = tol[tol.length - 1];
   const lastLoad = load[tol.length - 1];
   const yLoad = load[load.length - 2];
@@ -170,8 +179,8 @@ export function fitNPred(
   let loadRanges = calculateMonotonyLoadRange(
     load,
     lBound,
-    { min: 0, max: 99 },
-    { min: 0, max: 99 },
+    { min: MINMONOTONY, max: MAXMONOTONY },
+    { min: MINSTRAINACWR, max: MAXSTRAINACWR },
   );
   console.log(loadRanges);
   console.log(vBound);
@@ -184,7 +193,7 @@ export function fitNPred(
 
   return lrange.map((t) => {
     return {
-      time: calculateX1Boundaries(setting.threshold_pace, t, vBound),
+      time: calculateTimeBoundary(setting.threshold_pace, t, vBound),
       load: t,
     };
   });
@@ -241,7 +250,6 @@ export interface zone {
 
 export default function RunSuggestScreen() {
   const { storedKey, storedAid, storedToken } = useStoredKey();
-  const MAXACWR: number = 1.25;
 
   const [value, setValue] = useState<zone>({ label: "Zone 1", value: 1 }); // Initialize state for selected value
   const [range, setRange] = useState<number>(1.1);
@@ -262,7 +270,7 @@ export default function RunSuggestScreen() {
   }
   const dataLong = getWellnessRange(0, sLong, storedKey, storedAid) ?? [];
   const settings = getSettings(storedKey, storedAid);
-  if (dataLong == undefined || settings == undefined) {
+  if (dataLong == undefined || settings == undefined || dataLong.length == 0) {
     return (
       <Text>
         {storedKey}
@@ -292,12 +300,17 @@ export default function RunSuggestScreen() {
 
   let tol = dataLong.map((s) => s.ctl);
   let load = dataLong.map((s) => s.atl);
-  let neededLoad = findDoable(0, load, tol, 7, 42, 1, MAXACWR);
+  let neededLoad = findDoable(0, load, tol, 1, MAXACWR);
   let res = fitNPred(dataLong, runsetting, zone, neededLoad);
-  let sload = findDoable(0, load, tol, 7, 42, 1, range).max;
+  let sload = findDoable(0, load, tol, 1, range).max;
   let middlePace = (zone.min + zone.max) / 2;
   let time =
     estimateRunningTime(runsetting.threshold_pace, middlePace, sload) / 60 / 60;
+  let smon = getStrainMonFromLoad(
+    dataLong.map((t) => t.ctlLoad).filter((t) => t != undefined),
+    sload,
+  );
+  let cStrain = strainMonotony(dataLong);
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <DropDown
@@ -332,18 +345,33 @@ export default function RunSuggestScreen() {
               <Text>
                 LoadRange: {t.load.min} - {t.load.max}
               </Text>
-              <Text>
-                Load: {(load[load.length - 1] / tol[tol.length - 1]).toFixed(2)}{" "}
-                - ({1}-{MAXACWR})
-              </Text>
             </>
           );
         })}
       </View>
       <View style={styles.dcontainerLow}>
+        <Text>
+          Current acwr:{" "}
+          {(load[load.length - 1] / tol[tol.length - 1]).toFixed(2)} - ({1}-
+          {MAXACWR})
+        </Text>
+        <Text>
+          Current strain acwr: {cStrain.acwr.toFixed(2)} - ({MINSTRAINACWR}-
+          {MAXSTRAINACWR})
+        </Text>
+        <Text>
+          Current monotony: {cStrain.monotony.toFixed(2)} - ({MINMONOTONY}-
+          {MAXMONOTONY})
+        </Text>
         <Text>Acwr: {range.toFixed(2)}</Text>
         <Text>Load: {sload.toFixed(2)}</Text>
         <Text>Time: {hourToString(time)}</Text>
+        <Text>
+          Strain acwr: {smon.acwr.toFixed(2)} ({MINSTRAINACWR}-{MAXSTRAINACWR})
+        </Text>
+        <Text>
+          Monotony: {smon.monotony.toFixed(2)} ({MINMONOTONY}-{MAXMONOTONY})
+        </Text>
         <Text>Distance: {dist(middlePace, time * 3600)}</Text>
         <Slider
           style={{ width: 400, height: 40 }}
