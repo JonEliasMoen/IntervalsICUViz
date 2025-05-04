@@ -4,7 +4,6 @@ import {
   isoDateOffset,
 } from "@/components/utils/_utils";
 import { useMutation, useQueries, useQuery } from "@tanstack/react-query";
-import { TimeSeriesEntry } from "@/components/utils/_weatherModel";
 
 export interface sportInfo {
   type: string;
@@ -23,11 +22,39 @@ export interface wellness {
   ctlLoad: number;
   sleepScore: number;
   vo2max: number;
+
   [key: string]: any; // This allows for any other unknown properties
+}
+
+export interface newEx {
+  start_date_local: string; // "2025-05-04T00:00:00"
+  type: "Run";
+  athlete_id: string;
+  category: "WORKOUT";
+  name: string;
+  description: string;
+}
+
+export function newExMutation(apiKey: String) {
+  return useMutation(async (ex: newEx): Promise<any> => {
+    const response = await fetch(
+      `https://intervals.icu/api/v1/athlete/${ex.athlete_id}/events`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(ex),
+      },
+    );
+    if (!response.ok) throw new Error("Failed to fetch refresh token");
+  });
 }
 
 export interface settings {
   sportSettings: SportSettings[];
+
   [key: string]: any; // This allows for any other unknown properties
 }
 
@@ -113,6 +140,7 @@ export interface activity {
   pace: number;
   distance: number;
 }
+
 export function groupByWeek(data: activity[]): activity[][] {
   let myMap = new Array<Array<activity>>();
   let index = new Array<number>();
@@ -160,10 +188,13 @@ export function getActivities(
   console.log(data);
   return data;
 }
+
 export interface athlete {
   profile: string;
+
   [key: string]: any;
 }
+
 export interface tokenResponse {
   token_type: string;
   access_token: string;
@@ -176,6 +207,7 @@ export interface tokenResponse {
 export interface stream {
   [key: string]: sData;
 }
+
 export interface sData {
   data: number[];
   series_type: string;

@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { Text } from "@/components/Themed";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { Button, ScrollView, StyleSheet, View } from "react-native";
 import { hourToString, sLong } from "@/components/utils/_utils";
 import {
   getSettings,
   getWellnessRange,
+  newEx,
+  newExMutation,
   SportSettings,
   wellness,
 } from "@/components/utils/_fitnessModel";
@@ -238,9 +240,13 @@ function estimateRunningTime(
   return timeSeconds;
 }
 
-function dist(s: number, t: number): string {
+function distN(s: number, t: number): number {
   t = Math.max(0, t);
-  return ((s * t) / 1000).toFixed(2) + " km";
+  return (s * t) / 1000;
+}
+
+function dist(s: number, t: number): string {
+  return distN(s, t).toFixed(2) + " km";
 }
 
 export interface zone {
@@ -253,6 +259,31 @@ export default function RunSuggestScreen() {
 
   const [value, setValue] = useState<zone>({ label: "Zone 1", value: 1 }); // Initialize state for selected value
   const [range, setRange] = useState<number>(1.1);
+
+  const { mutate, isLoading, error } = newExMutation(storedKey);
+  const newEx = (zone: number, distance: number) => {
+    const todayMidnight = new Date();
+    todayMidnight.setHours(0, 0, 0, 0);
+
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0"); // Months are 0-based
+    const day = String(today.getDate()).padStart(2, "0");
+    const date = `${year}-${month}-${day}`;
+    const localMidnightString = `${date}T00:00:00`;
+
+    const d = Math.round(distance);
+    const ex: string = `-${d}km Z${zone} Power`;
+    const nex: newEx = {
+      start_date_local: localMidnightString,
+      athlete_id: storedAid,
+      name: `${d}km Z${zone} ${date}`,
+      description: ex,
+      type: "Run",
+      category: "WORKOUT",
+    };
+    mutate(nex);
+  };
   const items: zone[] = [
     { label: "Zone 1", value: 0 },
     { label: "Zone 2", value: 1 },
@@ -381,6 +412,10 @@ export default function RunSuggestScreen() {
           minimumTrackTintColor="#000000"
           maximumTrackTintColor="#FFFFFF"
           onValueChange={(value) => setRange(value)}
+        />
+        <Button
+          title={"Post workout"}
+          onPress={() => newEx(zoneNr + 1, distN(middlePace, time * 3600))}
         />
       </View>
     </ScrollView>
