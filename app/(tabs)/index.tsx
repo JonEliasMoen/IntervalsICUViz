@@ -3,7 +3,6 @@ import { Text } from "@/components/Themed";
 import ChartComponent from "@/components/components/_chatComp";
 import React from "react";
 import { mean, standardDeviation } from "simple-statistics";
-import quantile from "@stdlib/stats-base-dists-normal-quantile";
 import { hourToString, sLong, sShort } from "@/components/utils/_utils";
 import { useStoredKey } from "@/components/utils/_keyContext";
 import {
@@ -35,12 +34,14 @@ export function wattPer(t: "Run" | "Ride", data: wellness[]): wattResult {
     title: text,
   };
 }
+
 interface strainMonotony {
   monotony: number;
   acwr: number;
   strain: number;
   strainL: number;
 }
+
 export function strainMonotony(data: wellness[]): strainMonotony {
   let length = 7;
   let load = data.map((t) => t.ctlLoad).filter((t) => t != undefined);
@@ -59,6 +60,7 @@ export function strainMonotony(data: wellness[]): strainMonotony {
     strainL: strainL,
   };
 }
+
 export function strainMonotonyList(load: number[]): strainMonotony {
   let monotony =
     mean(load.slice(load.length - sShort)) /
@@ -75,27 +77,19 @@ export function strainMonotonyList(load: number[]): strainMonotony {
     strainL: strainL,
   };
 }
+
 export function groupbyWeekDistance(acts: activity[], sport: string): number[] {
   let facts = acts.filter((t) => t.type == sport);
   let wacts = groupByWeek(facts);
-  /*  let test = wacts
-    .map((t) =>
-      t
-        .map((a) => {
-          return a.distance / 1000;
-        })
-        .reduce((a, b) => a + b),
-    )
-    .map((t, i, a) => t / (a[i + 1] ?? 1));
-  console.log("test", test.slice(0, test.length - 1));
-  return test;*/
-  return wacts.map((t) =>
+  let distances = wacts.map((t) =>
     t
       .map((a) => {
         return a.distance / 1000;
       })
       .reduce((a, b) => a + b),
   );
+
+  return distances;
 }
 
 export default function TabOneScreen() {
@@ -114,7 +108,7 @@ export default function TabOneScreen() {
   if (acts == undefined) {
     return <Text>Loading</Text>;
   }
-  let distances = groupbyWeekDistance(acts, "Run").slice(0, 3);
+  let distances = groupbyWeekDistance(acts, "Run");
   let sAcwr = strainMonotony(dataLong.slice(dataLong.length - 28));
   let acwr = dataLong.map((t) => t.atl / t.ctl);
 
@@ -207,41 +201,41 @@ export default function TabOneScreen() {
         ]}
         transform={(n) => n / 3}
       />
-      <ChartComponentQuantile
-        title={"Distance running"}
-        values={distances}
-        progress={distances[0]}
+      <ChartComponent
+        title={"Weekly running distance"}
+        subtitle={"Last week: " + distances[1].toFixed(2) + "km"}
+        progress={distances[0] / distances[1]}
         zones={[
-          // Low weekly distance -> bad (red)
-          { text: "Low", startVal: 0, endVal: 0.2, color: "#D627284D" },
-
-          // Below average -> not great (orange)
           {
-            text: "Below Average",
-            startVal: 0.2,
-            endVal: 0.4,
+            text: "Low",
+            startVal: 0,
+            endVal: 0.8,
+            color: "#1F77B44D",
+          },
+          {
+            text: "Optimal",
+            startVal: 0.8,
+            endVal: 1.3,
+            color: "#009E0066",
+          },
+          {
+            text: "High",
+            startVal: 1.3,
+            endVal: 1.5,
             color: "#FFCB0E80",
           },
-
-          // Normal -> okay/good (light green)
           {
-            text: "Normal",
-            startVal: 0.4,
-            endVal: 0.7,
-            color: "#009E0066",
-            normal: true,
+            text: "Very high",
+            startVal: 1.5,
+            endVal: 2,
+            color: "#D627284D",
           },
-
-          // High -> better (green)
-          { text: "High", startVal: 0.7, endVal: 0.9, color: "#FFCB0E80" },
-
-          // Very High -> very good, but could also be caution if *extreme*
-          { text: "Very High", startVal: 0.9, endVal: 1, color: "#D627284D" }, // dark green
         ]}
-        indicatorTextTransform={(t, q) =>
-          t.toFixed(2) + "km " + Math.round(q * 100) + "%"
-        }
-      ></ChartComponentQuantile>
+        indicatorTextTransform={(t: number) => {
+          return distances[0].toFixed(2) + "km " + t.toFixed(2);
+        }}
+        transform={(n) => n / 2.0}
+      ></ChartComponent>
       <ChartComponent
         title={"Strain ACWR"}
         progress={sAcwr.acwr}

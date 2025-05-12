@@ -90,10 +90,16 @@ function calculateMonotonyLoadRange(
     data.push(getStrainMonFromLoad(pastLoad, i));
   }
   console.log(data);
-  const loads = data
+  var loads = data
     .filter((t) => t.monotony < monoBound.max && t.monotony > monoBound.min)
     .filter((t) => t.acwr < strBound.max && t.acwr > strBound.min)
     .map((t) => t.load);
+  if (loads.length == 0) {
+    loads = data
+      .filter((t) => t.monotony < monoBound.max)
+      .filter((t) => t.acwr < strBound.max)
+      .map((t) => t.load);
+  }
   console.log(loads);
   return convertToRanges(loads);
 }
