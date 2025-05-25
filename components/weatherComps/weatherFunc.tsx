@@ -1,6 +1,7 @@
 import {
   InstantDetails,
   TimeSeriesEntry,
+  TimeseriesWater,
 } from "@/components/utils/_weatherModel";
 
 function toFahrenheit(C: number): number {
@@ -72,6 +73,7 @@ function windIndex(T: number[], V: number[]): number[] {
 
   return res;
 }
+
 interface result {
   current: number;
   low: number;
@@ -79,6 +81,7 @@ interface result {
   nightlength: number;
   difference: number;
 }
+
 export function sunSinus(t: number, sunrise: number, sunset: number): result {
   let daylength = sunset - sunrise;
   let daySeconds = 3600 * 24;
@@ -96,6 +99,7 @@ export function sunSinus(t: number, sunrise: number, sunset: number): result {
     difference: difference,
   };
 }
+
 export function groupByDay(data: TimeSeriesEntry[]) {
   let myMap = new Array<Array<TimeSeriesEntry>>();
   let index = new Array<number>();
@@ -115,6 +119,27 @@ export function groupByDay(data: TimeSeriesEntry[]) {
   });
   return myMap;
 }
+
+export function groupByDayWater(data: TimeseriesWater[]): TimeseriesWater[][] {
+  let myMap = new Array<Array<TimeseriesWater>>();
+  let index = new Array<number>();
+  data.forEach((d) => {
+    const date = new Date(d.time);
+    const key = date.getDate();
+    const i = index.findIndex((k) => k == key);
+    if (i != -1) {
+      const data = myMap[i];
+      if (data != undefined) {
+        myMap[i] = [...data, d];
+      }
+    } else {
+      index = [...index, key];
+      myMap.push([d]);
+    }
+  });
+  return myMap;
+}
+
 export function feelTempNow(i: InstantDetails): number {
   return feelTemp(
     [i.air_temperature],
@@ -122,6 +147,7 @@ export function feelTempNow(i: InstantDetails): number {
     [i.relative_humidity],
   )[0];
 }
+
 export function feelTempArray(data: TimeSeriesEntry[]): number[] {
   return feelTemp(
     data.map((t) => t.data.instant.details.air_temperature),

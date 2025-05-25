@@ -1,11 +1,15 @@
 import {
-  FeatureWaterTempLocation,
-  getWaterTemp,
+  getSeaInfo,
   getWeather,
   TimeSeriesEntry,
+  TimeseriesWater,
 } from "@/components/utils/_weatherModel";
 import { Text } from "@/components/Themed";
 import { StyleSheet, View } from "react-native";
+import {
+  groupByDay,
+  groupByDayWater,
+} from "@/components/weatherComps/weatherFunc";
 
 interface kayakRes {
   date: Date;
@@ -18,19 +22,17 @@ interface kayakRes {
 function isOkKayak(
   t: TimeSeriesEntry,
   i: number,
-  wdata: FeatureWaterTempLocation,
+  wdata: TimeseriesWater[],
 ): kayakRes | undefined {
   const wind =
     t.data.instant.details.wind_speed < 5 &&
     t.data.instant.details.wind_speed_of_gust < 8;
-  const hour = new Date(t.time).getHours();
-  const okhour = hour < 22 && hour > 16;
-  const wave = wdata?.properties.timeseries[i];
+  const wave = wdata[i];
   const height = wave?.data.instant.details.sea_surface_wave_height;
   const okHeight = height < 0.5;
   const rain: number = t.data.next_1_hours?.details.precipitation_amount ?? 99;
-  const okRain = rain < 0.1;
-  if (okHeight && okhour && wind && okRain) {
+  const okRain = rain < 1;
+  if (okHeight && wind && okRain) {
     return {
       date: new Date(t.time),
       wind: t.data.instant.details.wind_speed,
@@ -48,42 +50,39 @@ export function KayakLocation(props: {
   dayOffset: number;
 }) {
   const data = getWeather(props.lat, props.long);
-  const wdata = getWaterTemp(props.lat, props.long);
-
+  const wdata = getSeaInfo(props.lat, props.long);
   if (data == undefined || wdata == undefined) {
     return <></>;
   }
-  let ok: kayakRes[] = [];
-  data.properties.timeseries.forEach((t, i) => {
-    let data = isOkKayak(t, i, wdata);
+  const dayMapw = groupByDayWater(wdata.properties.timeseries);
+  const todayw = dayMapw[props.dayOffset];
+
+  const dayMap = groupByDay(data.properties.timeseries);
+  const today = dayMap[props.dayOffset];
+
+  let result: kayakRes[] = [];
+  today.forEach((t, i) => {
+    let data = isOkKayak(t, i, todayw);
     if (data != undefined) {
-      ok.push(data);
+      result.push(data);
     }
   });
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.statusText}>Kayak windows</Text>
-
-      <View style={styles.row}>
-        <Text style={styles.dateCellHeader}>Date</Text>
-        <Text style={styles.cellHeader}>Wind</Text>
-        <Text style={styles.cellHeader}>Gust</Text>
-        <Text style={styles.cellHeader}>Wave</Text>
-        <Text style={styles.cellHeader}>Rain</Text>
-      </View>
-
-      {ok.map((t, i) => (
-        <View key={i} style={styles.row}>
-          <Text style={styles.dateCell}>
-            {t.date.toISOString().slice(0, 1)}
-          </Text>
-          <Text style={styles.cell}>{t.wind}</Text>
-          <Text style={styles.cell}>{t.gust}</Text>
-          <Text style={styles.cell}>{t.height}</Text>
-          <Text style={styles.cell}>{t.rain}</Text>
-        </View>
-      ))}
+    <View style={[styles.container]}>
+      {result.length > 0 && (
+        <>
+          <Text style={styles.statusText}>Kayak windows</Text>
+          {result.map((t) => {
+            return (
+              <Text>
+                {t.date.getHours() + ":00"} w {t.wind} g {t.gust} h {t.height} r{" "}
+                {t.rain}
+              </Text>
+            );
+          })}
+        </>
+      )}
     </View>
   );
 }
@@ -91,42 +90,14 @@ export function KayakLocation(props: {
 const styles = StyleSheet.create({
   container: {
     alignItems: "center",
-    padding: 10,
-  },
-  row: {
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderColor: "#ccc",
-    alignItems: "center",
-    paddingVertical: 4,
-  },
-  dateCellHeader: {
-    flex: 2,
-    fontWeight: "bold",
-    textAlign: "left",
-    paddingHorizontal: 4,
-  },
-  cellHeader: {
-    flex: 1,
-    fontWeight: "bold",
-    textAlign: "center",
-    paddingHorizontal: 4,
-  },
-  dateCell: {
-    flex: 2,
-    textAlign: "left",
-    paddingHorizontal: 4,
-    fontFamily: "monospace",
-  },
-  cell: {
-    flex: 1,
-    textAlign: "center",
-    paddingHorizontal: 4,
-    fontFamily: "monospace",
+    justifyContent: "center",
+    padding: 0,
+    margin: 0,
+    paddingRight: 0,
   },
   statusText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
-    marginBottom: 8,
+    marginBottom: 0, // Adds space between text and bar
   },
 });

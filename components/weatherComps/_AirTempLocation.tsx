@@ -19,7 +19,7 @@ function getRain(t: TimeSeriesEntry): PrecipationDetails | undefined {
   return t.data.next_1_hours?.details;
 }
 
-function stats(values: number[] | undefined) {
+export function stats(values: number[] | undefined) {
   const data = values ?? [10, 20];
   return [Math.min(...data), mean(data), Math.max(...data)];
 }
@@ -155,7 +155,7 @@ export function AirTempLocation(props: {
       color: colorsw[i],
     };
   });
-
+  console.log(props.dayOffset, wind2[0]);
   return (
     <>
       <ChartComponentRange
@@ -186,6 +186,7 @@ export function AirTempLocation(props: {
       ></ChartComponentRange>
       <ChartComponentRange
         title={"Avg wind gale"}
+        display={() => props.dayOffset < 3}
         progressFrom={wind2[0]}
         progressValue={wind2[1]}
         progressTo={wind2[2]}

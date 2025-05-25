@@ -15,8 +15,6 @@ import { dateOffset } from "@/components/utils/_utils";
 import { KayakLocation } from "@/components/weatherComps/_Kayak";
 
 export default function WeatherScreen() {
-  const [value, setValue] = useState<number>(0); // Initialize state for selected value
-  const [open, setOpen] = useState(false); // State for dropdown visibility
   let locationMap: location[] = [
     {
       label: "Grillstad",
@@ -136,27 +134,27 @@ export default function WeatherScreen() {
         text={"Select a location"}
       ></DropDown>
       <PressureLocation lat={loc.lat} long={loc.long}></PressureLocation>
-      <SunRiseSetLocation
-        lat={loc.lat}
-        long={loc.long}
-        now={now}
-      ></SunRiseSetLocation>
-      <TideLocation lat={loc.lat} long={loc.long} now={now}></TideLocation>
-      <BrightnessLocation
-        lat={loc.lat}
-        long={loc.long}
-        dayOffset={offset}
-      ></BrightnessLocation>
-      <AirTempLocation
-        lat={loc.lat}
-        long={loc.long}
-        dayOffset={offset}
-      ></AirTempLocation>
       <KayakLocation
         lat={loc.lat}
         long={loc.long}
         dayOffset={offset}
       ></KayakLocation>
+      <SunRiseSetLocation
+        lat={loc.lat}
+        long={loc.long}
+        now={now}
+      ></SunRiseSetLocation>
+      <AirTempLocation
+        lat={loc.lat}
+        long={loc.long}
+        dayOffset={offset}
+      ></AirTempLocation>
+      <BrightnessLocation
+        lat={loc.lat}
+        long={loc.long}
+        dayOffset={offset}
+      ></BrightnessLocation>
+      <TideLocation lat={loc.lat} long={loc.long} now={now}></TideLocation>
 
       {loc.snowPlace?.map((t) => {
         return <SnowDepthLocation loc={t}></SnowDepthLocation>;
@@ -164,6 +162,7 @@ export default function WeatherScreen() {
       <SeaWaterTempLocation
         lat={loc.lat}
         long={loc.long}
+        dayOffset={offset}
       ></SeaWaterTempLocation>
       <HayfeverLocation lat={loc.lat} long={loc.long}></HayfeverLocation>
     </ScrollView>

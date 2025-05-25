@@ -160,7 +160,7 @@ interface Geometry {
 
 interface Properties {
   meta: Meta;
-  timeseries: Timeseries[];
+  timeseries: TimeseriesWater[];
 }
 
 interface Meta {
@@ -176,7 +176,7 @@ interface Units {
   sea_water_to_direction: "degrees";
 }
 
-interface Timeseries {
+export interface TimeseriesWater {
   time: string; // ISO date string
   data: Data;
 }
@@ -197,7 +197,7 @@ interface Details {
   sea_water_to_direction: number;
 }
 
-export function getWaterTemp(
+export function getSeaInfo(
   lat: number,
   long: number,
 ): FeatureWaterTempLocation | undefined {
