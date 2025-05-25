@@ -1,25 +1,33 @@
-import { Button, ScrollView, StyleSheet, View } from "react-native";
+import { Button, ScrollView, StyleSheet } from "react-native";
 import { SnowDepthLocation } from "@/components/weatherComps/_SnowDepthLocation";
 import { HayfeverLocation } from "@/components/weatherComps/_HayfeverLocation";
 import { SeaWaterTempLocation } from "@/components/weatherComps/_SeaWaterTempLocation";
 import { AirTempLocation } from "@/components/weatherComps/_AirTempLocation";
 import { TideLocation } from "@/components/weatherComps/_TideLocation";
-import DropDownPicker from "react-native-dropdown-picker";
 import React, { useEffect, useState } from "react";
 import { SunRiseSetLocation } from "@/components/weatherComps/_SunRiseSetLocation";
-import { getWeather, location } from "@/components/utils/_weatherModel";
+import { location } from "@/components/utils/_weatherModel";
 import { BrightnessLocation } from "@/components/weatherComps/_BrightnessLocation";
 import { PressureLocation } from "@/components/weatherComps/_PressureLocation";
 import DropDown from "@/components/components/_dropDown";
 import { Text } from "@/components/Themed";
 import { dateOffset } from "@/components/utils/_utils";
+import { KayakLocation } from "@/components/weatherComps/_Kayak";
+
 export default function WeatherScreen() {
   const [value, setValue] = useState<number>(0); // Initialize state for selected value
   const [open, setOpen] = useState(false); // State for dropdown visibility
   let locationMap: location[] = [
     {
-      label: "Trondheim",
+      label: "Grillstad",
       value: 0,
+      lat: 63.4394093,
+      long: 10.5039971,
+      snowPlace: [],
+    },
+    {
+      label: "Trondheim",
+      value: 1,
       lat: 63.446827,
       long: 10.421906,
       snowPlace: [
@@ -55,7 +63,7 @@ export default function WeatherScreen() {
     },
     {
       label: "Oslo",
-      value: 1,
+      value: 2,
       lat: 59.9139,
       long: 10.7522,
       snowPlace: [
@@ -114,7 +122,6 @@ export default function WeatherScreen() {
   const dec = () => {
     barrier(offset - 1);
   };
-  console.log(offset);
 
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
@@ -145,6 +152,11 @@ export default function WeatherScreen() {
         long={loc.long}
         dayOffset={offset}
       ></AirTempLocation>
+      <KayakLocation
+        lat={loc.lat}
+        long={loc.long}
+        dayOffset={offset}
+      ></KayakLocation>
 
       {loc.snowPlace?.map((t) => {
         return <SnowDepthLocation loc={t}></SnowDepthLocation>;

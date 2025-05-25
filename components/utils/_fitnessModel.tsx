@@ -20,6 +20,7 @@ export interface wellness {
   weight: number;
   sportInfo: sportInfo[];
   ctlLoad: number;
+  atlLoad: number;
   sleepScore: number;
   vo2max: number;
 

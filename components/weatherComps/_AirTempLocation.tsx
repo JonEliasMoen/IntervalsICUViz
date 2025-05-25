@@ -3,7 +3,6 @@ import { ChartComponent, zone } from "@/components/components/_chatComp";
 import { mean } from "simple-statistics";
 import { generateGradient } from "typescript-color-gradient";
 import {
-  feelTemp,
   feelTempArray,
   feelTempNow,
   groupByDay,
@@ -15,7 +14,6 @@ import {
   TimeSeriesEntry,
 } from "@/components/utils/_weatherModel";
 import ChartComponentRange from "@/components/components/_chatCompRange";
-import ddDown from "@/components/components/_ddDown";
 
 function getRain(t: TimeSeriesEntry): PrecipationDetails | undefined {
   return t.data.next_1_hours?.details;
@@ -52,6 +50,7 @@ function getFeltTempArrayMapped(data: TimeSeriesEntry[]) {
 
   return [feltTemp, sfeltTemp, forecast];
 }
+
 export function AirTempLocation(props: {
   lat: number;
   long: number;
@@ -71,7 +70,6 @@ export function AirTempLocation(props: {
   const zonesFF = dayMap.map((k, i) => {
     const fData = getFeltTempArrayMapped(k);
     const sfeltTemp = Math.round(mean(fData[1]));
-    console.log(sfeltTemp);
     return {
       startVal: i * (1 / 11),
       endVal: (i + 1) * (1 / 11),

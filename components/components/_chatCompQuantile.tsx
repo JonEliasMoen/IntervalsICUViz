@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { mean, standardDeviation } from "simple-statistics";
 import quantile from "@stdlib/stats-base-dists-normal-quantile";
 
@@ -10,7 +10,12 @@ export interface zoneQ {
   color: string;
   normal?: boolean;
 }
-function normalQuantile(value: number, mean: number, std: number): number {
+
+export function normalQuantile(
+  value: number,
+  mean: number,
+  std: number,
+): number {
   // Standard normal CDF (cumulative distribution function)
   function erf(x: number): number {
     // Approximation of the error function using a numerical method
@@ -34,6 +39,7 @@ function normalQuantile(value: number, mean: number, std: number): number {
   const zScore = (value - mean) / std;
   return normalCDF(zScore);
 }
+
 export function Zones(
   zones: zoneQ[],
   valTrans: (n: number) => number,

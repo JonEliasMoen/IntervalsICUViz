@@ -8,6 +8,7 @@ export interface location {
   long: number;
   snowPlace?: snowPlace[];
 }
+
 export interface snowPlace {
   name: string;
   x: string;
@@ -69,6 +70,7 @@ export function getSunData(lat: number, long: number) {
 
 interface SnowResp {
   Data: number[];
+
   [key: string]: any;
 }
 
@@ -106,6 +108,7 @@ export function getSnowDepth(x: String, y: String): SnowResp | undefined {
   );
   return data;
 }
+
 export type FeatureCollection = {
   type: "FeatureCollection";
   features: Feature[];
@@ -144,7 +147,7 @@ export function getSkiSporet(
   return data;
 }
 
-interface FeatureWaterTempLocation {
+export interface FeatureWaterTempLocation {
   type: "Feature";
   geometry: Geometry;
   properties: Properties;
@@ -289,6 +292,7 @@ export interface TimeSeriesEntry {
     next_6_hours?: TemperatureDetails;
   };
 }
+
 interface SummaryDetails {
   summary: {
     symbol_code: string;

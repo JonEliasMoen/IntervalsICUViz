@@ -43,20 +43,54 @@ interface strainMonotony {
 }
 
 export function strainMonotony(data: wellness[]): strainMonotony {
-  let length = 7;
   let load = data.map((t) => t.ctlLoad).filter((t) => t != undefined);
-  let monotony =
-    mean(load.slice(data.length - sShort)) /
-    standardDeviation(load.slice(data.length - sShort));
-  let monotonyL =
-    mean(load.slice(data.length - sLong)) /
-    standardDeviation(load.slice(data.length - sLong));
-  let strain = monotony * mean(load.slice(data.length - sShort));
-  let strainL = monotonyL * mean(load.slice(data.length - sLong));
+  let short = load.slice(data.length - sShort);
+  let long = load.slice(data.length - sLong);
+  let shortM = mean(short);
+  let longM = mean(long);
+  let monotony = shortM / standardDeviation(short);
+  let monotonyL = longM / standardDeviation(long);
+  let strain = monotony * shortM;
+  let strainL = monotonyL * longM;
   return {
     monotony: monotony,
     acwr: strain / strainL,
     strain: strain,
+    strainL: strainL,
+  };
+}
+
+export function ewm(n: number[], hl: number) {
+  const alpha = 1 - Math.exp(-Math.log(2) / hl);
+  const res: number[] = [];
+  n.forEach((v, i) => {
+    if (i == 0) {
+      res.push(v);
+    } else {
+      res.push((1 - alpha) * res[i - 1] + alpha * v);
+    }
+  });
+  return res;
+}
+
+export function strainMonotonyEwm(tdata: wellness[]): strainMonotony {
+  const varianceL = tdata.map((t) => Math.pow(t.ctlLoad - t.ctl, 2));
+  const varianceS = tdata.map((t) => Math.pow(t.atlLoad - t.atl, 2));
+
+  //console.log(varianceS);
+  const stdS = Math.sqrt(ewm(varianceS, 28).at(-1) ?? 1);
+  const stdL = Math.sqrt(ewm(varianceL, 42).at(-1) ?? 1);
+
+  const monoS = tdata.at(-1)?.atl ?? 0 / stdS;
+  const monoL = tdata.at(-1)?.ctl ?? 0 / stdL;
+
+  const strainS = (tdata.at(-1)?.atl ?? 0) * monoS;
+  const strainL = (tdata.at(-1)?.ctl ?? 0) * monoL;
+
+  return {
+    monotony: monoS,
+    acwr: strainS / strainL,
+    strain: strainS,
     strainL: strainL,
   };
 }
@@ -99,6 +133,7 @@ export default function TabOneScreen() {
 
   const dataWeek = dataLong.slice(dataLong.length - 9);
   const dataMonth = dataLong.slice(dataLong.length - 7 * 4);
+
   if (dataLong.length == 0 && dataLong != undefined) {
     return <Text>Loading</Text>;
   }
@@ -109,7 +144,9 @@ export default function TabOneScreen() {
     return <Text>Loading</Text>;
   }
   let distances = groupbyWeekDistance(acts, "Run");
-  let sAcwr = strainMonotony(dataLong.slice(dataLong.length - 28));
+  let sAcwr = strainMonotonyEwm(dataLong);
+  let mAcwr = strainMonotony(dataLong.slice(dataLong.length - 28));
+  console.log(sAcwr);
   let acwr = dataLong.map((t) => t.atl / t.ctl);
 
   const data = dataWeek[dataWeek.length - 1];
@@ -147,12 +184,6 @@ export default function TabOneScreen() {
   if (restingHr.length == 0) {
     restingHr = [90, 100];
   }
-  let weight = dataMonth
-    .filter((s) => s.weight != 0 && s.weight != null)
-    .map((t) => t.weight);
-  if (weight.length == 0) {
-    restingHr = [90, 100];
-  }
 
   let form = data != undefined ? Math.round(data.ctl - data.atl) : 0;
   let formPer =
@@ -165,46 +196,9 @@ export default function TabOneScreen() {
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <Text style={styles.title}>Status</Text>
       <ChartComponent
-        title={"Montony"}
-        progress={sAcwr.monotony ?? 0}
-        zones={[
-          {
-            text: "Very Low (0-0.8)",
-            startVal: 0.0,
-            endVal: 0.8,
-            color: "#D627284D", // Red
-          },
-          {
-            text: "Low",
-            startVal: 0.8,
-            endVal: 1.0,
-            color: "#FFCB0E80", // Yellow
-          },
-          {
-            text: "Normal (1-1.5)",
-            startVal: 1.0,
-            endVal: 1.5,
-            color: "#009E0066", // Green
-          },
-          {
-            text: "High (1.5-2)",
-            startVal: 1.5,
-            endVal: 2.0,
-            color: "#FFCB0E80", // Yellow
-          },
-          {
-            text: "Very High (2-3)",
-            startVal: 2.0,
-            endVal: 3.0, // Arbitrary upper bound
-            color: "#D627284D", // Red
-          },
-        ]}
-        transform={(n) => n / 3}
-      />
-      <ChartComponent
         title={"Weekly running distance"}
         subtitle={"Last week: " + distances[1].toFixed(2) + "km"}
-        progress={distances[0] / distances[1]}
+        progress={distances[0] / mean(distances.slice(distances.length - 5))}
         zones={[
           {
             text: "Low",
@@ -239,6 +233,37 @@ export default function TabOneScreen() {
       <ChartComponent
         title={"Strain ACWR"}
         progress={sAcwr.acwr}
+        zones={[
+          {
+            text: "Low",
+            startVal: 0,
+            endVal: 0.8,
+            color: "#1F77B44D",
+          },
+          {
+            text: "Optimal",
+            startVal: 0.8,
+            endVal: 1.3,
+            color: "#009E0066",
+          },
+          {
+            text: "High",
+            startVal: 1.3,
+            endVal: 1.5,
+            color: "#FFCB0E80",
+          },
+          {
+            text: "Very high",
+            startVal: 1.5,
+            endVal: 2,
+            color: "#D627284D",
+          },
+        ]}
+        transform={(n) => n / 2.0}
+      ></ChartComponent>
+      <ChartComponent
+        title={"Strain ACR"}
+        progress={mAcwr.acwr}
         zones={[
           {
             text: "Low",
@@ -320,33 +345,6 @@ export default function TabOneScreen() {
         ]}
         indicatorTextTransform={(t, q) =>
           Math.round(t) + "bpm " + Math.round(q * 100) + "%"
-        }
-      ></ChartComponentQuantile>
-      <ChartComponentQuantile
-        values={weight}
-        title={"Weight"}
-        display={() => weight[weight.length - 1] != null}
-        progress={weight[weight.length - 1]}
-        zones={[
-          { text: "Very Low", startVal: 0, endVal: 0.1, color: "#D627284D" },
-          { text: "Low", startVal: 0.1, endVal: 0.25, color: "#FFCB0E80" },
-          {
-            text: "Normal",
-            startVal: 0.25,
-            endVal: 0.75,
-            color: "#009E0066",
-            normal: true,
-          },
-          { text: "High", startVal: 0.75, endVal: 0.9, color: "#FFCB0E80" },
-          {
-            text: "Very High",
-            startVal: 0.9,
-            endVal: 1,
-            color: "#D627284D",
-          },
-        ]}
-        indicatorTextTransform={(t, q) =>
-          t.toFixed(2) + "kg " + Math.round(q * 100) + "%"
         }
       ></ChartComponentQuantile>
       <ChartComponent
