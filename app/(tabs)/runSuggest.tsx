@@ -279,7 +279,7 @@ export default function RunSuggestScreen() {
     const localMidnightString = `${date}T00:00:00`;
 
     const d = Math.round(distance);
-    const ex: string = `-${d}km Z${zone} Power`;
+    const ex: string = `-${d}km Z${zone} Pace`;
     const nex: newEx = {
       start_date_local: localMidnightString,
       athlete_id: storedAid,
