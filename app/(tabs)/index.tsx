@@ -335,11 +335,11 @@ export default function TabOneScreen() {
         progress={restingHr[restingHr.length - 1] ?? 0}
         zones={[
           { text: "Low", startVal: 0, endVal: 0.2, color: "#1F77B44D" },
-          { text: "Normal", startVal: 0.2, endVal: 0.6, color: "#009E0066" },
+          { text: "Normal", startVal: 0.2, endVal: 0.8, color: "#009E0066" },
           {
             text: "Elevated",
-            startVal: 0.6,
-            endVal: 0.8,
+            startVal: 0.8,
+            endVal: 1,
             color: "#D627284D",
           },
         ]}
