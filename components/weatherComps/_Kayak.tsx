@@ -17,6 +17,8 @@ interface kayakRes {
   gust: number;
   height: number;
   rain: number;
+  score: string;
+  t: number;
 }
 
 function isOkKayak(
@@ -24,21 +26,34 @@ function isOkKayak(
   i: number,
   wdata: TimeseriesWater[],
 ): kayakRes | undefined {
+  const mw = 5;
+  const mwg = 8;
+  const mwh = 0.5;
+  const mr = 1;
+
   const wind =
-    t.data.instant.details.wind_speed < 5 &&
-    t.data.instant.details.wind_speed_of_gust < 8;
+    t.data.instant.details.wind_speed < mw &&
+    t.data.instant.details.wind_speed_of_gust < mwg;
   const wave = wdata[i];
   const height = wave?.data.instant.details.sea_surface_wave_height;
-  const okHeight = height < 0.5;
+  const okHeight = height < mwh;
   const rain: number = t.data.next_1_hours?.details.precipitation_amount ?? 99;
-  const okRain = rain < 1;
+  const okRain = rain < mr;
   if (okHeight && wind && okRain) {
+    let score =
+      (t.data.instant.details.wind_speed / mw +
+        t.data.instant.details.wind_speed_of_gust / mwg +
+        rain / mr) /
+      3;
+    score = 1 - score;
     return {
       date: new Date(t.time),
       wind: t.data.instant.details.wind_speed,
       gust: t.data.instant.details.wind_speed_of_gust,
       height: height,
       rain: rain,
+      t: t.data.instant.details.air_temperature,
+      score: score.toFixed(2),
     };
   }
   return undefined;
@@ -76,8 +91,8 @@ export function KayakLocation(props: {
           {result.map((t) => {
             return (
               <Text>
-                {t.date.getHours() + ":00"} w {t.wind} g {t.gust} h {t.height} r{" "}
-                {t.rain}
+                {t.date.getHours() + ":00"} s {t.score} w {t.wind} g {t.gust} h{" "}
+                {t.height} t {t.t} r {t.rain}
               </Text>
             );
           })}
