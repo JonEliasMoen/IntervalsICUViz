@@ -31,6 +31,7 @@
     "expo-system-ui": "~4.0.9",
     "expo-updates": "~0.27.4",
     "expo-web-browser": "~14.0.2",
+    "glob": "^11.0.2",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-native": "0.76.9",
@@ -44,6 +45,7 @@
     "react-native-table-component": "^1.2.2",
     "react-native-web": "~0.19.13",
     "simple-statistics": "^7.8.5",
+    "sudo-prompt": "^9.2.1",
     "typescript-color-gradient": "^4.0.0"
   },
   "devDependencies": {
