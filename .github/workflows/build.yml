@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
 jobs:
   build:
-    runs-on: ${{ github.event.inputs.os }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         node: [ 20.x ]
