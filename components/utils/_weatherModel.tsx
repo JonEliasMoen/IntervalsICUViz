@@ -142,6 +142,7 @@ export function getSkiSporet(
     {
       cacheTime: 30 * 60 * 1000,
       staleTime: 30 * 60 * 1000,
+      retry: false,
     },
   );
   return data;

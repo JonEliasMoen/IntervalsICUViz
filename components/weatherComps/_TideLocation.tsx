@@ -2,16 +2,12 @@ import {
   cutArrayIfOverLimit,
   fetchToTxt,
   getTimeHHMM,
-  hourToString,
   secondsSinceStartOfDay,
   secondsToHHMM,
 } from "@/components/utils/_utils";
 import { useQuery } from "@tanstack/react-query";
-import { fetchToJson } from "@/components/utils/_utils";
 import { ChartComponent, zone } from "@/components/components/_chatComp";
 import { generateGradient } from "typescript-color-gradient";
-import { useEffect, useState } from "react";
-import { sunSinus } from "@/components/weatherComps/weatherFunc";
 
 const harbors: string[] = [
   "andenes",
@@ -191,7 +187,7 @@ function parseForecast(data: string): WaterLevelForecast {
   };
 }
 
-function findHarbor(lat: number, long: number) {
+export function findHarbor(lat: number, long: number) {
   let dist = locations.map((u) =>
     Math.sqrt(Math.pow(u[0] - lat, 2) + Math.pow(u[1] - long, 2)),
   );

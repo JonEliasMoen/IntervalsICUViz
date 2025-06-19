@@ -3,7 +3,10 @@ import { SnowDepthLocation } from "@/components/weatherComps/_SnowDepthLocation"
 import { HayfeverLocation } from "@/components/weatherComps/_HayfeverLocation";
 import { SeaWaterTempLocation } from "@/components/weatherComps/_SeaWaterTempLocation";
 import { AirTempLocation } from "@/components/weatherComps/_AirTempLocation";
-import { TideLocation } from "@/components/weatherComps/_TideLocation";
+import {
+  findHarbor,
+  TideLocation,
+} from "@/components/weatherComps/_TideLocation";
 import React, { useEffect, useState } from "react";
 import { SunRiseSetLocation } from "@/components/weatherComps/_SunRiseSetLocation";
 import { location } from "@/components/utils/_weatherModel";
@@ -13,19 +16,27 @@ import DropDown from "@/components/components/_dropDown";
 import { Text } from "@/components/Themed";
 import { dateOffset } from "@/components/utils/_utils";
 import { KayakLocation } from "@/components/weatherComps/_Kayak";
+import * as Location from "expo-location";
 
 export default function WeatherScreen() {
-  let locationMap: location[] = [
+  const [locationMap, setLocationMap] = useState<location[]>([
     {
-      label: "Grillstad",
+      label: "Current Location",
       value: 0,
       lat: 63.4394093,
       long: 10.5039971,
       snowPlace: [],
     },
     {
-      label: "Trondheim",
+      label: "Grillstad",
       value: 1,
+      lat: 63.4394093,
+      long: 10.5039971,
+      snowPlace: [],
+    },
+    {
+      label: "Trondheim",
+      value: 2,
       lat: 63.446827,
       long: 10.421906,
       snowPlace: [
@@ -61,7 +72,7 @@ export default function WeatherScreen() {
     },
     {
       label: "Oslo",
-      value: 2,
+      value: 3,
       lat: 59.9139,
       long: 10.7522,
       snowPlace: [
@@ -95,7 +106,33 @@ export default function WeatherScreen() {
         },
       ],
     },
-  ];
+  ]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return; // Don't run on server
+
+    const getCurrentLocationAndUpdateMap = async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        alert("Permission to access location was denied");
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({});
+      console.log("User location:", location);
+
+      const updated = [...locationMap];
+      updated[0] = {
+        ...updated[0],
+        lat: location.coords.latitude,
+        long: location.coords.longitude,
+      };
+      setLocationMap(updated);
+    };
+
+    getCurrentLocationAndUpdateMap();
+  }, []);
+
   const [loc, setLocation] = useState(locationMap[0]);
 
   const [now, setCurrentTime] = useState(new Date());
@@ -120,7 +157,8 @@ export default function WeatherScreen() {
   const dec = () => {
     barrier(offset - 1);
   };
-
+  let harbor = findHarbor(loc.lat, loc.long);
+  harbor = harbor.charAt(0).toUpperCase() + harbor.slice(1);
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <Button title={"-->"} onPress={inc} />
@@ -133,6 +171,10 @@ export default function WeatherScreen() {
         setItem={setLocation}
         text={"Select a location"}
       ></DropDown>
+      <Text style={[{ textAlign: "center" }]}>
+        Lat: {loc.lat} Long: {loc.long}
+      </Text>
+      <Text style={[{ textAlign: "center" }]}>Closest harbor: {harbor}</Text>
       <PressureLocation lat={loc.lat} long={loc.long}></PressureLocation>
       <KayakLocation
         lat={loc.lat}
@@ -155,7 +197,6 @@ export default function WeatherScreen() {
         dayOffset={offset}
       ></BrightnessLocation>
       <TideLocation lat={loc.lat} long={loc.long} now={now}></TideLocation>
-
       {loc.snowPlace?.map((t) => {
         return <SnowDepthLocation loc={t}></SnowDepthLocation>;
       })}
