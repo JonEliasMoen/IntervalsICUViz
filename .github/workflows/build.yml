@@ -40,7 +40,6 @@ jobs:
             --profile=preview
       - name: 📦 Copy built APK
         run: |
-          mkdir -p ./app-build
           find /tmp/runner -type f -name "app-release.apk" -exec cp {} ./app-build/ \;
       - name: ⬆ Upload APK artifact
         uses: actions/upload-artifact@v4
