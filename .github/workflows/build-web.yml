@@ -5,7 +5,7 @@ on:
     branches:
       - master
     paths:
-      - "*.tsx"
+      - "**/*.tsx"
 jobs:
   build:
     runs-on: ubuntu-latest
