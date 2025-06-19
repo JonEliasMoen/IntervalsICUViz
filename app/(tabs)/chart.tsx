@@ -51,7 +51,7 @@ export default function Chart() {
       ></LineChartComp>
       <LineChartComp
         lineData={{
-          lines: [{ data: hrv, color: "red", label: "ACR" }],
+          lines: [{ data: hrv, color: "red", label: "HRV" }],
           title: "Hrv",
           xLabels: labels,
         }}
