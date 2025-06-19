@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - master
+    paths:
+      - "*.tsx"
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -39,5 +41,7 @@ jobs:
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-preview-apk
-          path: ./app-build/*.apk
+          name: yrweather-apk
+          path: ./app-build/*
+          overwrite: true
+          include-hidden-files: true

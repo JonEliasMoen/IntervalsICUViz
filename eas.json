@@ -13,6 +13,7 @@
     },
     "preview": {
       "distribution": "internal",
+      "artifactPath": "app-build/yrweather.apk",
       "channel": "preview"
     },
     "production": {
