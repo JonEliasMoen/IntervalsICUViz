@@ -1,4 +1,4 @@
-name: Build App
+name: Build App Web
 on:
   workflow_dispatch:
   push:
@@ -29,15 +29,8 @@ jobs:
       - name: 📦 Install dependencies
         run: npm install
 
-      - name: 👷 Build app
-        run: |
-          eas build --local \
-            --non-interactive \
-            --output=./app-build \
-            --platform=android \
-            --profile=preview
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-preview-apk
-          path: ./app-build/*.apk
+      - name: Make web static build
+        run: npx expo export --platform web
+      - name: Deploy
+        run: eas deploy --prod
+
