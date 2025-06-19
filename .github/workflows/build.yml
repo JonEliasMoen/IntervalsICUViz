@@ -35,17 +35,14 @@ jobs:
         run: |
           eas build --local \
             --non-interactive \
-            --output=./app-build \
+            --output=app-release.apk \
             --platform=android \
             --profile=preview
-      - name: Rename APK with extension
-        run: |
-          mv ./app-build/app-build ./app-build/app-build.apk
       - name: ⬆ Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-release.apk
-          path: ./app-build/app-build.apk
+          path: app-release.apk
       - name: Upload APK to GitHub Release
         uses: ncipollo/release-action@v1
         with:
