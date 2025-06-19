@@ -156,6 +156,7 @@ const styles = StyleSheet.create({
     marginBottom: 10, // Adds space between text and bar
   },
   subText: {
+    marginTop: -6,
     fontSize: 13,
     marginBottom: 5, // Adds space between text and bar
   },

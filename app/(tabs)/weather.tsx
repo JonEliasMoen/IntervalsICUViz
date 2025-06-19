@@ -17,6 +17,7 @@ import { Text } from "@/components/Themed";
 import { dateOffset } from "@/components/utils/_utils";
 import { KayakLocation } from "@/components/weatherComps/_Kayak";
 import * as Location from "expo-location";
+import { DewPointLocation } from "@/components/weatherComps/_DewPointLocation";
 
 export default function WeatherScreen() {
   const [locationMap, setLocationMap] = useState<location[]>([
@@ -175,6 +176,7 @@ export default function WeatherScreen() {
         Lat: {loc.lat} Long: {loc.long}
       </Text>
       <Text style={[{ textAlign: "center" }]}>Closest harbor: {harbor}</Text>
+      <DewPointLocation lat={loc.lat} long={loc.long} dayOffset={offset} />
       <PressureLocation lat={loc.lat} long={loc.long}></PressureLocation>
       <KayakLocation
         lat={loc.lat}
