@@ -38,11 +38,19 @@ jobs:
             --output=./app-build \
             --platform=android \
             --profile=preview
-      - name: 📦 Copy built APK
+      - name: Rename APK with extension
         run: |
-          find /tmp/runner -type f -name "app-release.apk" -exec cp {} ./app-build/ \;
+          mv ./app-build/app-build ./app-build/app-build.apk
       - name: ⬆ Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-preview-apk
-          path: ./app-build
+          name: app-release.apk
+          path: ./app-build/app-build.apk
+      - name: Upload APK to GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "app-release.apk"
+          tag: latest
+          name: "Latest Build"
+          allowUpdates: true
+          token: ${{ secrets.TOKEN }}
