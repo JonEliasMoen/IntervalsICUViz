@@ -163,12 +163,11 @@ export function groupByWeek(data: activity[]): activity[][] {
   let cindex = 0;
   for (let i = current; i > Math.min(...index) + 1; i -= 1) {
     const findex = index.findIndex((k) => k == i);
-    console.log(findex, i, index, myMap);
     if (findex == -1) {
       index.splice(cindex, 0, i);
       myMap.splice(cindex, 0, []);
     }
-    cindex = i + 1;
+    cindex = cindex + 1;
   }
   return myMap;
 }
