@@ -1,47 +1,11 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { mean, standardDeviation } from "simple-statistics";
-import quantile from "@stdlib/stats-base-dists-normal-quantile";
 
-export interface zoneQ {
-  text: string;
-  startVal: number;
-  endVal: number;
-  color: string;
-  normal?: boolean;
-}
-
-export function normalQuantile(
-  value: number,
-  mean: number,
-  std: number,
-): number {
-  // Standard normal CDF (cumulative distribution function)
-  function erf(x: number): number {
-    // Approximation of the error function using a numerical method
-    const t = 1 / (1 + 0.3275911 * Math.abs(x));
-    const tau =
-      t *
-      (0.254829592 +
-        t *
-          (-0.284496736 +
-            t * (1.421413741 + t * (-1.453152027 + t * 1.061405429))));
-    const sign = x >= 0 ? 1 : -1;
-    return sign * (1 - tau * Math.exp(-x * x));
-  }
-
-  // Standard normal CDF for a given x
-  function normalCDF(x: number): number {
-    return 0.5 * (1 + erf(x / Math.sqrt(2)));
-  }
-
-  // Compute the quantile using the inverse CDF
-  const zScore = (value - mean) / std;
-  return normalCDF(zScore);
-}
+import { QUANTILE } from "@/components/classes/QUANTILE";
+import { zone } from "@/components/components/_chatComp";
 
 export function Zones(
-  zones: zoneQ[],
+  zones: zone[],
   valTrans: (n: number) => number,
   title: string,
 ) {
@@ -67,37 +31,27 @@ export function ChartComponentQuantile(props: {
   title: string;
   display?: () => boolean;
   progress: number;
-  values: number[];
-  zones: zoneQ[];
+  values: QUANTILE;
+  zones: zone[];
   indicatorTextTransform?: (n: number, q: number) => string | number;
 }) {
   let q = [props.zones[0].startVal, props.zones[props.zones.length - 1].endVal];
-
+  let wrap = props.values;
   let zn = props.zones.find((t) => t.normal == true);
   let qn = [zn?.startVal ?? 0.25, zn?.endVal ?? 0.75];
-  let hmean = mean(props.values);
-  let hstd = standardDeviation(props.values);
   let transform = (n: number) => {
     // Quantile => 0-1
     //return n;
     let vDif = q[1] - q[0];
     return vDif != 0 ? (n - q[0]) / vDif : 0;
   };
-  let tr = (n: number) => {
-    // number => Quantile
-    return normalQuantile(n, hmean, hstd);
-  };
-  let hq = (n: number) => {
-    // quantile => number
-    return quantile(n, hmean, hstd);
-  };
 
   let subtitle =
     "Normal range: " +
-    hmean.toFixed(2) +
+    wrap.mean.toFixed(2) +
     "±" +
-    (hq(qn[1]) - hq(0.5)).toFixed(2);
-  let vquantile = tr(props.progress);
+    (wrap.inverse(qn[1]) - wrap.inverse(0.5)).toFixed(2);
+  let vquantile = wrap.transform(props.progress);
   let value = transform(vquantile);
   let text =
     props.zones.find(

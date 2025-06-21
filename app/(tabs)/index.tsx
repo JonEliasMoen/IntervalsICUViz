@@ -3,7 +3,7 @@ import { Text } from "@/components/Themed";
 import ChartComponent from "@/components/components/_chatComp";
 import React from "react";
 import { mean, standardDeviation } from "simple-statistics";
-import { hourToString, sLong, sShort } from "@/components/utils/_utils";
+import { sLong, sShort } from "@/components/utils/_utils";
 import { useStoredKey } from "@/components/utils/_keyContext";
 import {
   activity,
@@ -12,7 +12,7 @@ import {
   groupByWeek,
   wellness,
 } from "@/components/utils/_fitnessModel";
-import { ChartComponentQuantile } from "@/components/components/_chatCompQuantile";
+import { wellnessWrapper } from "@/components/classes/_wellnessWrapper";
 
 interface wattResult {
   wattPerKg: number;
@@ -120,7 +120,7 @@ export function groupbyWeekDistance(acts: activity[], sport: string): number[] {
       .map((a) => {
         return a.distance / 1000;
       })
-      .reduce((a, b) => a + b),
+      .reduce((a, b) => a + b, 0),
   );
 
   return distances;
@@ -146,44 +146,17 @@ export default function TabOneScreen() {
   let distances = groupbyWeekDistance(acts, "Run");
   let sAcwr = strainMonotonyEwm(dataLong);
   let mAcwr = strainMonotony(dataLong.slice(dataLong.length - 28));
-  console.log(sAcwr);
+
   let acwr = dataLong.map((t) => t.atl / t.ctl);
 
   const data = dataWeek[dataWeek.length - 1];
+  let wRap = new wellnessWrapper(dataMonth);
 
-  const sleep =
-    dataLong
-      .filter((s) => s.sleepSecs != 0 && s.sleepSecs != null)
-      .map((s) => s.sleepSecs)
-      .at(-1) ?? 0;
-  const sleepScore =
-    dataLong
-      .filter((s) => s.sleepScore != 0 && s.sleepScore != null)
-      .map((s) => s.sleepScore)
-      .at(-1) ?? 0;
   const vo2max =
     dataLong
       .filter((s) => s.vo2max != 0 && s.vo2max != null)
       .map((s) => s.vo2max)
       .at(-1) ?? 0;
-  const restingHrI =
-    dataLong
-      .filter((s) => s.restingHR != 0 && s.restingHR != null)
-      .map((s) => s.restingHR)
-      .at(-1) ?? 0;
-
-  let hrv = dataMonth
-    .filter((s) => s.hrv != 0 && s.hrv != null)
-    .map((t) => t.hrv);
-  if (hrv.length == 0) {
-    hrv = [90, 100];
-  }
-  let restingHr = dataMonth
-    .filter((s) => s.restingHR != 0 && s.restingHR != null)
-    .map((t) => t.restingHR);
-  if (restingHr.length == 0) {
-    restingHr = [90, 100];
-  }
 
   let form = data != undefined ? Math.round(data.ctl - data.atl) : 0;
   let formPer =
@@ -195,6 +168,7 @@ export default function TabOneScreen() {
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <Text style={styles.title}>Status</Text>
+      {wRap.readiness.getComponent()}
       <ChartComponent
         title={"Weekly running distance"}
         subtitle={"Last week: " + distances[1].toFixed(2) + "km"}
@@ -292,123 +266,10 @@ export default function TabOneScreen() {
         ]}
         transform={(n) => n / 2.0}
       ></ChartComponent>
-      <ChartComponentQuantile
-        values={hrv}
-        title={"HRV (rMSSD)"}
-        display={() => hrv[hrv.length - 1] != null}
-        progress={hrv[hrv.length - 1] ?? 0}
-        zones={[
-          {
-            text: "Low",
-            startVal: 0,
-            endVal: 0.1,
-            color: "#D627284D",
-          },
-          {
-            text: "Below",
-            startVal: 0.1,
-            endVal: 0.2,
-            color: "#FFCB0E80",
-          },
-          {
-            text: "Normal",
-            startVal: 0.2,
-            endVal: 0.7,
-            color: "#009E0066",
-            normal: true,
-          },
-          {
-            text: "Elevated",
-            startVal: 0.7,
-            endVal: 1,
-            color: "#1F77B44D",
-          },
-        ]}
-        indicatorTextTransform={(t, q) =>
-          Math.round(t) + "ms " + Math.round(q * 100) + "%"
-        }
-      ></ChartComponentQuantile>
-      <ChartComponentQuantile
-        values={restingHr}
-        title={"Resting hr"}
-        display={() => restingHr[restingHr.length - 1] != null}
-        progress={restingHr[restingHr.length - 1] ?? 0}
-        zones={[
-          { text: "Low", startVal: 0, endVal: 0.2, color: "#1F77B44D" },
-          { text: "Normal", startVal: 0.2, endVal: 0.8, color: "#009E0066" },
-          {
-            text: "Elevated",
-            startVal: 0.8,
-            endVal: 1,
-            color: "#D627284D",
-          },
-        ]}
-        indicatorTextTransform={(t, q) =>
-          Math.round(t) + "bpm " + Math.round(q * 100) + "%"
-        }
-      ></ChartComponentQuantile>
-      <ChartComponent
-        title={`Ramprate q`}
-        progress={data.rampRate}
-        zones={[
-          {
-            text: "0-0.2",
-            startVal: -2.5,
-            endVal: -0.53,
-            color: "#1F77B44D",
-          },
-          {
-            text: "0.2-0.7",
-            startVal: -0.53,
-            endVal: 0.78,
-            color: "#009E0066",
-          },
-          {
-            text: "0.7-0.9",
-            startVal: 0.78,
-            endVal: 1.43,
-            color: "#FFCB0E80",
-          },
-          {
-            text: "0.9-1",
-            startVal: 1.43,
-            endVal: 2,
-            color: "#D627284D",
-          },
-        ]}
-        transform={(n) => (n + 2.5) / (2.5 + 2)}
-      ></ChartComponent>
-      <ChartComponent
-        title={"ACWR"}
-        progress={acwr[acwr.length - 1]}
-        zones={[
-          {
-            text: "Low",
-            startVal: 0,
-            endVal: 0.8,
-            color: "#1F77B44D",
-          },
-          {
-            text: "Optimal",
-            startVal: 0.8,
-            endVal: 1.3,
-            color: "#009E0066",
-          },
-          {
-            text: "High",
-            startVal: 1.3,
-            endVal: 1.5,
-            color: "#FFCB0E80",
-          },
-          {
-            text: "Very high",
-            startVal: 1.5,
-            endVal: 2,
-            color: "#D627284D",
-          },
-        ]}
-        transform={(n) => n / 2.0}
-      ></ChartComponent>
+      {wRap.hrv.getComponent()}
+      {wRap.rhr.getComponent()}
+      {wRap.rampRate.getComponent()}
+      {wRap.acwr.getComponent()}
       <ChartComponent
         title={"ACWR 42d"}
         progress={mean(acwr)}
@@ -440,90 +301,8 @@ export default function TabOneScreen() {
         ]}
         transform={(n) => n / 2.0}
       />
-      <ChartComponent
-        title={"Sleep"}
-        display={() => sleep != 0 && sleep != null}
-        progress={sleep != null ? sleep / 3600 : 5}
-        indicatorTextTransform={hourToString}
-        zones={[
-          {
-            text: "4-5 Hours",
-            startVal: 4,
-            endVal: 5,
-            color: "#DD04A74D",
-          },
-          {
-            text: "5-6 Hours",
-            startVal: 5,
-            endVal: 6,
-            color: "#FFCB0E80",
-          },
-          {
-            text: "6-7 Hours",
-            startVal: 6,
-            endVal: 7,
-            color: "#C8F509A8",
-          },
-          {
-            text: "7-8 Hours",
-            startVal: 7,
-            endVal: 8,
-            color: "#009E0057",
-          },
-          {
-            text: "8-9 Hours",
-            startVal: 8,
-            endVal: 9,
-            color: "#009E0099",
-          },
-          {
-            text: "9-10 Hours",
-            startVal: 9,
-            endVal: 10,
-            color: "#1D00CCFF",
-          },
-        ]}
-        transform={(n) => (n - 4) / 6}
-      ></ChartComponent>
-      <ChartComponent
-        title={"Sleep Score"}
-        display={() => sleepScore != 0 && sleepScore != null}
-        progress={sleepScore != null ? Math.round(sleepScore) : 0}
-        indicatorTextTransform={(n) => Math.round(n) + "%"}
-        zones={[
-          {
-            text: "Very Poor",
-            startVal: 0,
-            endVal: 59,
-            color: "#D627284D",
-          },
-          {
-            text: "Poor",
-            startVal: 60,
-            endVal: 69,
-            color: "#FFCB0E80",
-          },
-          {
-            text: "Fair",
-            startVal: 70,
-            endVal: 79,
-            color: "#C8F509A8",
-          },
-          {
-            text: "Good",
-            startVal: 80,
-            endVal: 89,
-            color: "#009E0057",
-          },
-          {
-            text: "Excellent",
-            startVal: 90,
-            endVal: 100,
-            color: "#009E0099",
-          },
-        ]}
-        transform={(n) => n / 100}
-      ></ChartComponent>
+      {wRap.sleep.getComponent()}
+      {wRap.sleepScore.getComponent()}
       <ChartComponent
         title={"Form"}
         progress={-form}
@@ -662,7 +441,7 @@ export default function TabOneScreen() {
       ></ChartComponent>
       <ChartComponent
         title={"Resting hr (26-35 years)"}
-        progress={restingHrI}
+        progress={wRap.rhr.last}
         zones={[
           {
             text: "Poor",

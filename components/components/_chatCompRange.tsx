@@ -1,12 +1,6 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
-
-export interface zone {
-  text: string;
-  startVal: number;
-  endVal: number;
-  color: string;
-}
+import { zone } from "@/components/components/_chatComp";
 
 export function Zones(
   zones: zone[],

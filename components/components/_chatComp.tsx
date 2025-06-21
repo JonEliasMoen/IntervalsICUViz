@@ -6,6 +6,7 @@ export interface zone {
   startVal: number;
   endVal: number;
   color: string;
+  normal?: boolean;
 }
 
 export function Zones(
@@ -40,7 +41,7 @@ export function ChartComponent(props: {
   transform: (n: number) => number;
   indicatorTextTransform?: (n: number) => string | number;
 }) {
-  let value = props.transform(props.progress);
+  let value = Math.min(1, Math.max(0, props.transform(props.progress)));
   let text =
     props.zones.find(
       (zone) =>

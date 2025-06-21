@@ -6,6 +6,8 @@ export interface line {
   data: number[];
   color: string;
   label: string;
+  reverse?: boolean;
+  isScaled?: boolean;
 }
 
 export interface data {
@@ -21,12 +23,21 @@ function normalizeLines(
 ): { points: string; color: string }[] {
   const maxLength = Math.max(...lines.map((l) => l.data.length));
   const flat = lines.flatMap((l) => l.data);
-  const max = Math.max(...flat);
-  const min = Math.min(...flat);
 
   return lines.map((l) => {
+    let max = Math.max(...l.data);
+    let min = Math.min(...l.data);
+    console.log(l.label, max, min);
+    if (l.isScaled) {
+      max = 1;
+      min = 0;
+    }
     const stepX = width / (maxLength - 1);
-    const scaleY = (v: number) => height - ((v - min) / (max - min)) * height;
+    let scaleY = (v: number) => height - ((v - min) / (max - min)) * height;
+    if (l.reverse) {
+      scaleY = (v: number) => ((v - min) / (max - min)) * height;
+    }
+
     const points = l.data.map((v, i) => `${i * stepX},${scaleY(v)}`).join(" ");
     return { points, color: l.color };
   });
