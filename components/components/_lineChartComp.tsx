@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Pressable, Text, useWindowDimensions, View } from "react-native";
-import Svg, { Polyline } from "react-native-svg";
+import Svg, { Polyline, Rect } from "react-native-svg";
+import { Attribute } from "@/components/classes/interfaces";
 
 export interface line {
   data: number[];
@@ -13,7 +14,6 @@ export interface line {
 export interface data {
   lines: line[];
   title: string;
-  xLabels: string[];
 }
 
 function normalizeLines(
@@ -22,7 +22,6 @@ function normalizeLines(
   height: number,
 ): { points: string; color: string }[] {
   const maxLength = Math.max(...lines.map((l) => l.data.length));
-  const flat = lines.flatMap((l) => l.data);
 
   return lines.map((l) => {
     let max = Math.max(...l.data);
@@ -43,7 +42,27 @@ function normalizeLines(
   });
 }
 
-export function LineChartComp(props: { lineData: data }) {
+function normalizeZones(
+  attr: Attribute | undefined,
+  height: number,
+): { start: number; end: number; color: string }[] | undefined {
+  if (!attr) {
+    return undefined;
+  }
+  let zones = attr.getZones();
+  let isScaled = zones[zones.length - 1].endVal == 1 && zones[0].startVal == 0;
+
+  return zones.map((l) => {
+    let scaleY = (v: number): number => height - attr.transform(v) * height;
+    if (isScaled) {
+      scaleY = (v: number): number => height - v * height;
+    }
+
+    return { start: scaleY(l.startVal), end: scaleY(l.endVal), color: l.color };
+  });
+}
+
+export function LineChartComp(props: { lineData: data; attr?: Attribute }) {
   const { width } = useWindowDimensions();
   const chartWidth = width - 40;
   const chartHeight = 160;
@@ -58,7 +77,14 @@ export function LineChartComp(props: { lineData: data }) {
 
   const filteredLines = props.lineData.lines.filter((_, i) => activeLines[i]);
   const normalized = normalizeLines(filteredLines, chartWidth, chartHeight);
-
+  const normalizedZones = normalizeZones(props.attr, chartHeight);
+  if (props.attr) {
+    console.log(
+      "norm",
+      props.lineData.title,
+      normalizeZones(props.attr, chartHeight),
+    );
+  }
   return (
     <View
       style={{
@@ -96,6 +122,16 @@ export function LineChartComp(props: { lineData: data }) {
         ))}
       </View>
       <Svg width={chartWidth} height={chartHeight}>
+        {normalizedZones &&
+          normalizedZones.map((zone, index) => (
+            <Rect
+              x={0}
+              y={zone.end}
+              height={zone.start - zone.end}
+              width={chartWidth}
+              fill={zone.color}
+            ></Rect>
+          ))}
         {normalized.map((line, idx) => (
           <Polyline
             key={idx}

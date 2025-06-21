@@ -14,6 +14,7 @@ import {
   TimeSeriesEntry,
 } from "@/components/utils/_weatherModel";
 import ChartComponentRange from "@/components/components/_chatCompRange";
+import React from "react";
 
 function getRain(t: TimeSeriesEntry): PrecipationDetails | undefined {
   return t.data.next_1_hours?.details;
@@ -62,8 +63,8 @@ export function AirTempLocation(props: {
   }
   const dayMap = groupByDay(data.properties.timeseries);
   const today = dayMap[props.dayOffset];
-  const fData = getFeltTempArrayMapped(today);
-  const feltTemp = fData[0];
+  const forcData = getFeltTempArrayMapped(today);
+  const feltTemp = forcData[0];
   const feltTempNow = feelTempNow(today[0].data.instant.details);
 
   const gradientArray = generateGradient(["#02c7fc", "#ff0404"], 1000);

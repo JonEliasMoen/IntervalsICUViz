@@ -5,8 +5,7 @@ import React from "react";
 import { getWellnessRange } from "@/components/utils/_fitnessModel";
 import { useStoredKey } from "@/components/utils/_keyContext";
 import LineChartComp from "@/components/components/_lineChartComp";
-import { dateOffset } from "@/components/utils/_utils";
-import { wellnessWrapper } from "@/components/classes/_wellnessWrapper";
+import { wellnessWrapper } from "@/components/classes/wellness/_wellnessWrapper";
 
 export default function Chart() {
   const { storedKey, storedAid } = useStoredKey();
@@ -18,12 +17,6 @@ export default function Chart() {
   let wRap = new wellnessWrapper(dataLong);
   let a = dataLong.map((t) => t.atl);
   let b = dataLong.map((t) => t.ctl);
-  let labels = b.map((a, i) => {
-    return dateOffset(b.length - i - 1)
-      .toString()
-      .slice(4, 4 + 6);
-  });
-  console.log(labels);
   // @ts-ignore
   return (
     <ScrollView>
@@ -34,13 +27,24 @@ export default function Chart() {
             { data: b, color: "blue", label: "CTL" },
           ],
           title: "Acute chronic",
-          xLabels: labels,
         }}
       ></LineChartComp>
       <LineChartComp
+        attr={wRap.acwr}
         lineData={{
           lines: [
-            { data: wRap.acwr.acwrT, color: "red", label: "ACR" },
+            {
+              data: wRap.acwr.acwrT,
+              color: "red",
+              label: "ACR",
+              isScaled: true,
+            },
+            {
+              data: wRap.acwrs.acrsT,
+              color: "blue",
+              label: "ACRS",
+              isScaled: true,
+            },
             {
               data: wRap.rampRate.rampT,
               color: "blue",
@@ -49,10 +53,10 @@ export default function Chart() {
             },
           ],
           title: "Acute chronic Workload ratio",
-          xLabels: labels,
         }}
       ></LineChartComp>
       <LineChartComp
+        attr={wRap.hrv}
         lineData={{
           lines: [
             { data: wRap.readiness.value, color: "blue", label: "Readiness" },
@@ -63,21 +67,27 @@ export default function Chart() {
               label: "RHR",
               isScaled: true,
             },
+          ],
+          title: "Health data",
+        }}
+      ></LineChartComp>
+      <LineChartComp
+        lineData={{
+          lines: [
             {
-              data: wRap.sleepScore.sleepScoreT,
-              color: "orange",
-              label: "Sleep score",
+              data: wRap.sleep.getTransformed(),
+              color: "blue",
+              label: "Sleep",
               isScaled: true,
             },
             {
-              data: wRap.sleep.sleepT,
-              color: "black",
-              label: "Sleep secs",
+              data: wRap.sleepScore.getTransformed(),
+              color: "red",
+              label: "Sleep Score",
               isScaled: true,
             },
           ],
-          title: "Health data",
-          xLabels: labels,
+          title: "Sleep",
         }}
       ></LineChartComp>
     </ScrollView>

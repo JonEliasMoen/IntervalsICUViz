@@ -12,7 +12,7 @@ import {
   groupByWeek,
   wellness,
 } from "@/components/utils/_fitnessModel";
-import { wellnessWrapper } from "@/components/classes/_wellnessWrapper";
+import { wellnessWrapper } from "@/components/classes/wellness/_wellnessWrapper";
 
 interface wattResult {
   wattPerKg: number;
@@ -56,41 +56,6 @@ export function strainMonotony(data: wellness[]): strainMonotony {
     monotony: monotony,
     acwr: strain / strainL,
     strain: strain,
-    strainL: strainL,
-  };
-}
-
-export function ewm(n: number[], hl: number) {
-  const alpha = 1 - Math.exp(-Math.log(2) / hl);
-  const res: number[] = [];
-  n.forEach((v, i) => {
-    if (i == 0) {
-      res.push(v);
-    } else {
-      res.push((1 - alpha) * res[i - 1] + alpha * v);
-    }
-  });
-  return res;
-}
-
-export function strainMonotonyEwm(tdata: wellness[]): strainMonotony {
-  const varianceL = tdata.map((t) => Math.pow(t.ctlLoad - t.ctl, 2));
-  const varianceS = tdata.map((t) => Math.pow(t.atlLoad - t.atl, 2));
-
-  //console.log(varianceS);
-  const stdS = Math.sqrt(ewm(varianceS, 28).at(-1) ?? 1);
-  const stdL = Math.sqrt(ewm(varianceL, 42).at(-1) ?? 1);
-
-  const monoS = tdata.at(-1)?.atl ?? 0 / stdS;
-  const monoL = tdata.at(-1)?.ctl ?? 0 / stdL;
-
-  const strainS = (tdata.at(-1)?.atl ?? 0) * monoS;
-  const strainL = (tdata.at(-1)?.ctl ?? 0) * monoL;
-
-  return {
-    monotony: monoS,
-    acwr: strainS / strainL,
-    strain: strainS,
     strainL: strainL,
   };
 }
@@ -144,9 +109,6 @@ export default function TabOneScreen() {
     return <Text>Loading</Text>;
   }
   let distances = groupbyWeekDistance(acts, "Run");
-  let sAcwr = strainMonotonyEwm(dataLong);
-  let mAcwr = strainMonotony(dataLong.slice(dataLong.length - 28));
-
   let acwr = dataLong.map((t) => t.atl / t.ctl);
 
   const data = dataWeek[dataWeek.length - 1];
@@ -204,68 +166,7 @@ export default function TabOneScreen() {
         }}
         transform={(n) => n / 2.0}
       ></ChartComponent>
-      <ChartComponent
-        title={"Strain ACWR"}
-        progress={sAcwr.acwr}
-        zones={[
-          {
-            text: "Low",
-            startVal: 0,
-            endVal: 0.8,
-            color: "#1F77B44D",
-          },
-          {
-            text: "Optimal",
-            startVal: 0.8,
-            endVal: 1.3,
-            color: "#009E0066",
-          },
-          {
-            text: "High",
-            startVal: 1.3,
-            endVal: 1.5,
-            color: "#FFCB0E80",
-          },
-          {
-            text: "Very high",
-            startVal: 1.5,
-            endVal: 2,
-            color: "#D627284D",
-          },
-        ]}
-        transform={(n) => n / 2.0}
-      ></ChartComponent>
-      <ChartComponent
-        title={"Strain ACR"}
-        progress={mAcwr.acwr}
-        zones={[
-          {
-            text: "Low",
-            startVal: 0,
-            endVal: 0.8,
-            color: "#1F77B44D",
-          },
-          {
-            text: "Optimal",
-            startVal: 0.8,
-            endVal: 1.3,
-            color: "#009E0066",
-          },
-          {
-            text: "High",
-            startVal: 1.3,
-            endVal: 1.5,
-            color: "#FFCB0E80",
-          },
-          {
-            text: "Very high",
-            startVal: 1.5,
-            endVal: 2,
-            color: "#D627284D",
-          },
-        ]}
-        transform={(n) => n / 2.0}
-      ></ChartComponent>
+      {wRap.acwrs.getComponent()}
       {wRap.hrv.getComponent()}
       {wRap.rhr.getComponent()}
       {wRap.rampRate.getComponent()}

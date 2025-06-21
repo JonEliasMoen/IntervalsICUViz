@@ -1,7 +1,7 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
-import { QUANTILE } from "@/components/classes/QUANTILE";
+import { QUANTILE } from "@/components/classes/aggregations/QUANTILE";
 import { zone } from "@/components/components/_chatComp";
 
 export function Zones(
