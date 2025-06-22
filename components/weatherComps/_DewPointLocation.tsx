@@ -1,6 +1,6 @@
 import { generateGradient } from "typescript-color-gradient";
 import { getWeather } from "@/components/utils/_weatherModel";
-import { groupByDay } from "@/components/weatherComps/weatherFunc";
+import { groupByDay } from "@/components/classes/WeatherFeature/weatherFunc";
 import { mean } from "simple-statistics";
 import React from "react";
 import ChartComponentRange from "@/components/components/_chatCompRange";

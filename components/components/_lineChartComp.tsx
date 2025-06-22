@@ -78,13 +78,6 @@ export function LineChartComp(props: { lineData: data; attr?: Attribute }) {
   const filteredLines = props.lineData.lines.filter((_, i) => activeLines[i]);
   const normalized = normalizeLines(filteredLines, chartWidth, chartHeight);
   const normalizedZones = normalizeZones(props.attr, chartHeight);
-  if (props.attr) {
-    console.log(
-      "norm",
-      props.lineData.title,
-      normalizeZones(props.attr, chartHeight),
-    );
-  }
   return (
     <View
       style={{

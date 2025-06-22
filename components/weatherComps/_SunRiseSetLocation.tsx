@@ -4,10 +4,10 @@ import {
   secondsSinceStartOfDay,
   secondsToHHMM,
 } from "@/components/utils/_utils";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { generateGradient } from "typescript-color-gradient";
 import { getSunData } from "@/components/utils/_weatherModel";
-import { sunSinus } from "@/components/weatherComps/weatherFunc";
+import { sunSinus } from "@/components/classes/WeatherFeature/weatherFunc";
 
 function until(current: number, rise: number, set: number, noon: number) {
   if (current > set) {
@@ -28,6 +28,7 @@ function until(current: number, rise: number, set: number, noon: number) {
 export function toPercent(v: number) {
   return Math.round(Math.abs(v) * 100) + "%";
 }
+
 export function toPercentNotAbs(v: number) {
   return Math.round(v * 100) + "%";
 }

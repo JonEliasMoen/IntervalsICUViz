@@ -1,7 +1,7 @@
 import { generateGradient } from "typescript-color-gradient";
-import { ChartComponent, zone } from "@/components/components/_chatComp";
+import { ChartComponent } from "@/components/components/_chatComp";
 import { getWeather } from "@/components/utils/_weatherModel";
-import { groupByDay } from "@/components/weatherComps/weatherFunc";
+import { groupByDay } from "@/components/classes/WeatherFeature/weatherFunc";
 import { mean } from "simple-statistics";
 
 export function BrightnessLocation(props: {

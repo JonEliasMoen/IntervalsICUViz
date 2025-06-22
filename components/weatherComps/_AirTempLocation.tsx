@@ -6,7 +6,7 @@ import {
   feelTempArray,
   feelTempNow,
   groupByDay,
-} from "@/components/weatherComps/weatherFunc";
+} from "@/components/classes/WeatherFeature/weatherFunc";
 import {
   getWeather,
   InstantDetails,
@@ -15,6 +15,7 @@ import {
 } from "@/components/utils/_weatherModel";
 import ChartComponentRange from "@/components/components/_chatCompRange";
 import React from "react";
+import { weatherWrapper } from "@/components/classes/WeatherFeature/weatherWrapper";
 
 function getRain(t: TimeSeriesEntry): PrecipationDetails | undefined {
   return t.data.next_1_hours?.details;
@@ -61,6 +62,7 @@ export function AirTempLocation(props: {
   if (data == null) {
     return <></>;
   }
+  const wRap = new weatherWrapper(data, props.dayOffset);
   const dayMap = groupByDay(data.properties.timeseries);
   const today = dayMap[props.dayOffset];
   const forcData = getFeltTempArrayMapped(today);
@@ -159,6 +161,7 @@ export function AirTempLocation(props: {
   console.log(props.dayOffset, wind2[0]);
   return (
     <>
+      {wRap.uv.getComponent()}
       <ChartComponentRange
         title={"Average temp"}
         subtitle={"Now: " + feltTempNow.toFixed(2) + "°C"}

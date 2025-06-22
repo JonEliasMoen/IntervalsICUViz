@@ -214,7 +214,7 @@ export function getSeaInfo(
   return data;
 }
 
-interface WeatherFeature {
+export interface WeatherFeature {
   type: "Feature";
   geometry: {
     type: "Point";
@@ -325,7 +325,10 @@ interface TemperatureDetails {
   };
 }
 
-export function getWeather(lat: number, long: number) {
+export function getWeather(
+  lat: number,
+  long: number,
+): WeatherFeature | undefined {
   const date = isoDateOffset(0);
   const { data: data } = useQuery(["weather", date, lat, long], () =>
     fetchToJson<WeatherFeature>(

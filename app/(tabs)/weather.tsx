@@ -160,6 +160,7 @@ export default function WeatherScreen() {
   };
   let harbor = findHarbor(loc.lat, loc.long);
   harbor = harbor.charAt(0).toUpperCase() + harbor.slice(1);
+
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <Button title={"-->"} onPress={inc} />
@@ -173,7 +174,7 @@ export default function WeatherScreen() {
         text={"Select a location"}
       ></DropDown>
       <Text style={[{ textAlign: "center" }]}>
-        Lat: {loc.lat} Long: {loc.long}
+        Lat: {loc.lat.toFixed(4)} Long: {loc.long.toFixed(4)}
       </Text>
       <Text style={[{ textAlign: "center" }]}>Closest harbor: {harbor}</Text>
       <DewPointLocation lat={loc.lat} long={loc.long} dayOffset={offset} />

@@ -2,7 +2,7 @@ import { generateGradient } from "typescript-color-gradient";
 import { getSeaInfo } from "@/components/utils/_weatherModel";
 import ChartComponentRange from "@/components/components/_chatCompRange";
 import { stats } from "@/components/weatherComps/_AirTempLocation";
-import { groupByDayWater } from "@/components/weatherComps/weatherFunc";
+import { groupByDayWater } from "@/components/classes/WeatherFeature/weatherFunc";
 
 export function SeaWaterTempLocation(props: {
   lat: number;

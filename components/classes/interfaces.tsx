@@ -1,7 +1,7 @@
 import { zone } from "@/components/components/_chatComp";
+import { mean } from "simple-statistics";
 
 export interface Attribute {
-  last: number;
   transform: (n: number) => number;
 
   getTransformed(): number[];
@@ -16,6 +16,10 @@ export function fix(v: number | undefined | null): number {
     return 0;
   }
   return v;
+}
+
+export function getRange(data: number[]) {
+  return [Math.min(...data), mean(data), Math.max(...data)];
 }
 
 export function getLast(data: number[]) {

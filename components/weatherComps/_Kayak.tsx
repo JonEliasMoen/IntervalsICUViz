@@ -9,7 +9,7 @@ import { StyleSheet, View } from "react-native";
 import {
   groupByDay,
   groupByDayWater,
-} from "@/components/weatherComps/weatherFunc";
+} from "@/components/classes/WeatherFeature/weatherFunc";
 
 interface kayakRes {
   date: Date;
