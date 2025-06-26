@@ -6,6 +6,8 @@ on:
       - master
     paths:
       - "**/*.tsx"
+      - "package.json"
+      - "package-lock.json"
 jobs:
   build:
     runs-on: ubuntu-latest
