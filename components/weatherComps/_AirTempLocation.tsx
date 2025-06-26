@@ -62,7 +62,7 @@ export function AirTempLocation(props: {
   if (data == null) {
     return <></>;
   }
-  const wRap = new weatherWrapper(data, props.dayOffset);
+  const wRap = new weatherWrapper(data, props.dayOffset, []);
   const dayMap = groupByDay(data.properties.timeseries);
   const today = dayMap[props.dayOffset];
   const forcData = getFeltTempArrayMapped(today);

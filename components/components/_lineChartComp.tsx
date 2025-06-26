@@ -1,10 +1,12 @@
 import React, { useState } from "react";
-import { Pressable, Text, useWindowDimensions, View } from "react-native";
-import Svg, { Polyline, Rect } from "react-native-svg";
+import { Pressable, useWindowDimensions, View } from "react-native";
+import Svg, { Polyline, Rect, Text } from "react-native-svg";
 import { Attribute } from "@/components/classes/interfaces";
+import { getTimeHHMM, secondsFrom } from "@/components/utils/_utils";
 
 export interface line {
-  data: number[];
+  y: number[];
+  x?: Date[];
   color: string;
   label: string;
   reverse?: boolean;
@@ -14,31 +16,66 @@ export interface line {
 export interface data {
   lines: line[];
   title: string;
+  labels?: Date[];
+}
+
+function scaleX(data: Date[]): number[] {
+  let xN = data.map((t) => secondsFrom(t, data[0]));
+  xN = xN.map((t) => t / Math.max(...xN));
+  return xN;
 }
 
 function normalizeLines(
   lines: line[],
   width: number,
   height: number,
-): { points: string; color: string }[] {
-  const maxLength = Math.max(...lines.map((l) => l.data.length));
+): { points: string; xcolor: string }[] {
+  const maxLength = Math.max(...lines.map((l) => l.y.length));
 
   return lines.map((l) => {
-    let max = Math.max(...l.data);
-    let min = Math.min(...l.data);
+    let max = Math.max(...l.y);
+    let min = Math.min(...l.y);
     console.log(l.label, max, min);
     if (l.isScaled) {
       max = 1;
       min = 0;
     }
+
     const stepX = width / (maxLength - 1);
     let scaleY = (v: number) => height - ((v - min) / (max - min)) * height;
     if (l.reverse) {
       scaleY = (v: number) => ((v - min) / (max - min)) * height;
     }
 
-    const points = l.data.map((v, i) => `${i * stepX},${scaleY(v)}`).join(" ");
-    return { points, color: l.color };
+    let points = l.y.map((v, i) => `${i * stepX},${scaleY(v)}`).join(" ");
+    if (l.x != undefined) {
+      // @ts-ignore
+      let xN = scaleX(l.x);
+      console.log(xN);
+      points = l.y.map((v, i) => `${xN[i] * width},${scaleY(v)}`).join(" ");
+    }
+    return { points, xcolor: l.color };
+  });
+}
+
+function normalizeLabels(
+  data: Date[] | undefined,
+  chartWidth: number,
+): { text: string; x: number }[] {
+  if (!data) {
+    return [];
+  }
+  let xN = scaleX(data);
+  return data.map((t, i) => {
+    if (i > 0) {
+      if (t.getDay() != data[i - 1].getDay()) {
+        return { text: t.toString().slice(0, 3), x: xN[i] * chartWidth };
+      }
+    }
+    if (i % 2 == 0) {
+      return { text: getTimeHHMM(t).slice(0, 2), x: xN[i] * chartWidth };
+    }
+    return { text: "", x: xN[i] * chartWidth };
   });
 }
 
@@ -78,6 +115,7 @@ export function LineChartComp(props: { lineData: data; attr?: Attribute }) {
   const filteredLines = props.lineData.lines.filter((_, i) => activeLines[i]);
   const normalized = normalizeLines(filteredLines, chartWidth, chartHeight);
   const normalizedZones = normalizeZones(props.attr, chartHeight);
+  const normalisedLabels = normalizeLabels(props.lineData.labels, chartWidth);
   return (
     <View
       style={{
@@ -114,7 +152,17 @@ export function LineChartComp(props: { lineData: data; attr?: Attribute }) {
           </Pressable>
         ))}
       </View>
-      <Svg width={chartWidth} height={chartHeight}>
+      <Svg width={chartWidth} height={chartHeight + 30}>
+        {normalisedLabels.map((zone, index) => (
+          <Text
+            fontSize="10"
+            x={zone.x}
+            y={chartHeight + 15}
+            textAnchor="middle"
+          >
+            {zone.text}
+          </Text>
+        ))}
         {normalizedZones &&
           normalizedZones.map((zone, index) => (
             <Rect
@@ -130,7 +178,7 @@ export function LineChartComp(props: { lineData: data; attr?: Attribute }) {
             key={idx}
             points={line.points}
             fill="none"
-            stroke={line.color}
+            stroke={line.xcolor}
             strokeWidth="2"
           />
         ))}

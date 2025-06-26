@@ -13,10 +13,13 @@ export class weatherWrapper {
   timeseries: TimeSeriesEntry[];
   uv: UV;
 
-  constructor(data: WeatherFeature, dayOffset: number) {
+  constructor(data: WeatherFeature, dayOffset: number, t: TimeSeriesEntry[]) {
     this.weather = data;
     if (dayOffset != -1) {
       this.timeseries = groupByDay(data.properties.timeseries)[dayOffset];
+    }
+    if (t?.length != 0) {
+      this.timeseries = t;
     } else {
       this.timeseries = this.weather.properties.timeseries;
     }
@@ -31,5 +34,9 @@ export class weatherWrapper {
 
   getAttr(d: keyof InstantDetails): number[] {
     return this.timeseries.map((n) => n.data.instant.details[d]);
+  }
+
+  getDates(): Date[] {
+    return this.timeseries.map((n) => new Date(n.time));
   }
 }

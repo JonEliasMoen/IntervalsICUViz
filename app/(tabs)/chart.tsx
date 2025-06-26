@@ -23,8 +23,8 @@ export default function Chart() {
       <LineChartComp
         lineData={{
           lines: [
-            { data: a, color: "red", label: "ATL" },
-            { data: b, color: "blue", label: "CTL" },
+            { y: a, color: "red", label: "ATL" },
+            { y: b, color: "blue", label: "CTL" },
           ],
           title: "Acute chronic",
         }}
@@ -34,19 +34,19 @@ export default function Chart() {
         lineData={{
           lines: [
             {
-              data: wRap.acwr.acwrT,
+              y: wRap.acwr.acwrT,
               color: "red",
               label: "ACR",
               isScaled: true,
             },
             {
-              data: wRap.acwrs.acrsT,
+              y: wRap.acwrs.acrsT,
               color: "blue",
               label: "ACRS",
               isScaled: true,
             },
             {
-              data: wRap.rampRate.rampT,
+              y: wRap.rampRate.rampT,
               color: "blue",
               label: "Ramp rate",
               isScaled: true,
@@ -59,10 +59,10 @@ export default function Chart() {
         attr={wRap.hrv}
         lineData={{
           lines: [
-            { data: wRap.readiness.value, color: "blue", label: "Readiness" },
-            { data: wRap.hrv.hrvT, color: "red", label: "HRV", isScaled: true },
+            { y: wRap.readiness.value, color: "blue", label: "Readiness" },
+            { y: wRap.hrv.hrvT, color: "red", label: "HRV", isScaled: true },
             {
-              data: wRap.rhr.getTransformed(),
+              y: wRap.rhr.getTransformed(),
               color: "purple",
               label: "RHR",
               isScaled: true,
@@ -75,13 +75,13 @@ export default function Chart() {
         lineData={{
           lines: [
             {
-              data: wRap.sleep.getTransformed(),
+              y: wRap.sleep.getTransformed(),
               color: "blue",
               label: "Sleep",
               isScaled: true,
             },
             {
-              data: wRap.sleepScore.getTransformed(),
+              y: wRap.sleepScore.getTransformed(),
               color: "red",
               label: "Sleep Score",
               isScaled: true,
