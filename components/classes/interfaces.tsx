@@ -19,6 +19,9 @@ export function fix(v: number | undefined | null): number {
 }
 
 export function getRange(data: number[]) {
+  if (data.length == 0) {
+    return [-1];
+  }
   return [Math.min(...data), mean(data), Math.max(...data)];
 }
 

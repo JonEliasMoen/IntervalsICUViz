@@ -74,15 +74,35 @@ function normalizeLabels(
   }
   console.log(chartWidth);
   let xN = scaleX(data);
+  let dt = secondsFrom(data[1], data[0]) / 60 / 60 / 24;
+  if (dt == 1) {
+    return data
+      .map((t, i) => {
+        if (i > 0) {
+          if (t.getDay() != data[i - 1].getDay() && t.getDay() == 0) {
+            return {
+              text: t.getUTCDate() + "." + t.getMonth(),
+              x: xN[i] * chartWidth,
+            };
+          }
+        }
+        return {
+          text: "",
+          x: xN[i] * chartWidth,
+        };
+      })
+      .filter((t) => t.text !== "");
+  }
+
   return data
     .map((t, i) => {
       if (i > 0) {
         if (t.getDay() != data[i - 1].getDay()) {
           return { text: t.toString().slice(0, 3), x: xN[i] * chartWidth };
         }
-      }
-      if (t.getHours() % 3 == 0) {
-        return { text: getTimeHHMM(t).slice(0, 2), x: xN[i] * chartWidth };
+        if (t.getHours() % 3 == 0) {
+          return { text: getTimeHHMM(t).slice(0, 2), x: xN[i] * chartWidth };
+        }
       }
       return { text: "", x: xN[i] * chartWidth };
     })
@@ -189,12 +209,12 @@ export function LineChartComp(props: { lineData: data; attr?: Attribute }) {
         ))}
         {normalisedLabels.length > 0 && (
           <Line
-            strokeWidth={"2"}
+            strokeWidth={"1"}
             stroke={"black"}
             x1={0}
-            y1={chartHeight + 5}
+            y1={chartHeight}
             x2={chartWidth}
-            y2={chartHeight + 5}
+            y2={chartHeight}
           />
         )}
 

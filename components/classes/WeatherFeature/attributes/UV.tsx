@@ -14,7 +14,9 @@ export class UV implements Attribute {
   now: number;
 
   constructor(data: weatherWrapper) {
-    this.uv = data.getAttr("ultraviolet_index_clear_sky");
+    this.uv = data
+      .getAttr("ultraviolet_index_clear_sky")
+      .filter((t) => t !== undefined);
     this.uvT = transformed(this.uv, this);
     this.range = getRange(this.uv);
     this.now = this.uv[0];
@@ -28,6 +30,7 @@ export class UV implements Attribute {
     return (
       <ChartComponent
         title={"UV Index"}
+        display={() => this.range[0] != -1}
         subtitle={"Now: " + this.now}
         progress={this.range[2]}
         zones={this.getZones()}

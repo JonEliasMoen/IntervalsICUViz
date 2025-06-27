@@ -6,6 +6,7 @@ import { getWellnessRange } from "@/components/utils/_fitnessModel";
 import { useStoredKey } from "@/components/utils/_keyContext";
 import LineChartComp from "@/components/components/_lineChartComp";
 import { wellnessWrapper } from "@/components/classes/wellness/_wellnessWrapper";
+import { dateOffset } from "@/components/utils/_utils";
 
 export default function Chart() {
   const { storedKey, storedAid } = useStoredKey();
@@ -17,6 +18,11 @@ export default function Chart() {
   let wRap = new wellnessWrapper(dataLong);
   let a = dataLong.map((t) => t.atl);
   let b = dataLong.map((t) => t.ctl);
+  const simpleRange = (a: number, b: number): number[] =>
+    Array.from({ length: Math.max(0, b - a) }, (_, i) => a + i);
+
+  const dt = simpleRange(-a.length + 1, 1).map((t) => dateOffset(-t));
+  console.log("wtf", dt.length, a.length);
   // @ts-ignore
   return (
     <ScrollView>
@@ -27,6 +33,7 @@ export default function Chart() {
             { y: b, color: "blue", label: "CTL" },
           ],
           title: "Acute chronic",
+          labels: dt,
         }}
       ></LineChartComp>
       <LineChartComp
@@ -52,6 +59,7 @@ export default function Chart() {
               isScaled: true,
             },
           ],
+          labels: dt,
           title: "Acute chronic Workload ratio",
         }}
       ></LineChartComp>
@@ -69,6 +77,7 @@ export default function Chart() {
             },
           ],
           title: "Health data",
+          labels: dt,
         }}
       ></LineChartComp>
       <LineChartComp
@@ -88,6 +97,7 @@ export default function Chart() {
             },
           ],
           title: "Sleep",
+          labels: dt,
         }}
       ></LineChartComp>
     </ScrollView>

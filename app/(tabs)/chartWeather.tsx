@@ -5,31 +5,25 @@ import React from "react";
 import LineChartComp from "@/components/components/_lineChartComp";
 import { getWeather } from "@/components/utils/_weatherModel";
 import { weatherWrapper } from "@/components/classes/WeatherFeature/weatherWrapper";
-import { secondsFrom } from "@/components/utils/_utils";
 
 export default function ChartWeather() {
   const weather = getWeather(63.4394093, 10.5039971);
   if (!weather) {
     return <Text>Loading...</Text>;
   }
-  const wRap = new weatherWrapper(
-    weather,
-    -1,
+  const wRap = new weatherWrapper(weather, -1).setTimeseries(
     weather.properties.timeseries.slice(0, 55),
   );
   let x = wRap.getDates();
-  let xN = x.map((t) => secondsFrom(t, x[0]));
-  console.log(xN);
-  xN = xN.map((t) => t / Math.max(...xN));
-  console.log(xN);
   return (
     <ScrollView>
       <LineChartComp
         lineData={{
           lines: [
             {
-              y: wRap.getAttr("air_temperature"),
+              y: wRap.temp.getTransformed(),
               x: x,
+              isScaled: true,
               color: "red",
               label: "Temperature",
             },

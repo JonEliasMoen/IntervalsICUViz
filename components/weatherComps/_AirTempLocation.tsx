@@ -1,10 +1,8 @@
-import { normalizeBasedOnRange, secondsFrom } from "@/components/utils/_utils";
 import { ChartComponent, zone } from "@/components/components/_chatComp";
 import { mean } from "simple-statistics";
 import { generateGradient } from "typescript-color-gradient";
 import {
   feelTempArray,
-  feelTempNow,
   groupByDay,
 } from "@/components/classes/WeatherFeature/weatherFunc";
 import {
@@ -16,6 +14,7 @@ import {
 import ChartComponentRange from "@/components/components/_chatCompRange";
 import React from "react";
 import { weatherWrapper } from "@/components/classes/WeatherFeature/weatherWrapper";
+import { normalizeBasedOnRange, secondsFrom } from "@/components/utils/_utils";
 
 function getRain(t: TimeSeriesEntry): PrecipationDetails | undefined {
   return t.data.next_1_hours?.details;
@@ -62,12 +61,9 @@ export function AirTempLocation(props: {
   if (data == null) {
     return <></>;
   }
-  const wRap = new weatherWrapper(data, props.dayOffset, []);
+  const wRap = new weatherWrapper(data, props.dayOffset);
   const dayMap = groupByDay(data.properties.timeseries);
   const today = dayMap[props.dayOffset];
-  const forcData = getFeltTempArrayMapped(today);
-  const feltTemp = forcData[0];
-  const feltTempNow = feelTempNow(today[0].data.instant.details);
 
   const gradientArray = generateGradient(["#02c7fc", "#ff0404"], 1000);
   const zonesFF = dayMap.map((k, i) => {
@@ -109,18 +105,6 @@ export function AirTempLocation(props: {
       .reduce((sum, value) => sum * value, 1);
 
   const colorsw = generateGradient(["#F5AF19", "#F12711"], 10);
-  const colors = generateGradient(["#02c7fc", "#ff0404"], 6 * 2);
-
-  const zones: zone[] = [-25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25].map(
-    (v, i) => {
-      return {
-        startVal: v,
-        endVal: v + 5,
-        text: `${v}-${v + 5}°C `,
-        color: colors[i],
-      };
-    },
-  );
   const windText: string[] = [
     "Calm",
     "Light Air",
@@ -162,16 +146,7 @@ export function AirTempLocation(props: {
   return (
     <>
       {wRap.uv.getComponent()}
-      <ChartComponentRange
-        title={"Average temp"}
-        subtitle={"Now: " + feltTempNow.toFixed(2) + "°C"}
-        progressFrom={stats(feltTemp)[0]}
-        progressValue={stats(feltTemp)[1]}
-        progressTo={stats(feltTemp)[2]}
-        zones={zones}
-        transform={(v) => (v + 25) / 50}
-        indicatorTextTransform={(n) => n.toFixed(2) + "°C"}
-      ></ChartComponentRange>
+      {wRap.temp.getComponent()}
       <ChartComponent
         title={"Temp days forward"}
         progress={0}

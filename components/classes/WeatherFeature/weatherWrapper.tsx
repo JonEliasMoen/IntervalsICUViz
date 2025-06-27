@@ -7,23 +7,30 @@ import {
 } from "@/components/utils/_weatherModel";
 import { groupByDay } from "@/components/classes/WeatherFeature/weatherFunc";
 import { UV } from "./attributes/UV";
+import { TEMP } from "@/components/classes/WeatherFeature/attributes/TEMP";
 
 export class weatherWrapper {
   weather: WeatherFeature;
   timeseries: TimeSeriesEntry[];
   uv: UV;
+  temp: TEMP;
 
-  constructor(data: WeatherFeature, dayOffset: number, t: TimeSeriesEntry[]) {
+  constructor(data: WeatherFeature, dayOffset: number) {
     this.weather = data;
     if (dayOffset != -1) {
       this.timeseries = groupByDay(data.properties.timeseries)[dayOffset];
-    }
-    if (t?.length != 0) {
-      this.timeseries = t;
     } else {
-      this.timeseries = this.weather.properties.timeseries;
+      this.timeseries = data.properties.timeseries;
     }
     this.uv = new UV(this);
+    this.temp = new TEMP(this);
+  }
+
+  setTimeseries(timeseries: TimeSeriesEntry[]) {
+    this.timeseries = timeseries;
+    this.uv = new UV(this);
+    this.temp = new TEMP(this);
+    return this;
   }
 
   getComposite(d: Attribute[]) {
