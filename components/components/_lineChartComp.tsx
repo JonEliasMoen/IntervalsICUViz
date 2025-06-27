@@ -1,5 +1,10 @@
 import React, { useState } from "react";
-import { Pressable, useWindowDimensions, View } from "react-native";
+import {
+  Pressable,
+  Text as DefaultText,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import Svg, { Polyline, Rect, Text } from "react-native-svg";
 import { Attribute } from "@/components/classes/interfaces";
 import { getTimeHHMM, secondsFrom } from "@/components/utils/_utils";
@@ -125,9 +130,9 @@ export function LineChartComp(props: { lineData: data; attr?: Attribute }) {
         alignItems: "center",
       }}
     >
-      <Text style={{ fontSize: 18, fontWeight: "600", marginBottom: 8 }}>
+      <DefaultText style={{ fontSize: 18, fontWeight: "600", marginBottom: 8 }}>
         {props.lineData.title}
-      </Text>
+      </DefaultText>
       <View style={{ flexDirection: "row", marginBottom: 8 }}>
         {props.lineData.lines.map((line, index) => (
           <Pressable key={index} onPress={() => toggleLine(index)}>
