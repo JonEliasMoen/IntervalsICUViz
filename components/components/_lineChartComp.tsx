@@ -5,7 +5,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import Svg, { Polyline, Rect, Text } from "react-native-svg";
+import Svg, { Line, Polyline, Rect, Text } from "react-native-svg";
 import { Attribute } from "@/components/classes/interfaces";
 import { getTimeHHMM, secondsFrom } from "@/components/utils/_utils";
 
@@ -22,6 +22,8 @@ export interface data {
   lines: line[];
   title: string;
   labels?: Date[];
+  height?: number;
+  width?: number;
 }
 
 function scaleX(data: Date[]): number[] {
@@ -70,18 +72,21 @@ function normalizeLabels(
   if (!data) {
     return [];
   }
+  console.log(chartWidth);
   let xN = scaleX(data);
-  return data.map((t, i) => {
-    if (i > 0) {
-      if (t.getDay() != data[i - 1].getDay()) {
-        return { text: t.toString().slice(0, 3), x: xN[i] * chartWidth };
+  return data
+    .map((t, i) => {
+      if (i > 0) {
+        if (t.getDay() != data[i - 1].getDay()) {
+          return { text: t.toString().slice(0, 3), x: xN[i] * chartWidth };
+        }
       }
-    }
-    if (i % 2 == 0) {
-      return { text: getTimeHHMM(t).slice(0, 2), x: xN[i] * chartWidth };
-    }
-    return { text: "", x: xN[i] * chartWidth };
-  });
+      if (t.getHours() % 3 == 0) {
+        return { text: getTimeHHMM(t).slice(0, 2), x: xN[i] * chartWidth };
+      }
+      return { text: "", x: xN[i] * chartWidth };
+    })
+    .filter((t) => t.text != "");
 }
 
 function normalizeZones(
@@ -106,8 +111,10 @@ function normalizeZones(
 
 export function LineChartComp(props: { lineData: data; attr?: Attribute }) {
   const { width } = useWindowDimensions();
-  const chartWidth = width - 40;
-  const chartHeight = 160;
+  const chartWidth =
+    props.lineData.width != undefined ? props.lineData.width : width - 40;
+  const chartHeight =
+    props.lineData.height != undefined ? props.lineData.height : 160;
 
   const [activeLines, setActiveLines] = useState<boolean[]>(
     props.lineData.lines.map(() => true),
@@ -159,15 +166,38 @@ export function LineChartComp(props: { lineData: data; attr?: Attribute }) {
       </View>
       <Svg width={chartWidth} height={chartHeight + 30}>
         {normalisedLabels.map((zone, index) => (
-          <Text
-            fontSize="10"
-            x={zone.x}
-            y={chartHeight + 15}
-            textAnchor="middle"
-          >
-            {zone.text}
-          </Text>
+          <>
+            <Line
+              opacity={50}
+              strokeDashoffset={1}
+              stroke={"black"}
+              x1={zone.x}
+              y1={0}
+              x2={zone.x}
+              y2={chartHeight + 5}
+              strokeDasharray="2 4" // Dash length 2, gap length 4
+            />
+            <Text
+              fontSize="10"
+              x={zone.x}
+              y={chartHeight + 20}
+              textAnchor="middle"
+            >
+              {zone.text}
+            </Text>
+          </>
         ))}
+        {normalisedLabels.length > 0 && (
+          <Line
+            strokeWidth={"2"}
+            stroke={"black"}
+            x1={0}
+            y1={chartHeight + 5}
+            x2={chartWidth}
+            y2={chartHeight + 5}
+          />
+        )}
+
         {normalizedZones &&
           normalizedZones.map((zone, index) => (
             <Rect
