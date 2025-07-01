@@ -34,7 +34,7 @@ export class TEMP implements Attribute {
         title={"Average temp"}
         subtitle={"Now: " + this.temp[0].toFixed(2) + "°C"}
         progressFrom={this.range[0]}
-        progressValue={this.range[1]}
+        progressValue={this.now}
         progressTo={this.range[2]}
         zones={this.getZones()}
         transform={this.transform}

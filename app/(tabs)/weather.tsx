@@ -10,7 +10,6 @@ import {
 import React, { useEffect, useState } from "react";
 import { SunRiseSetLocation } from "@/components/weatherComps/_SunRiseSetLocation";
 import { location } from "@/components/utils/_weatherModel";
-import { BrightnessLocation } from "@/components/weatherComps/_BrightnessLocation";
 import { PressureLocation } from "@/components/weatherComps/_PressureLocation";
 import DropDown from "@/components/components/_dropDown";
 import { Text } from "@/components/Themed";
@@ -194,11 +193,6 @@ export default function WeatherScreen() {
         long={loc.long}
         dayOffset={offset}
       ></AirTempLocation>
-      <BrightnessLocation
-        lat={loc.lat}
-        long={loc.long}
-        dayOffset={offset}
-      ></BrightnessLocation>
       <TideLocation lat={loc.lat} long={loc.long} now={now}></TideLocation>
       {loc.snowPlace?.map((t) => {
         return <SnowDepthLocation loc={t}></SnowDepthLocation>;

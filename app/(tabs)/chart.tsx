@@ -22,7 +22,7 @@ export default function Chart() {
     Array.from({ length: Math.max(0, b - a) }, (_, i) => a + i);
 
   const dt = simpleRange(-a.length + 1, 1).map((t) => dateOffset(-t));
-  console.log("wtf", dt.length, a.length);
+
   // @ts-ignore
   return (
     <ScrollView>

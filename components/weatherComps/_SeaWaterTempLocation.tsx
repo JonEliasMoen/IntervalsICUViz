@@ -32,7 +32,7 @@ export function SeaWaterTempLocation(props: {
       <ChartComponentRange
         title={"Water temperature"}
         progressFrom={temp[0]}
-        progressValue={temp[1]}
+        progressValue={temps[0]}
         progressTo={temp[2]}
         zones={[
           {
@@ -78,7 +78,7 @@ export function SeaWaterTempLocation(props: {
       <ChartComponentRange
         title={"Wave height"}
         progressFrom={wave[0]}
-        progressValue={wave[1]}
+        progressValue={waveHeight[0]}
         progressTo={wave[2]}
         zones={[
           {

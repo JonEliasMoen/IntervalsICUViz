@@ -6,6 +6,49 @@ import LineChartComp from "@/components/components/_lineChartComp";
 import { getWeather } from "@/components/utils/_weatherModel";
 import { weatherWrapper } from "@/components/classes/WeatherFeature/weatherWrapper";
 
+function getComponent(wRap: weatherWrapper, title: string): React.JSX.Element {
+  let x = wRap.getDates();
+  console.log(title, "rain", wRap.rain.getTransformed());
+  return (
+    <LineChartComp
+      lineData={{
+        lines: [
+          {
+            y: wRap.temp.getTransformed(),
+            x: x,
+            isScaled: true,
+            color: "red",
+            label: "Temperature",
+          },
+          {
+            y: wRap.wind.getTransformed(),
+            x: x,
+            isScaled: true,
+            color: "blue",
+            label: "Wind",
+          },
+          {
+            y: wRap.cover.getTransformed(),
+            isScaled: true,
+            x: x,
+            color: "orange",
+            label: "Cloud Cover",
+          },
+          {
+            y: wRap.rain.getTransformed(),
+            isScaled: true,
+            x: x,
+            color: "green",
+            label: "Rain",
+          },
+        ],
+        title: title,
+        labels: x,
+      }}
+    ></LineChartComp>
+  );
+}
+
 export default function ChartWeather() {
   const weather = getWeather(63.4394093, 10.5039971);
   if (!weather) {
@@ -14,36 +57,11 @@ export default function ChartWeather() {
   const wRap = new weatherWrapper(weather, -1).setTimeseries(
     weather.properties.timeseries.slice(0, 55),
   );
-  let x = wRap.getDates();
+  const wRapFull = new weatherWrapper(weather, -1);
   return (
     <ScrollView>
-      <LineChartComp
-        lineData={{
-          lines: [
-            {
-              y: wRap.temp.getTransformed(),
-              x: x,
-              isScaled: true,
-              color: "red",
-              label: "Temperature",
-            },
-            {
-              y: wRap.getAttr("wind_speed"),
-              x: x,
-              color: "blue",
-              label: "Wind",
-            },
-            {
-              y: wRap.getAttr("cloud_area_fraction"),
-              x: x,
-              color: "orange",
-              label: "Cloud Cover",
-            },
-          ],
-          title: "Temperature",
-          labels: x,
-        }}
-      ></LineChartComp>
+      {getComponent(wRap, "Forecast short")}
+      {getComponent(wRapFull, "Forecast long")}
     </ScrollView>
   );
 }

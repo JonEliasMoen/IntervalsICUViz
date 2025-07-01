@@ -1,7 +1,6 @@
 import { generateGradient } from "typescript-color-gradient";
 import { getWeather } from "@/components/utils/_weatherModel";
 import { groupByDay } from "@/components/classes/WeatherFeature/weatherFunc";
-import { mean } from "simple-statistics";
 import React from "react";
 import ChartComponentRange from "@/components/components/_chatCompRange";
 import { zone } from "@/components/components/_chatComp";
@@ -22,7 +21,6 @@ export function DewPointLocation(props: {
   );
   const max = Math.max(...dewpoints);
   const min = Math.min(...dewpoints);
-  const value = mean(dewpoints);
 
   const colors = generateGradient(["#02c7fc", "#ff0404"], 6);
 
@@ -48,7 +46,7 @@ export function DewPointLocation(props: {
       title={"Dew point"}
       subtitle={"Now: " + dewpoints[0].toFixed(2) + "°C"}
       progressFrom={min}
-      progressValue={value}
+      progressValue={dewpoints[0]}
       progressTo={max}
       zones={zones}
       transform={(n) => n / 30}

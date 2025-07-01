@@ -179,7 +179,7 @@ export function LineChartComp(props: { lineData: data; attr?: Attribute }) {
                   marginRight: 6,
                 }}
               />
-              <Text>{line.label}</Text>
+              <DefaultText>{line.label}</DefaultText>
             </View>
           </Pressable>
         ))}
