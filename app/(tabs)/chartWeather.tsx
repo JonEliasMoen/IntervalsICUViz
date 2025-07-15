@@ -41,6 +41,13 @@ function getComponent(wRap: weatherWrapper, title: string): React.JSX.Element {
             color: "green",
             label: "Rain",
           },
+          {
+            y: wRap.uv.getTransformed(),
+            isScaled: true,
+            x: x,
+            color: "pink",
+            label: "UV",
+          },
         ],
         title: title,
         labels: x,

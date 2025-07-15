@@ -52,12 +52,6 @@ export default function Chart() {
               label: "ACRS",
               isScaled: true,
             },
-            {
-              y: wRap.rampRate.rampT,
-              color: "blue",
-              label: "Ramp rate",
-              isScaled: true,
-            },
           ],
           labels: dt,
           title: "Acute chronic Workload ratio",

@@ -31,7 +31,7 @@ export function ChartComponentRange(props: {
   display?: () => boolean;
   progressFrom: number;
   progressTo: number;
-  progressValue: number;
+  progressValue?: number | null;
   zones: zone[];
   transform: (n: number) => number;
   indicatorTextTransform?: (n: number) => string | number;
@@ -40,7 +40,6 @@ export function ChartComponentRange(props: {
     props.progressFrom,
     (props.progressFrom + props.progressTo) / 2,
     props.progressTo,
-    props.progressValue,
   ].map((t) => props.transform(t));
   let text =
     props.zones.find(
@@ -48,8 +47,8 @@ export function ChartComponentRange(props: {
         value[0] >= props.transform(zone.startVal) &&
         value[0] <= props.transform(zone.endVal),
     )?.text ?? "";
-  let progress = value[1] - 0.5;
-  let progressValue = value[3] - 0.5;
+  let progress =
+    props.transform((props.progressFrom + props.progressTo) / 2) - 0.5;
   let display = props.display != null ? props.display() : true;
   let titleText = props.title != undefined ? props.title + ": " : "";
   return (
@@ -70,28 +69,11 @@ export function ChartComponentRange(props: {
             height: 20,
             borderWidth: 2,
             borderColor: "black",
-            backgroundColor: "rgba(0,0,0, 0)",
+            backgroundColor: "rgba(0,0,0, 0)", // Black progress indicator
           },
           {
             position: "relative",
             left: progress * 2 * 100,
-          },
-        ]}
-      ></View>
-      <View
-        style={[
-          {
-            position: "absolute",
-            top: -50,
-            width: 1,
-            height: 20,
-            borderWidth: 1,
-            borderColor: "black",
-            backgroundColor: "rgba(0,0,0, 0)",
-          },
-          {
-            position: "relative",
-            left: progressValue * 2 * 100,
           },
         ]}
       />
@@ -99,10 +81,8 @@ export function ChartComponentRange(props: {
         style={[
           styles.subtext,
           {
-            top: -50,
             position: "relative",
             left: progress * 2 * 100,
-            height: 15,
           },
         ]}
       >
@@ -116,10 +96,8 @@ export function ChartComponentRange(props: {
         style={[
           styles.subtext,
           {
-            top: -50,
             position: "relative",
             left: progress * 2 * 100,
-            height: 0,
           },
         ]}
       >

@@ -25,7 +25,7 @@ export class TEMP implements Attribute {
   }
 
   transform(n: number): number {
-    return normalizeBasedOnRangeSingle(n, -25, 25);
+    return normalizeBasedOnRangeSingle(n, -50, 50);
   }
 
   getComponent(): React.JSX.Element {
@@ -48,17 +48,18 @@ export class TEMP implements Attribute {
   }
 
   getZones(): zone[] {
-    const colors = generateGradient(["#02c7fc", "#ff0404"], 6 * 2);
-    const zones: zone[] = [-25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25].map(
-      (v, i) => {
-        return {
-          startVal: v,
-          endVal: v + 5,
-          text: `${v}-${v + 5}°C `,
-          color: colors[i],
-        };
-      },
-    );
+    const colors = generateGradient(["#02c7fc", "#ff0404"], 10 * 2);
+    const zones: zone[] = [
+      -50, -45, -40, -35, -30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30,
+      35, 40, 45, 50,
+    ].map((v, i) => {
+      return {
+        startVal: v,
+        endVal: v + 5,
+        text: `${v}-${v + 5}°C `,
+        color: colors[i],
+      };
+    });
     return zones;
   }
 }

@@ -1,10 +1,5 @@
-import { ChartComponent } from "@/components/components/_chatComp";
 import { mean } from "simple-statistics";
-import { generateGradient } from "typescript-color-gradient";
-import {
-  feelTempArray,
-  groupByDay,
-} from "@/components/classes/WeatherFeature/weatherFunc";
+import { feelTempArray } from "@/components/classes/WeatherFeature/weatherFunc";
 import {
   getWeather,
   InstantDetails,
@@ -61,32 +56,12 @@ export function AirTempLocation(props: {
     return <></>;
   }
   const wRap = new weatherWrapper(data, props.dayOffset);
-  const dayMap = groupByDay(data.properties.timeseries);
-  const gradientArray = generateGradient(["#02c7fc", "#ff0404"], 1000);
-  const zonesFF = dayMap.map((k, i) => {
-    const fData = getFeltTempArrayMapped(k);
-    const sfeltTemp = Math.round(mean(fData[1]));
-    return {
-      startVal: i * (1 / 11),
-      endVal: (i + 1) * (1 / 11),
-      text: "",
-      color: gradientArray[sfeltTemp],
-    };
-  });
-
   return (
     <>
       {wRap.cover.getComponent()}
       {wRap.uv.getComponent()}
       {wRap.temp.getComponent()}
       {wRap.rain.getComponent()}
-      <ChartComponent
-        title={"Temp days forward"}
-        progress={0}
-        zones={zonesFF}
-        transform={(u) => u}
-        indicatorTextTransform={() => ""}
-      ></ChartComponent>
       {wRap.wind.getComponent()}
       {wRap.windgust.getComponent()}
     </>
