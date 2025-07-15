@@ -178,11 +178,6 @@ export default function WeatherScreen() {
       <Text style={[{ textAlign: "center" }]}>Closest harbor: {harbor}</Text>
       <DewPointLocation lat={loc.lat} long={loc.long} dayOffset={offset} />
       <PressureLocation lat={loc.lat} long={loc.long}></PressureLocation>
-      <KayakLocation
-        lat={loc.lat}
-        long={loc.long}
-        dayOffset={offset}
-      ></KayakLocation>
       <SunRiseSetLocation
         lat={loc.lat}
         long={loc.long}
@@ -202,6 +197,11 @@ export default function WeatherScreen() {
         long={loc.long}
         dayOffset={offset}
       ></SeaWaterTempLocation>
+      <KayakLocation
+        lat={loc.lat}
+        long={loc.long}
+        dayOffset={offset}
+      ></KayakLocation>
       <HayfeverLocation lat={loc.lat} long={loc.long}></HayfeverLocation>
     </ScrollView>
   );
