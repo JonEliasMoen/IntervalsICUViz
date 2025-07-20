@@ -2,6 +2,7 @@ export function today() {
   let d = new Date();
   return d.getDate();
 }
+
 export const sShort = 7;
 export const sLong = 28;
 
@@ -10,6 +11,7 @@ export function isoDateOffset(n: number) {
   date.setDate(date.getDate() - n);
   return date.toISOString().slice(0, 10);
 }
+
 export function dateOffset(n: number) {
   let date = new Date();
   date.setDate(date.getDate() - n);
@@ -25,9 +27,7 @@ export function secondsSinceStartOfDay(date: Date): number {
   // @ts-ignore
   return (date - startOfDay) / 1000;
 }
-export function cutArrayIfOverLimit<T>(array: T[], maxLength: number): T[] {
-  return array.length > maxLength ? array.slice(0, maxLength) : array;
-}
+
 export function normalizeBasedOnRange(
   array: number[],
   min: number,
@@ -35,6 +35,7 @@ export function normalizeBasedOnRange(
 ): number[] {
   return array.map((t) => normalizeBasedOnRangeSingle(t, min, max));
 }
+
 export function normalizeBasedOnRangeSingle(
   t: number,
   min: number,
@@ -42,6 +43,7 @@ export function normalizeBasedOnRangeSingle(
 ): number {
   return (t - min) / (max - min);
 }
+
 export function daysSince(d: Date) {
   var date2 = new Date();
   var diff = Math.abs(d - date2.getTime());
@@ -66,6 +68,7 @@ export function secondsFrom(date: Date, dateFrom: Date): number {
   // @ts-ignore
   return (date - dateFrom) / 1000;
 }
+
 export function getTimeHHMM(date: Date): string {
   const hours = date.getHours().toString().padStart(2, "0");
   const minutes = date.getMinutes().toString().padStart(2, "0");
@@ -77,7 +80,6 @@ export function secondsToHHMM(seconds: number): string {
 
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
-
   return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
 }
 
