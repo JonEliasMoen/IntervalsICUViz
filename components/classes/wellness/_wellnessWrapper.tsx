@@ -9,6 +9,8 @@ import { RHR } from "@/components/classes/wellness/attributes/RHR";
 import { ACR } from "@/components/classes/wellness/attributes/ACR";
 import { RAMP } from "@/components/classes/wellness/attributes/RAMP";
 import { ACRS } from "@/components/classes/wellness/attributes/ACRS";
+import { WEIGHT } from "@/components/classes/wellness/attributes/WEIGHT";
+import { BODYFAT } from "@/components/classes/wellness/attributes/BODYFAT";
 
 export class wellnessWrapper {
   wellness: wellness[];
@@ -20,6 +22,8 @@ export class wellnessWrapper {
   sleepScore: SLEEPSCORE;
   readiness: READINESS;
   acwrs: ACRS;
+  weight: WEIGHT;
+  fat: BODYFAT;
 
   constructor(data: wellness[]) {
     this.wellness = data;
@@ -31,6 +35,8 @@ export class wellnessWrapper {
     this.sleepScore = new SLEEPSCORE(this);
     this.readiness = new READINESS(this, [this.hrv, this.rhr]);
     this.acwrs = new ACRS(this);
+    this.weight = new WEIGHT(this);
+    this.fat = new BODYFAT(this);
   }
 
   getComposite(d: Attribute[]) {

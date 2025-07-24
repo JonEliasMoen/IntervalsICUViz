@@ -78,7 +78,8 @@ export function getTimeHHMM(date: Date): string {
 export function secondsToHHMM(seconds: number): string {
   if (seconds < 0) throw new Error("Seconds cannot be negative");
 
-  const hours = Math.floor(seconds / 3600);
+  let hours = Math.floor(seconds / 3600);
+  hours = hours == 24 ? 0 : hours;
   const minutes = Math.floor((seconds % 3600) / 60);
   return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
 }

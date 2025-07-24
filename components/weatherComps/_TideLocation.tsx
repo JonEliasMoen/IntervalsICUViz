@@ -212,10 +212,12 @@ export interface forecast {
 function getTideReal(data: WaterLevelForecast, now: Date): forecast {
   let today = new Date();
   let dtoday = data.records.filter((t) => t.day == today.getDate());
-  let x = dtoday.map((t) =>
-    secondsSinceStartOfDay(
-      new Date(t.year, t.month, t.day, t.hour + 2, t.minute),
-    ),
+  let x = dtoday.map(
+    (t) =>
+      secondsSinceStartOfDay(
+        new Date(t.year, t.month, t.day, t.hour, t.minute),
+      ) +
+      2 * 60 * 60,
   );
   let end = 60 * 60 * 24;
   let i = secondsSinceStartOfDay(now) / end;
@@ -228,26 +230,35 @@ function getTideReal(data: WaterLevelForecast, now: Date): forecast {
 
   let current = 0;
   let extr: extrema[] = [];
-  y.forEach((t, i, v) => {
+
+  y.map((t, i, v) => {
     if (i > 0) {
       if (v[i - 1] < t) {
+        if (current == -1) {
+          extr.push({ type: "low", index: i, sec: x[i] });
+        }
         current = 1;
         return 1; // increasing
-      }
-      if (v[i - 1] > t) {
+      } else if (v[i - 1] > t) {
+        if (current == 1) {
+          extr.push({ type: "high", index: i, sec: x[i] });
+        }
         current = -1;
         return -1; // decreasing
+      } else {
+        if (current == 1) {
+          extr.push({ type: "high", index: i, sec: x[i] });
+        }
+        if (current == -1) {
+          extr.push({ type: "low", index: i, sec: x[i] });
+        }
+        current = 0;
       }
     }
-    if (current == 1) {
-      extr.push({ type: "high", index: i, sec: x[i] });
-    }
-    if (current == -1) {
-      extr.push({ type: "low", index: i, sec: x[i] });
-    }
-    current = 0;
+
     return 0;
   });
+  console.log(test, extr);
   let coming = extr.find((t) => t.index > nowI);
   x = x.map((t) => t / end);
   return {
