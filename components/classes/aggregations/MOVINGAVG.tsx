@@ -11,8 +11,8 @@ export class MOVINGAVG {
 
   transform(): number[] {
     const result = [];
-    for (let i = 0; i < this.data.length - this.size; i += 1) {
-      result.push(mean(this.data.slice(i, i + this.size)));
+    for (let i = this.size; i < this.data.length; i += 1) {
+      result.push(mean(this.data.slice(i - this.size, i)));
     }
     return result;
   }

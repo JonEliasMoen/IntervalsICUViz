@@ -48,4 +48,8 @@ export class wellnessWrapper {
   getAttr(d: keyof wellness): number[] {
     return this.wellness.map((t) => (t[d] == 0 || t[d] == null ? 0 : t[d]));
   }
+
+  getAttrNon(d: keyof wellness): wellness[] {
+    return this.wellness.filter((t) => (t[d] == 0 || t[d] == null ? 0 : t[d]));
+  }
 }

@@ -40,7 +40,7 @@ export class RAIN implements Attribute {
   }
 
   transform(n: number): number {
-    return n / 30;
+    return n / 10;
   }
 
   getComponent(): React.JSX.Element {
@@ -70,16 +70,9 @@ export class RAIN implements Attribute {
   }
 
   getZones(): zone[] {
-    const rainText = [
-      "",
-      "Weak rain",
-      "Moderate rain",
-      "Heavy rain",
-      "Very heavy rain",
-      "Shower",
-    ];
-    const colorsw = generateGradient(["#F5AF19", "#F12711"], 10);
-    return [0, 0.5, 2, 6, 10, 18, 30].map((v, i, a) => {
+    const rainText = ["", "Weak rain", "Moderate rain", "Heavy rain"];
+    const colorsw = generateGradient(["#F5AF19", "#F12711"], 4);
+    return [0, 0.5, 2, 6, 10].map((v, i, a) => {
       return {
         startVal: v,
         endVal: i != 9 ? a[i + 1] : v + 4,

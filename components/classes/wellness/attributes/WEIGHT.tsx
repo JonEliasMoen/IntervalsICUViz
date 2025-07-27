@@ -8,23 +8,32 @@ import { mean } from "simple-statistics";
 
 export class WEIGHT implements Attribute {
   weight: number[];
+  x: Date[];
   weightT: number[];
   quantile: QUANTILE;
   last: number;
 
   constructor(data: wellnessWrapper) {
     this.weight = data.getAttr("weight").filter((t) => t != 0);
-    this.quantile = new QUANTILE(this.weight, 7 * 4);
+    this.x = data
+      .getAttrNon("weight")
+      .filter((t) => t.weight != 0)
+      .map((t) => new Date(t.id));
+    this.quantile = new QUANTILE(this.weight, 4);
     this.weightT = transformed(this.weight, this);
-    this.last = mean(this.weight.slice(-7));
+    this.last = mean(this.weight.slice(this.weight.length - 2));
   }
 
   getTransformed(): number[] {
-    return this.weightT;
+    return [];
+  }
+
+  getX(): Date[] {
+    return this.x;
   }
 
   transform(n: number): number {
-    return (n - 40) / (100 - 40);
+    return 0;
   }
 
   getComponent(): React.JSX.Element {

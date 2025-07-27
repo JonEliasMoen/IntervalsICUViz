@@ -258,7 +258,6 @@ function getTideReal(data: WaterLevelForecast, now: Date): forecast {
 
     return 0;
   });
-  console.log(test, extr);
   let coming = extr.find((t) => t.index > nowI);
   x = x.map((t) => t / end);
   return {

@@ -8,20 +8,29 @@ import { mean } from "simple-statistics";
 
 export class BODYFAT implements Attribute {
   fat: number[];
+  x: Date[];
   fatT: number[];
   quantile: QUANTILE;
   last: number;
 
   constructor(data: wellnessWrapper) {
     this.fat = data.getAttr("bodyFat").filter((t) => t != 0);
+    this.x = data
+      .getAttrNon("bodyFat")
+      .filter((t) => t.bodyFat != 0)
+      .map((t) => new Date(t.id));
     console.log(this.fat);
-    this.quantile = new QUANTILE(this.fat, 7 * 4);
+    this.quantile = new QUANTILE(this.fat, 4);
     this.fatT = transformed(this.fat, this);
-    this.last = mean(this.fat.slice(this.fat.length - 7));
+    this.last = mean(this.fat.slice(this.fat.length - 2));
   }
 
   getTransformed(): number[] {
     return this.fatT;
+  }
+
+  getX(): Date[] {
+    return this.x;
   }
 
   transform(n: number): number {

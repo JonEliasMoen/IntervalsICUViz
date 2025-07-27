@@ -11,6 +11,8 @@ export interface sportInfo {
 }
 
 export interface wellness {
+  id: string;
+  bodyFat: number;
   sleepSecs: number;
   atl: number; // acute
   ctl: number; // chronic

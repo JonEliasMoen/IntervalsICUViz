@@ -18,19 +18,42 @@ export default function Chart() {
   let wRap = new wellnessWrapper(dataLong);
   let a = dataLong.map((t) => t.atl);
   let b = dataLong.map((t) => t.ctl);
+  let max = Math.max(...a, ...b);
+  a = a.map((t) => t / max);
+  b = b.map((t) => t / max);
+
   const simpleRange = (a: number, b: number): number[] =>
     Array.from({ length: Math.max(0, b - a) }, (_, i) => a + i);
 
   const dt = simpleRange(-a.length + 1, 1).map((t) => dateOffset(-t));
-
   // @ts-ignore
   return (
     <ScrollView>
       <LineChartComp
         lineData={{
           lines: [
-            { y: a, color: "red", label: "ATL" },
-            { y: b, color: "blue", label: "CTL" },
+            {
+              y: wRap.weight.weight,
+              color: "red",
+              label: "Weight",
+              x: wRap.weight.getX(),
+            },
+            {
+              y: wRap.fat.fat,
+              color: "blue",
+              label: "Fat",
+              x: wRap.fat.getX(),
+            },
+          ],
+          labels: wRap.weight.getX(),
+          title: "Body composition",
+        }}
+      ></LineChartComp>
+      <LineChartComp
+        lineData={{
+          lines: [
+            { y: a, color: "red", label: "ATL", isScaled: true },
+            { y: b, color: "blue", label: "CTL", isScaled: true },
           ],
           title: "Acute chronic",
           labels: dt,
