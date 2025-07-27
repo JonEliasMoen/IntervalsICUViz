@@ -230,19 +230,23 @@ function getTideReal(data: WaterLevelForecast, now: Date): forecast {
 
   let current = 0;
   let extr: extrema[] = [];
-
+  let counter = 0;
   y.map((t, i, v) => {
     if (i > 0) {
       if (v[i - 1] < t) {
-        if (current == -1) {
+        if (current == -1 && counter > 10) {
+          counter = 0;
           extr.push({ type: "low", index: i, sec: x[i] });
         }
+        counter += 1;
         current = 1;
         return 1; // increasing
       } else if (v[i - 1] > t) {
-        if (current == 1) {
+        if (current == 1 && counter > 10) {
+          counter = 0;
           extr.push({ type: "high", index: i, sec: x[i] });
         }
+        counter += 1;
         current = -1;
         return -1; // decreasing
       } else {
