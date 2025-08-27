@@ -2,8 +2,7 @@ import { ScrollView, StyleSheet } from "react-native";
 import { Text } from "@/components/Themed";
 import ChartComponent from "@/components/components/_chatComp";
 import React from "react";
-import { mean, standardDeviation } from "simple-statistics";
-import { sLong, sShort } from "@/components/utils/_utils";
+import { mean } from "simple-statistics";
 import { useStoredKey } from "@/components/utils/_keyContext";
 import {
   activity,
@@ -32,48 +31,6 @@ export function wattPer(t: "Run" | "Ride", data: wellness[]): wattResult {
     kg: weight,
     watt: eftp,
     title: text,
-  };
-}
-
-interface strainMonotony {
-  monotony: number;
-  acwr: number;
-  strain: number;
-  strainL: number;
-}
-
-export function strainMonotony(data: wellness[]): strainMonotony {
-  let load = data.map((t) => t.ctlLoad).filter((t) => t != undefined);
-  let short = load.slice(data.length - sShort);
-  let long = load.slice(data.length - sLong);
-  let shortM = mean(short);
-  let longM = mean(long);
-  let monotony = shortM / standardDeviation(short);
-  let monotonyL = longM / standardDeviation(long);
-  let strain = monotony * shortM;
-  let strainL = monotonyL * longM;
-  return {
-    monotony: monotony,
-    acwr: strain / strainL,
-    strain: strain,
-    strainL: strainL,
-  };
-}
-
-export function strainMonotonyList(load: number[]): strainMonotony {
-  let monotony =
-    mean(load.slice(load.length - sShort)) /
-    standardDeviation(load.slice(load.length - sShort));
-  let monotonyL =
-    mean(load.slice(load.length - sLong)) /
-    standardDeviation(load.slice(load.length - sLong));
-  let strain = monotony * mean(load.slice(load.length - sShort));
-  let strainL = monotonyL * mean(load.slice(load.length - sLong));
-  return {
-    monotony: monotony,
-    acwr: strain / strainL,
-    strain: strain,
-    strainL: strainL,
   };
 }
 

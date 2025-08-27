@@ -18,6 +18,21 @@ export class Range {
     return this.start <= range.end && this.end >= range.start;
   }
 
+  intersectWith(range: Range): Range | null {
+    // First, check if there is any overlap. If not, the intersection is null.
+    if (!this.overlapsWith(range)) {
+      return null;
+    }
+
+    // The start of the intersection is the maximum of the two start points.
+    const intersectStart = Math.max(this.start, range.start);
+
+    // The end of the intersection is the minimum of the two end points.
+    const intersectEnd = Math.min(this.end, range.end);
+
+    return new Range(intersectStart, intersectEnd);
+  }
+
   // Trim the current range based on another range
   trimWith(range: Range): Range | null {
     if (!this.overlapsWith(range)) {
@@ -78,4 +93,28 @@ export function trimRanges(ranges: Range[], trimRange: Range): Range[] {
   }
 
   return trimmedRanges;
+}
+
+export function findCommonIntersection(ranges: Range[]): Range | null {
+  // If the array is empty, there's no common intersection.
+  if (ranges.length === 0) {
+    return null;
+  }
+
+  // Start with the first range as the potential common intersection.
+  let commonRange = ranges[0];
+
+  // Iterate through the rest of the ranges, narrowing down the common intersection.
+  for (let i = 1; i < ranges.length; i++) {
+    const intersection = commonRange.intersectWith(ranges[i]);
+
+    // If at any point there is no intersection, then there is no common range.
+    if (intersection === null) {
+      return null;
+    }
+
+    commonRange = intersection;
+  }
+
+  return commonRange;
 }

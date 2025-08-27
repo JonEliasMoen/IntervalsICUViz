@@ -8,101 +8,20 @@ import {
   newEx,
   newExMutation,
   SportSettings,
-  wellness,
 } from "@/components/utils/_fitnessModel";
 import { useStoredKey } from "@/components/utils/_keyContext";
-import { strainMonotony, strainMonotonyList } from "@/app/(tabs)/index";
 import DropDown from "@/components/components/_dropDown";
 import Slider from "@react-native-community/slider";
+import { wellnessWrapper } from "@/components/classes/wellness/_wellnessWrapper";
+import { Boundaries } from "@/components/utils/_otherModel";
+import { findDoable } from "@/components/classes/wellness/attributes/ACR";
 
-export function convertToRanges(arr: number[]): Boundaries[] {
-  if (arr.length === 0) return [];
-
-  arr.sort((a, b) => a - b);
-
-  const ranges: Boundaries[] = [];
-  let start = arr[0];
-  let end = arr[0];
-
-  for (let i = 1; i < arr.length; i++) {
-    if (arr[i] === end + 1) {
-      end = arr[i];
-    } else {
-      ranges.push({
-        min: start,
-        max: end,
-      });
-      start = arr[i];
-      end = arr[i];
-    }
-  }
-
-  ranges.push({
-    min: start,
-    max: end,
-  });
-
-  return ranges;
-}
-
-type Boundaries = {
-  min: number;
-  max: number;
-};
 type finalRes = {
   time: Boundaries;
   load: Boundaries;
 };
 
-type desc = {
-  load: number;
-  monotony: number;
-  acwr: number;
-};
-
 const MAXACWR: number = 1.25;
-const MAXMONOTONY: number = 1.5;
-const MINMONOTONY: number = 1;
-const MAXSTRAINACWR: number = 1.5;
-const MINSTRAINACWR: number = 1.1;
-const SHORT = 7;
-const LONG = 42;
-
-function getStrainMonFromLoad(pastLoad: number[], load: number) {
-  const cLoad = JSON.parse(JSON.stringify(pastLoad));
-  cLoad[cLoad.length - 1] += load;
-  const mData = strainMonotonyList(cLoad);
-  return {
-    load: Math.round(load),
-    monotony: mData.monotony,
-    acwr: mData.acwr,
-  };
-}
-
-function calculateMonotonyLoadRange(
-  pastLoad: number[],
-  loadBound: Boundaries,
-  monoBound: Boundaries,
-  strBound: Boundaries,
-): Boundaries[] {
-  const data: desc[] = [];
-  for (let i = Math.floor(loadBound.min); i <= Math.ceil(loadBound.max); i++) {
-    data.push(getStrainMonFromLoad(pastLoad, i));
-  }
-  console.log(data);
-  var loads = data
-    .filter((t) => t.monotony < monoBound.max && t.monotony > monoBound.min)
-    .filter((t) => t.acwr < strBound.max && t.acwr > strBound.min)
-    .map((t) => t.load);
-  if (loads.length == 0) {
-    loads = data
-      .filter((t) => t.monotony < monoBound.max)
-      .filter((t) => t.acwr < strBound.max)
-      .map((t) => t.load);
-  }
-  console.log(loads);
-  return convertToRanges(loads);
-}
 
 function calculateTimeBoundary(
   tpace: number,
@@ -138,73 +57,20 @@ function calculateTimeBoundary(
   };
 }
 
-function findDoable(
-  dt: number,
-  load: number[],
-  tol: number[],
-  lowerDiscount: number,
-  higherDiscount: number,
-): Boundaries {
-  const S = SHORT;
-  const L = LONG;
-  const lastTol = tol[tol.length - 1];
-  const lastLoad = load[tol.length - 1];
-  const yLoad = load[load.length - 2];
-  const yTol = tol[tol.length - 2];
-
-  const alpha = 1 - Math.exp(-Math.log(2) / S);
-  const beta = 1 - Math.exp(-Math.log(2) / L);
-
-  for (let z = 0; z < dt; z++) {
-    load.push((1 - alpha) * lastLoad);
-    tol.push((1 - beta) * lastTol);
-  }
-
-  const d = ((alpha - 1) * yLoad + lastLoad) / alpha;
-
-  const res: number[] = [];
-  for (const t of [lowerDiscount, higherDiscount]) {
-    let x = alpha * (yLoad - d) + t * (beta * d - beta * yTol + yTol) - yLoad;
-    x /= alpha - t * beta;
-    res.push(x);
-  }
-
-  // Ensure no negative values
-  const adjustedRes = res.map((val) => Math.max(0, val));
-  return {
-    min: adjustedRes[0],
-    max: adjustedRes[1],
-  };
-}
-
 export function fitNPred(
-  wellnessData: wellness[],
   setting: SportSettings,
   vBound: Boundaries,
-  lBound: Boundaries,
+  t: Boundaries | null,
 ): finalRes[] {
-  let load = wellnessData.map((t) => t.ctlLoad).filter((t) => t != undefined);
-  let loadRanges = calculateMonotonyLoadRange(
-    load,
-    lBound,
-    { min: MINMONOTONY, max: MAXMONOTONY },
-    { min: MINSTRAINACWR, max: MAXSTRAINACWR },
-  );
-  console.log(loadRanges);
-  console.log(vBound);
-  let lrange: Boundaries[];
-  if (loadRanges == undefined || loadRanges.length == 0) {
+  if (!t) {
     return [];
-  } else {
-    lrange = loadRanges;
   }
-
-  return lrange.map((t) => {
-    return {
+  return [
+    {
       time: calculateTimeBoundary(setting.threshold_pace, t, vBound),
       load: t,
-    };
-  });
+    },
+  ];
 }
 
 // z is like z0, z1 here.
@@ -334,20 +200,17 @@ export default function RunSuggestScreen() {
   let zoneNr = value.value ?? 0;
   console.log(value.value, zoneNr);
   let zone = specZone(runsetting, zoneNr);
+  let wR = new wellnessWrapper(dataLong);
+  let lrange = wR.solve.common;
 
   let tol = dataLong.map((s) => s.ctl);
   let load = dataLong.map((s) => s.atl);
-  let neededLoad = findDoable(0, load, tol, 1, MAXACWR);
-  let res = fitNPred(dataLong, runsetting, zone, neededLoad);
+  let res = fitNPred(runsetting, zone, lrange);
   let sload = findDoable(0, load, tol, 1, range).max;
   let middlePace = (zone.min + zone.max) / 2;
   let time =
     estimateRunningTime(runsetting.threshold_pace, middlePace, sload) / 60 / 60;
-  let smon = getStrainMonFromLoad(
-    dataLong.map((t) => t.ctlLoad).filter((t) => t != undefined),
-    sload,
-  );
-  let cStrain = strainMonotony(dataLong);
+
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <DropDown
@@ -392,23 +255,10 @@ export default function RunSuggestScreen() {
           {(load[load.length - 1] / tol[tol.length - 1]).toFixed(2)} - ({1}-
           {MAXACWR})
         </Text>
-        <Text>
-          Current strain acwr: {cStrain.acwr.toFixed(2)} - ({MINSTRAINACWR}-
-          {MAXSTRAINACWR})
-        </Text>
-        <Text>
-          Current monotony: {cStrain.monotony.toFixed(2)} - ({MINMONOTONY}-
-          {MAXMONOTONY})
-        </Text>
+
         <Text>Acwr: {range.toFixed(2)}</Text>
         <Text>Load: {sload.toFixed(2)}</Text>
         <Text>Time: {hourToString(time)}</Text>
-        <Text>
-          Strain acwr: {smon.acwr.toFixed(2)} ({MINSTRAINACWR}-{MAXSTRAINACWR})
-        </Text>
-        <Text>
-          Monotony: {smon.monotony.toFixed(2)} ({MINMONOTONY}-{MAXMONOTONY})
-        </Text>
         <Text>Distance: {dist(middlePace, time * 3600)}</Text>
         <Slider
           style={{ width: 400, height: 40 }}

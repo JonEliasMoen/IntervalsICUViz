@@ -11,6 +11,7 @@ import { RAMP } from "@/components/classes/wellness/attributes/RAMP";
 import { ACRS } from "@/components/classes/wellness/attributes/ACRS";
 import { WEIGHT } from "@/components/classes/wellness/attributes/WEIGHT";
 import { BODYFAT } from "@/components/classes/wellness/attributes/BODYFAT";
+import { SOLVE } from "./attributes/solve";
 
 export class wellnessWrapper {
   wellness: wellness[];
@@ -24,17 +25,19 @@ export class wellnessWrapper {
   acwrs: ACRS;
   weight: WEIGHT;
   fat: BODYFAT;
+  solve: SOLVE;
 
   constructor(data: wellness[]) {
     this.wellness = data;
     this.acwr = new ACR(this);
+    this.acwrs = new ACRS(this);
+    this.solve = new SOLVE(this, [this.acwr, this.acwrs]);
     this.rampRate = new RAMP(this);
     this.rhr = new RHR(this);
     this.hrv = new HRV(this);
     this.sleep = new SLEEP(this);
     this.sleepScore = new SLEEPSCORE(this);
     this.readiness = new READINESS(this, [this.hrv, this.rhr]);
-    this.acwrs = new ACRS(this);
     this.weight = new WEIGHT(this);
     this.fat = new BODYFAT(this);
   }
