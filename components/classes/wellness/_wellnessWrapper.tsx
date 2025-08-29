@@ -12,6 +12,7 @@ import { ACRS } from "@/components/classes/wellness/attributes/ACRS";
 import { WEIGHT } from "@/components/classes/wellness/attributes/WEIGHT";
 import { BODYFAT } from "@/components/classes/wellness/attributes/BODYFAT";
 import { SOLVE } from "./attributes/solve";
+import { HRVRATIO } from "@/components/classes/wellness/attributes/HRVRATIO";
 
 export class wellnessWrapper {
   wellness: wellness[];
@@ -19,6 +20,7 @@ export class wellnessWrapper {
   rampRate: RAMP;
   rhr: RHR;
   hrv: HRV;
+  hrvr: HRVRATIO;
   sleep: SLEEP;
   sleepScore: SLEEPSCORE;
   readiness: READINESS;
@@ -35,6 +37,7 @@ export class wellnessWrapper {
     this.rampRate = new RAMP(this);
     this.rhr = new RHR(this);
     this.hrv = new HRV(this);
+    this.hrvr = new HRVRATIO(this);
     this.sleep = new SLEEP(this);
     this.sleepScore = new SLEEPSCORE(this);
     this.readiness = new READINESS(this, [this.hrv, this.rhr]);

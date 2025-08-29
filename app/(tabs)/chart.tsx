@@ -3,15 +3,14 @@ import { ScrollView, Text } from "react-native";
 
 import React from "react";
 import { getWellnessRange } from "@/components/utils/_fitnessModel";
-import { useStoredKey } from "@/components/utils/_keyContext";
+import { useSettings } from "@/components/utils/_keyContext";
 import LineChartComp from "@/components/components/_lineChartComp";
 import { wellnessWrapper } from "@/components/classes/wellness/_wellnessWrapper";
 import { dateOffset } from "@/components/utils/_utils";
 
 export default function Chart() {
-  const { storedKey, storedAid } = useStoredKey();
-  const dataLong = getWellnessRange(0, 42, storedKey, storedAid) ?? [];
-  // 1440/
+  const { settings } = useSettings();
+  const dataLong = getWellnessRange(0, 42, settings) ?? [];
   if (dataLong.length == 0 && dataLong != undefined) {
     return <Text>Loading</Text>;
   }

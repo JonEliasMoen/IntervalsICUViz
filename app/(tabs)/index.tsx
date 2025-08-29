@@ -90,6 +90,7 @@ export default function TabOneScreen() {
       {wRap.readiness.getComponent()}
       {wRap.weight.getComponent()}
       {wRap.fat.getComponent()}
+      {wRap.hrvr.getComponent()}
       <ChartComponent
         title={"Weekly running distance"}
         subtitle={"Last week: " + distances[1].toFixed(2) + "km"}
