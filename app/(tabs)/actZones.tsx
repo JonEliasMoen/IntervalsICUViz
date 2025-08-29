@@ -11,10 +11,9 @@ import {
   getStream,
   powerzone,
   settings,
-  SportSettings,
   stream,
 } from "@/components/utils/_fitnessModel";
-import { useStoredKey } from "@/components/utils/_keyContext";
+import { useSettings } from "@/components/utils/_keyContext";
 import DropDownPicker from "react-native-dropdown-picker";
 import Slider from "@react-native-community/slider";
 import { Checkbox } from "react-native-paper";
@@ -270,7 +269,8 @@ export function mergeStravaIntervals(
 }
 
 export default function ZoneScreen() {
-  const { storedKey, storedAid, storedToken } = useStoredKey();
+  const { settings } = useSettings();
+
   const [value, setValue] = useState<number | null>(null); // Initialize state for selected value
   const [open, setOpen] = useState(false); // State for dropdown visibility
   const [ewmvalue, setEwmValue] = useState<number | null>(null); // Initialize state for selected value
@@ -290,30 +290,30 @@ export default function ZoneScreen() {
   ];
   let nameMap = ["Combined", "Pace zone", "Gap zone", "Power zone", "Hr zone"];
   let type = value != null ? itemsAct[value - 1].label : "Combined";
-  console.log("token", storedToken);
-  let acts = getActivities(0, 7 * 4, storedKey, storedAid);
-  let settings = getSettings(storedKey, storedAid);
+  console.log("token", settings.stravaToken);
+  let acts = getActivities(0, 7 * 4, settings);
+  let isettings = getSettings(settings);
   const iacts = acts?.filter((t) => t._note != null) || [];
   const streamData = getStream(
     iacts.map((t) => t.id),
     ["watts", "heartrate", "velocity_smooth"],
-    storedToken,
+    settings.stravaToken,
   );
   const sacts = getStravaActivities(
     iacts.map((t) => t.id),
-    storedToken,
+    settings.stravaToken,
   );
 
-  if (!storedKey || !storedAid || !acts || !settings) {
+  if (!settings.apiKey || !settings.aid || !acts || !isettings) {
     return (
       <Text>
-        {storedKey}
-        {storedAid}
+        {settings.apiKey}
+        {settings.aid}
       </Text>
     );
   }
   if (streamData && sacts) {
-    let rideData = streamToZone(sacts, streamData, settings);
+    let rideData = streamToZone(sacts, streamData, isettings);
     acts = [
       ...acts.filter((t) => t._note == null),
       ...mergeStravaIntervals(sacts, rideData),

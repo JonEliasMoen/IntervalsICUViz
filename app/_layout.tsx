@@ -7,7 +7,7 @@ import React, { useEffect } from "react";
 import "react-native-reanimated";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { QueryClient } from "@tanstack/query-core";
-import { StoredKeyProvider } from "@/components/utils/_keyContext";
+import { SettingsProvider } from "@/components/utils/_keyContext";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -46,9 +46,9 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <StoredKeyProvider>
+      <SettingsProvider>
         <RootLayoutNav></RootLayoutNav>
-      </StoredKeyProvider>
+      </SettingsProvider>
     </QueryClientProvider>
   );
 }

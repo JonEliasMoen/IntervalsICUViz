@@ -4,91 +4,97 @@ import base64 from "react-native-base64";
 import { tokenResponse } from "@/components/utils/_fitnessModel";
 import { useMutation } from "@tanstack/react-query";
 
-type StoredKeyContextType = {
-  storedKey: string;
-  setStoredKey: React.Dispatch<React.SetStateAction<string>>;
-  storedAid: string;
-  setStoredAid: React.Dispatch<React.SetStateAction<string>>;
-  storedToken: tokenResponse;
-  setStoredToken: React.Dispatch<React.SetStateAction<tokenResponse>>;
+export interface UserSettings {
+  stravaToken?: tokenResponse;
+  aid?: string;
+  apiKey?: string;
+  lat?: number;
+  long?: number;
+}
+
+type SettingsContextType = {
+  settings: UserSettings;
+  setSettings: (update: Partial<UserSettings>) => void;
 };
 
-const StoredKeyContext = createContext<StoredKeyContextType | undefined>(
+const SettingsContext = createContext<SettingsContextType | undefined>(
   undefined,
 );
 
-export const StoredKeyProvider: React.FC<{ children: React.ReactNode }> = ({
+export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [storedKey, setStoredKey] = useState("");
-  const [storedAid, setStoredAid] = useState("");
-  // @ts-ignore
-  const [storedToken, setStoredToken] = useState<tokenResponse>("{}");
-  const { mutate, isLoading, error } = useMutation(
+  const [settings, _setSettings] = useState<UserSettings>({});
+
+  const saveSettings = async (newSettings: Partial<UserSettings>) => {
+    let merged = { ...settings, ...newSettings };
+    if (newSettings.apiKey) {
+      merged = {
+        ...merged,
+        apiKey: base64.encode("API_KEY:" + newSettings.apiKey),
+      };
+    }
+    console.log(merged);
+    _setSettings(merged);
+    await AsyncStorage.setItem("@settings", JSON.stringify(merged));
+  };
+
+  const { mutate } = useMutation(
     async (token: tokenResponse): Promise<tokenResponse> => {
       const response = await fetch(
         `https://yrweatherbackend.vercel.app/strava/exchange?refresh_token=${token.refresh_token}`,
         { method: "GET" },
       );
-      if (!response.ok) throw new Error("Failed to fetch refresh token");
+      if (!response.ok) throw new Error("Failed to refresh token");
       return response.json();
     },
     {
       onSuccess: (data) => {
-        AsyncStorage.setItem("@token", JSON.stringify(data));
-        setStoredToken(data);
+        saveSettings({ stravaToken: data });
       },
     },
   );
+
   useEffect(() => {
-    const loadData = async () => {
+    const load = async () => {
       try {
-        const value = await AsyncStorage.getItem("@api_key");
-        if (value !== null) {
-          setStoredKey(base64.encode("API_KEY:" + value));
-        }
-        const aid = await AsyncStorage.getItem("@aid");
-        if (aid !== null) {
-          setStoredAid(aid);
-        }
-        const token = await AsyncStorage.getItem("@token");
-        if (token !== null) {
-          const dtoken: tokenResponse = JSON.parse(token);
-          setStoredToken(dtoken);
+        const json = await AsyncStorage.getItem("@settings");
+        if (json) {
+          const parsed: UserSettings = JSON.parse(json);
+          _setSettings(parsed);
+
+          const token = parsed.stravaToken;
           if (
-            dtoken.expires_at < Math.floor(Date.now() / 1000) ||
-            dtoken.access_token == undefined
+            token &&
+            (token.expires_at < Math.floor(Date.now() / 1000) ||
+              !token.access_token)
           ) {
-            mutate(dtoken);
+            mutate(token);
           }
         }
       } catch (e) {
-        console.error("Error reading API key:", e);
+        console.error("Error loading settings:", e);
       }
     };
-    loadData();
+    load();
   }, []);
 
   return (
-    <StoredKeyContext.Provider
+    <SettingsContext.Provider
       value={{
-        storedKey,
-        setStoredKey,
-        storedAid,
-        setStoredAid,
-        storedToken,
-        setStoredToken,
+        settings,
+        setSettings: saveSettings,
       }}
     >
       {children}
-    </StoredKeyContext.Provider>
+    </SettingsContext.Provider>
   );
 };
 
-export const useStoredKey = (): StoredKeyContextType => {
-  const context = useContext(StoredKeyContext);
+export const useSettings = (): SettingsContextType => {
+  const context = useContext(SettingsContext);
   if (!context) {
-    throw new Error("useStoredKey must be used within a StoredKeyProvider");
+    throw new Error("useSettings must be used within a SettingsProvider");
   }
   return context;
 };

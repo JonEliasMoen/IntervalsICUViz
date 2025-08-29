@@ -4,6 +4,7 @@ import {
   isoDateOffset,
 } from "@/components/utils/_utils";
 import { useMutation, useQueries, useQuery } from "@tanstack/react-query";
+import { UserSettings } from "@/components/utils/_keyContext";
 
 export interface sportInfo {
   type: string;
@@ -38,14 +39,14 @@ export interface newEx {
   description: string;
 }
 
-export function newExMutation(apiKey: String) {
+export function newExMutation(settings: UserSettings) {
   return useMutation(async (ex: newEx): Promise<any> => {
     const response = await fetch(
       `https://intervals.icu/api/v1/athlete/${ex.athlete_id}/events`,
       {
         method: "POST",
         headers: {
-          Authorization: `Basic ${apiKey}`,
+          Authorization: `Basic ${settings.apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(ex),
@@ -74,34 +75,28 @@ export interface SportSettings {
   [key: string]: any; // This allows for any other unknown properties
 }
 
-export function getSettings(
-  apiKey: string | null,
-  aid: string | null,
-): settings | undefined {
+export function getSettings(set: UserSettings): settings | undefined {
   const { data: data } = useQuery(
     ["intervals", "settings"],
     () =>
-      fetchToJson<settings>(`https://intervals.icu/api/v1/athlete/${aid}`, {
+      fetchToJson<settings>(`https://intervals.icu/api/v1/athlete/${set.aid}`, {
         method: "GET",
         headers: {
-          Authorization: `Basic ${apiKey}`,
+          Authorization: `Basic ${set.apiKey}`,
         },
       }),
     {
-      enabled: !!apiKey && !!aid,
+      enabled: !!set.apiKey && !!set.aid,
     },
   );
-  console.log(data);
   return data;
 }
 
 export function getWellnessRange(
   n: number,
   n2: number,
-  apiKey: string | null,
-  aid: string | null,
+  settings: UserSettings,
 ): wellness[] | undefined {
-  console.log(apiKey);
   let isodate1 = isoDateOffset(n);
   let isodate2 = isoDateOffset(n2);
 
@@ -109,16 +104,16 @@ export function getWellnessRange(
     ["intervals", "wellness", isodate2, isodate1],
     () =>
       fetchToJson<wellness[]>(
-        `https://intervals.icu/api/v1/athlete/${aid}/wellness?oldest=${isodate2}&newest=${isodate1}`,
+        `https://intervals.icu/api/v1/athlete/${settings.aid}/wellness?oldest=${isodate2}&newest=${isodate1}`,
         {
           method: "GET",
           headers: {
-            Authorization: `Basic ${apiKey}`,
+            Authorization: `Basic ${settings.apiKey}`,
           },
         },
       ),
     {
-      enabled: !!apiKey && !!aid,
+      enabled: !!settings.apiKey && !!settings.apiKey,
     },
   );
   return data;
@@ -174,31 +169,25 @@ export function groupByWeek(data: activity[]): activity[][] {
   return myMap;
 }
 
-export function getActivities(
-  n: number,
-  n2: number,
-  apiKey: string | null,
-  aid: string | null,
-) {
+export function getActivities(n: number, n2: number, settings: UserSettings) {
   let isodate1 = isoDateOffset(n);
   let isodate2 = isoDateOffset(n2);
   const { data: data } = useQuery(
     ["intervals", "activities", isodate1, isodate2],
     () =>
       fetchToJson<activity[]>(
-        `https://intervals.icu/api/v1/athlete/${aid}/activities?oldest=${isodate2}&newest=${isodate1}`,
+        `https://intervals.icu/api/v1/athlete/${settings.aid}/activities?oldest=${isodate2}&newest=${isodate1}`,
         {
           method: "GET",
           headers: {
-            Authorization: `Basic ${apiKey}`,
+            Authorization: `Basic ${settings.apiKey}`,
           },
         },
       ),
     {
-      enabled: !!apiKey && !!aid,
+      enabled: !!settings.apiKey && !!settings.aid,
     },
   );
-  console.log(data);
   return data;
 }
 
@@ -231,7 +220,7 @@ export interface sData {
 export function getStream(
   ids: string[],
   keys: string[],
-  token: tokenResponse,
+  token: tokenResponse | undefined,
 ): stream[] | undefined {
   const queries = useQueries({
     queries: ids.map((t) => ({
@@ -246,7 +235,7 @@ export function getStream(
             },
           },
         ),
-      enabled: token.access_token != null,
+      enabled: token?.access_token != null,
     })),
   });
   let any = queries.map((q) => q.data).some((d) => d == undefined);
@@ -258,7 +247,7 @@ export function getStream(
 
 export function getStravaActivities(
   ids: string[],
-  token: tokenResponse,
+  token: tokenResponse | undefined,
 ): activity[] | undefined {
   const queries = useQueries({
     queries: ids.map((t) => ({

@@ -1,25 +1,14 @@
-import { Button, Platform, StyleSheet, TextInput } from "react-native";
+import { Button, StyleSheet, TextInput } from "react-native";
 import { Text, View } from "@/components/Themed";
 import React, { useEffect, useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useStoredKey } from "@/components/utils/_keyContext";
+import { useMutation } from "@tanstack/react-query";
+import { useSettings } from "@/components/utils/_keyContext";
 import { useRouter } from "expo-router";
 import { tokenResponse } from "@/components/utils/_fitnessModel";
 import * as Linking from "expo-linking";
 
-export interface userSettings {
-  stravaToken: tokenResponse;
-  intervalsDat: intervalsData;
-}
-interface intervalsData {
-  aid: string;
-  apiKey: string;
-}
-
 export default function TabTwoScreen() {
-  const [apiKey, setApiKey] = useState("");
-  const [aid, setAid] = useState("");
+  const { settings, setSettings } = useSettings();
   const [authenticated, setAuthenticated] = useState(false);
   const router = useRouter();
   const { mutate, isLoading, error } = useMutation(
@@ -33,7 +22,8 @@ export default function TabTwoScreen() {
     },
     {
       onSuccess: (data) => {
-        handleSaveRefreshToken(data);
+        setSettings({ stravaToken: data });
+        setAuthenticated(true);
         router.push("/settings");
       },
       onError: (error) => {
@@ -41,69 +31,6 @@ export default function TabTwoScreen() {
       },
     },
   );
-  const {
-    storedKey,
-    setStoredKey,
-    storedAid,
-    setStoredAid,
-    storedToken,
-    setStoredToken,
-  } = useStoredKey();
-  console.log(storedToken);
-
-  const queryClient = useQueryClient();
-  useEffect(() => {
-    const loadApiKey = async () => {
-      try {
-        const value = await AsyncStorage.getItem("@api_key");
-        if (value !== null) {
-          setStoredKey(value);
-          setApiKey(".".repeat(value.length));
-        }
-        const aid = await AsyncStorage.getItem("@aid");
-        if (aid !== null) {
-          setStoredAid(aid);
-          setAid(aid);
-        }
-      } catch (e) {
-        console.log("Error reading API key:", e);
-      }
-    };
-    loadApiKey();
-  }, []);
-
-  const handleSave = () => {
-    try {
-      if (apiKey != ".".repeat(apiKey.length)) {
-        AsyncStorage.setItem("@api_key", apiKey);
-        setApiKey(apiKey); // Clear the input after saving
-        console.log(apiKey);
-        queryClient.invalidateQueries(["intervals"]);
-      }
-    } catch (e) {
-      console.log("Error saving API key:", e);
-    }
-  };
-  const handleSaveAid = () => {
-    try {
-      if (aid != ".".repeat(aid.length)) {
-        AsyncStorage.setItem("@aid", aid);
-        setStoredAid(aid); // Clear the input after saving
-        console.log(aid);
-        queryClient.invalidateQueries(["intervals"]);
-      }
-    } catch (e) {
-      console.log("Error saving aid key:", e);
-    }
-  };
-  const handleSaveRefreshToken = (token: tokenResponse) => {
-    try {
-      AsyncStorage.setItem("@token", JSON.stringify(token));
-      setAuthenticated(true);
-    } catch (e) {
-      console.log("Error saving refresh key:", e);
-    }
-  };
 
   useEffect(() => {
     const checkInitialDeepLink = async () => {
@@ -157,21 +84,17 @@ export default function TabTwoScreen() {
       <Text style={styles.title}>Api key</Text>
       <TextInput
         style={(styles.input, { width: 200, borderWidth: 1, marginBottom: 10 })}
-        value={apiKey}
-        onChangeText={setApiKey}
+        value={settings.apiKey ?? ""}
+        onChangeText={(txt) => setSettings({ apiKey: txt })}
         clearTextOnFocus={true}
-        onEndEditing={handleSave}
-        onBlur={handleSave}
         placeholder="Paste api key here"
         secureTextEntry={true}
       />
       <Text style={styles.title}>Athlete ID</Text>
       <TextInput
         style={(styles.input, { width: 200, borderWidth: 1, marginBottom: 10 })}
-        value={aid}
-        onChangeText={setAid}
-        onEndEditing={handleSaveAid}
-        onBlur={handleSaveAid}
+        value={settings.aid ?? ""}
+        onChangeText={(txt) => setSettings({ aid: txt })}
         clearTextOnFocus={true}
         placeholder="Athlede ID"
         secureTextEntry={false}
@@ -183,7 +106,7 @@ export default function TabTwoScreen() {
         onPress={handleRedirect}
         disabled={authenticated}
       />
-      <Text>{storedToken.access_token}</Text>
+      <Text>{settings.stravaToken?.access_token}</Text>
       <Text>{authenticated.toString()}</Text>
     </View>
   );

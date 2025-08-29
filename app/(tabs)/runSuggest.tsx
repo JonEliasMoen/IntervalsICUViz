@@ -9,7 +9,7 @@ import {
   newExMutation,
   SportSettings,
 } from "@/components/utils/_fitnessModel";
-import { useStoredKey } from "@/components/utils/_keyContext";
+import { useSettings } from "@/components/utils/_keyContext";
 import DropDown from "@/components/components/_dropDown";
 import Slider from "@react-native-community/slider";
 import { wellnessWrapper } from "@/components/classes/wellness/_wellnessWrapper";
@@ -127,12 +127,12 @@ export interface zone {
 }
 
 export default function RunSuggestScreen() {
-  const { storedKey, storedAid, storedToken } = useStoredKey();
+  const { settings } = useSettings();
 
   const [value, setValue] = useState<zone>({ label: "Zone 1", value: 1 }); // Initialize state for selected value
   const [range, setRange] = useState<number>(1.1);
 
-  const { mutate, isLoading, error } = newExMutation(storedKey);
+  const { mutate, isLoading, error } = newExMutation(settings);
   const newEx = (zone: number, distance: number) => {
     const todayMidnight = new Date();
     todayMidnight.setHours(0, 0, 0, 0);
@@ -148,7 +148,7 @@ export default function RunSuggestScreen() {
     const ex: string = `-${d}km Z${zone} Pace`;
     const nex: newEx = {
       start_date_local: localMidnightString,
-      athlete_id: storedAid,
+      athlete_id: settings.aid!!,
       name: `${d}km Z${zone} ${date}`,
       description: ex,
       type: "Run",
@@ -163,26 +163,26 @@ export default function RunSuggestScreen() {
     { label: "Zone 4", value: 3 },
     { label: "Zone 5", value: 4 },
   ];
-  if (storedKey == undefined || storedAid == undefined) {
+  if (settings.aid == undefined || settings.apiKey == undefined) {
     return (
       <Text>
-        {storedKey}
-        {storedAid}
+        {settings.apiKey}
+        {settings.aid}
       </Text>
     );
   }
-  const dataLong = getWellnessRange(0, sLong, storedKey, storedAid) ?? [];
-  const settings = getSettings(storedKey, storedAid);
-  if (dataLong == undefined || settings == undefined || dataLong.length == 0) {
+  const dataLong = getWellnessRange(0, sLong, settings) ?? [];
+  const isettings = getSettings(settings);
+  if (dataLong == undefined || isettings == undefined || dataLong.length == 0) {
     return (
       <Text>
-        {storedKey}
-        {storedAid}
+        {settings.apiKey}
+        {settings.aid}
       </Text>
     );
   }
 
-  let runsetting = settings.sportSettings.filter(
+  let runsetting = isettings.sportSettings.filter(
     (t) =>
       t.types.find((t) => {
         return t == "Run";

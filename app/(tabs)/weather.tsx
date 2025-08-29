@@ -17,14 +17,16 @@ import { dateOffset } from "@/components/utils/_utils";
 import { KayakLocation } from "@/components/weatherComps/_Kayak";
 import * as Location from "expo-location";
 import { DewPointLocation } from "@/components/weatherComps/_DewPointLocation";
+import { useSettings } from "@/components/utils/_keyContext";
 
 export default function WeatherScreen() {
+  const { settings, setSettings } = useSettings();
   const [locationMap, setLocationMap] = useState<location[]>([
     {
       label: "Current Location",
       value: 0,
-      lat: 63.4394093,
-      long: 10.5039971,
+      lat: settings.lat ?? 63.4394093,
+      long: settings.long ?? 10.5039971,
       snowPlace: [],
     },
     {
@@ -122,6 +124,11 @@ export default function WeatherScreen() {
       console.log("User location:", location);
 
       const updated = [...locationMap];
+      setSettings({
+        lat: location.coords.latitude,
+        long: location.coords.longitude,
+      });
+
       updated[0] = {
         ...updated[0],
         lat: location.coords.latitude,

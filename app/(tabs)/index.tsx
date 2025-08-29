@@ -3,7 +3,7 @@ import { Text } from "@/components/Themed";
 import ChartComponent from "@/components/components/_chatComp";
 import React from "react";
 import { mean } from "simple-statistics";
-import { useStoredKey } from "@/components/utils/_keyContext";
+import { useSettings } from "@/components/utils/_keyContext";
 import {
   activity,
   getActivities,
@@ -49,10 +49,10 @@ export function groupbyWeekDistance(acts: activity[], sport: string): number[] {
 }
 
 export default function TabOneScreen() {
-  const { storedKey, storedAid } = useStoredKey();
-  const dataLong = getWellnessRange(0, 42, storedKey, storedAid) ?? [];
-  const acts = getActivities(0, 42, storedKey, storedAid);
-
+  const { settings } = useSettings();
+  const dataLong = getWellnessRange(0, 42, settings) ?? [];
+  const acts = getActivities(0, 42, settings);
+  console.log(settings);
   const dataWeek = dataLong.slice(dataLong.length - 9);
   const dataMonth = dataLong.slice(dataLong.length - 7 * 4);
 
