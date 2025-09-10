@@ -223,7 +223,7 @@ function getTideReal(data: WaterLevelForecast, now: Date): forecast {
       secondsSinceStartOfDay(
         new Date(t.year, t.month, t.day, t.hour, t.minute),
       ) +
-      2 * 60 * 60,
+      2 * 60 * 60, // UTC timezone STUFF
   );
   let end = 60 * 60 * 24;
   let i = secondsSinceStartOfDay(now) / end;

@@ -2,11 +2,12 @@ import {
   fetchToJson,
   getTimeHHMM,
   isoDateOffset,
+  secondsSinceStartOfDay,
 } from "@/components/utils/_utils";
 import { useQuery } from "@tanstack/react-query";
 import { Text } from "@/components/Themed";
-import { StyleSheet, View } from "react-native";
-import ChartComponent from "@/components/components/_chatComp";
+import { StyleSheet } from "react-native";
+import ChartComponent, { zone } from "@/components/components/_chatComp";
 import React from "react";
 
 interface TideEntry {
@@ -69,11 +70,28 @@ export function TideLocationGlobal(props: {
   now: Date;
 }) {
   let raw = getTide2(props.lat, props.long);
-  // let raw: TideData = {
+  // const raw: TideData = {
   //   data: [
-  //     { height: -0.8865, time: "2025-09-10T05:04:00+00:00", type: "low" },
-  //     { height: 0.5405, time: "2025-09-10T11:26:00+00:00", type: "high" },
-  //     // ...
+  //     {
+  //       height: -0.8865135185002665,
+  //       time: "2025-09-10T05:04:00+00:00",
+  //       type: "low",
+  //     },
+  //     {
+  //       height: 0.5405793330290688,
+  //       time: "2025-09-10T11:26:00+00:00",
+  //       type: "high",
+  //     },
+  //     {
+  //       height: -0.7910657257619506,
+  //       time: "2025-09-10T17:18:00+00:00",
+  //       type: "low",
+  //     },
+  //     {
+  //       height: 0.6291827736199677,
+  //       time: "2025-09-10T23:37:00+00:00",
+  //       type: "high",
+  //     },
   //   ],
   //   meta: {
   //     cost: 1,
@@ -98,16 +116,34 @@ export function TideLocationGlobal(props: {
   if (!raw) {
     return <Text>Tide Rate limit reached</Text>;
   }
-  let parts = raw.data.map((t) => {
-    let dt = getTimeHHMM(new Date(t.time));
-    return t.type + ": " + dt;
+  let end = 60 * 60 * 24;
+  let zones: zone[] = raw.data.map((t, i, a) => {
+    let conv = (t: string) => secondsSinceStartOfDay(new Date(t)) / end;
+    let dt = conv(t.time);
+    let next = new Date(t.time).getDay() != new Date().getDay();
+    return {
+      startVal: i == 0 ? 0 : conv(a[i - 1].time),
+      endVal: next ? end : dt,
+      text: "",
+      color: t.type == "low" ? "red" : "blue",
+    };
   });
 
+  let subtext = raw.data
+    .map((t) => {
+      let dt = getTimeHHMM(new Date(t.time));
+      return t.type + ": " + dt;
+    })
+    .join(" ");
   return (
-    <View style={styles.container}>
-      <Text style={styles.statusText}>Tide Global</Text>
-      <Text style={styles.subText}>{parts.join(" ")}</Text>
-    </View>
+    <ChartComponent
+      title={"Tide Global"}
+      progress={secondsSinceStartOfDay(props.now) / end}
+      subtitle={subtext}
+      zones={zones}
+      transform={(u) => u}
+      indicatorTextTransform={(u) => getTimeHHMM(props.now)}
+    ></ChartComponent>
   );
 }
 
