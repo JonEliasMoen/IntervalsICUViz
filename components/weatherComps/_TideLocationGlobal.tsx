@@ -47,7 +47,7 @@ export function getTide2(lat: number, long: number) {
   let end = isoDateOffset(-1);
   console.log(start, end);
   const { data: data } = useQuery(
-    ["tide2", lat, long],
+    ["tide2", lat.toFixed(0), long.toFixed(0)],
     () =>
       fetchToJson<TideData>(
         `https://yrweatherbackend.vercel.app/stormglass/v2/tide/extremes/point?start=${start}&end=${end}&lat=${lat}&lng=${long}`,
