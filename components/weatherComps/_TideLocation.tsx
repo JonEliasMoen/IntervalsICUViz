@@ -1,6 +1,7 @@
 import {
   fetchToTxt,
   getTimeHHMM,
+  haversineDistance,
   secondsSinceStartOfDay,
   secondsToHHMM,
 } from "@/components/utils/_utils";
@@ -63,12 +64,12 @@ const locations: [number, number][] = [
   [58.976871, 5.709849],
   [58.009823, 7.540309],
   [69.671613, 18.953032],
+  [64.862085, 11.240181],
   [63.431045, 10.412592],
-  [64.862085, 11.240181], // inserted directly
   [70.370343, 31.099269],
   [59.037388, 10.948513],
   [62.473042, 6.202297],
-];
+]; // 69°38'48.3"N 18°58'28.3
 
 type WaterLevelRecord = {
   year: number;
@@ -94,8 +95,7 @@ type WaterLevelForecast = {
   records: WaterLevelRecord[];
 };
 
-export function getTide(lat: number, long: number) {
-  const harbor = findHarbor(lat, long);
+export function getTide(harbor: string) {
   const { data: data } = useQuery(["tide", harbor], () =>
     fetchToTxt(
       `https://yrweatherbackend.vercel.app/tidalwater/1.1/?harbor=${harbor}`,
@@ -186,11 +186,17 @@ function parseForecast(data: string): WaterLevelForecast {
   };
 }
 
-export function findHarbor(lat: number, long: number) {
-  let dist = locations.map((u) =>
-    Math.sqrt(Math.pow(u[0] - lat, 2) + Math.pow(u[1] - long, 2)),
-  );
-  return harbors[dist.findIndex((u) => u == Math.min(...dist)) + 1];
+interface harbor {
+  harbor: string;
+  distance: number;
+}
+
+export function findHarbor(lat: number, long: number): harbor {
+  let dist = locations.map((u) => haversineDistance(lat, long, u[0], u[1]));
+  //console.log(dist.map((t, i) => [harbors[i], t, locations[i]]));
+  let index = dist.findIndex((u) => u == Math.min(...dist));
+  let distance = dist[index];
+  return { harbor: harbors[index], distance: distance };
 }
 
 interface extrema {
@@ -278,7 +284,8 @@ function getTideReal(data: WaterLevelForecast, now: Date): forecast {
 }
 
 export function TideLocation(props: { lat: number; long: number; now: Date }) {
-  let raw = getTide(props.lat, props.long);
+  const harbor = findHarbor(props.lat, props.long);
+  let raw = getTide(harbor.harbor);
   if (raw == undefined) {
     return <></>;
   }

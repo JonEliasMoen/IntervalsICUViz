@@ -18,6 +18,7 @@ import { KayakLocation } from "@/components/weatherComps/_Kayak";
 import * as Location from "expo-location";
 import { DewPointLocation } from "@/components/weatherComps/_DewPointLocation";
 import { useSettings } from "@/components/utils/_keyContext";
+import { TideLocationGlobal } from "@/components/weatherComps/_TideLocationGlobal";
 
 export default function WeatherScreen() {
   const { settings, setSettings } = useSettings();
@@ -164,8 +165,14 @@ export default function WeatherScreen() {
   const dec = () => {
     barrier(offset - 1);
   };
-  let harbor = findHarbor(loc.lat, loc.long);
-  harbor = harbor.charAt(0).toUpperCase() + harbor.slice(1);
+  let charbor = findHarbor(loc.lat, loc.long);
+  let harbor = charbor.harbor;
+  harbor =
+    harbor.charAt(0).toUpperCase() +
+    harbor.slice(1) +
+    " (" +
+    charbor.distance.toFixed(2) +
+    "km)";
 
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
@@ -195,7 +202,16 @@ export default function WeatherScreen() {
         long={loc.long}
         dayOffset={offset}
       ></AirTempLocation>
-      <TideLocation lat={loc.lat} long={loc.long} now={now}></TideLocation>
+      {charbor.distance < 200 ? (
+        <TideLocation lat={loc.lat} long={loc.long} now={now}></TideLocation>
+      ) : (
+        <TideLocationGlobal
+          lat={loc.lat}
+          long={loc.long}
+          now={now}
+        ></TideLocationGlobal>
+      )}
+
       {loc.snowPlace?.map((t) => {
         return <SnowDepthLocation loc={t}></SnowDepthLocation>;
       })}
