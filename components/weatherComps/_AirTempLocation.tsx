@@ -1,30 +1,13 @@
 import { mean } from "simple-statistics";
 import { feelTempArray } from "@/components/classes/WeatherFeature/weatherFunc";
-import {
-  getWeather,
-  InstantDetails,
-  PrecipationDetails,
-  TimeSeriesEntry,
-} from "@/components/utils/_weatherModel";
+import { getWeather, TimeSeriesEntry } from "@/components/utils/_weatherModel";
 import React from "react";
 import { weatherWrapper } from "@/components/classes/WeatherFeature/weatherWrapper";
 import { normalizeBasedOnRange, secondsFrom } from "@/components/utils/_utils";
 
-function getRain(t: TimeSeriesEntry): PrecipationDetails | undefined {
-  return t.data.next_1_hours?.details;
-}
-
 export function stats(values: number[] | undefined) {
   const data = values ?? [10, 20];
   return [Math.min(...data), mean(data), Math.max(...data)];
-}
-
-function summary(
-  param: keyof InstantDetails,
-  value: TimeSeriesEntry[] | undefined,
-): number[] {
-  const values = value?.map((n) => n.data.instant.details[param]);
-  return stats(values);
 }
 
 function transform(dtoday: TimeSeriesEntry[]): number[] {

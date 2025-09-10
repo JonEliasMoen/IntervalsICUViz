@@ -288,12 +288,14 @@ export default function ZoneScreen() {
     "icu_zone_times",
     "icu_hr_zone_times",
   ];
+
   let nameMap = ["Combined", "Pace zone", "Gap zone", "Power zone", "Hr zone"];
   let type = value != null ? itemsAct[value - 1].label : "Combined";
   console.log("token", settings.stravaToken);
-  let acts = getActivities(0, 7 * 4, settings);
+  let acts = getActivities(0, 42, settings);
   let isettings = getSettings(settings);
   const iacts = acts?.filter((t) => t._note != null) || [];
+
   const streamData = getStream(
     iacts.map((t) => t.id),
     ["watts", "heartrate", "velocity_smooth"],

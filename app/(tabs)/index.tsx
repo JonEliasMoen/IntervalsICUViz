@@ -3,15 +3,13 @@ import { Text } from "@/components/Themed";
 import ChartComponent from "@/components/components/_chatComp";
 import React from "react";
 import { mean } from "simple-statistics";
-import { useSettings } from "@/components/utils/_keyContext";
 import {
   activity,
   getActivities,
-  getWellnessRange,
   groupByWeek,
   wellness,
 } from "@/components/utils/_fitnessModel";
-import { wellnessWrapper } from "@/components/classes/wellness/_wellnessWrapper";
+import { useWellness } from "@/components/utils/_wrapContext";
 
 interface wattResult {
   wattPerKg: number;
@@ -49,27 +47,15 @@ export function groupbyWeekDistance(acts: activity[], sport: string): number[] {
 }
 
 export default function TabOneScreen() {
-  const { settings } = useSettings();
-  const dataLong = getWellnessRange(0, 42, settings) ?? [];
+  const { wRap, dataLong, settings } = useWellness();
   const acts = getActivities(0, 42, settings);
-  console.log(settings);
-  const dataWeek = dataLong.slice(dataLong.length - 9);
-  const dataMonth = dataLong.slice(dataLong.length - 7 * 4);
 
-  if (dataLong.length == 0 && dataLong != undefined) {
+  if (!wRap || !dataLong || !acts) {
     return <Text>Loading</Text>;
   }
-  if (dataWeek.length == 0 && dataWeek != undefined) {
-    return <Text>Loading</Text>;
-  }
-  if (acts == undefined) {
-    return <Text>Loading</Text>;
-  }
+
   let distances = groupbyWeekDistance(acts, "Run");
-  let acwr = dataLong.map((t) => t.atl / t.ctl);
-
-  const data = dataWeek[dataWeek.length - 1];
-  let wRap = new wellnessWrapper(dataMonth);
+  let acwr = wRap.acwr.acwr;
 
   const vo2max =
     dataLong
@@ -77,13 +63,8 @@ export default function TabOneScreen() {
       .map((s) => s.vo2max)
       .at(-1) ?? 0;
 
-  let form = data != undefined ? Math.round(data.ctl - data.atl) : 0;
-  let formPer =
-    data != undefined
-      ? Math.round(((data.ctl - data.atl) * 100) / data.ctl)
-      : 0;
-  let rideEftp = wattPer("Ride", dataWeek);
-  let runEftp = wattPer("Run", dataWeek);
+  let rideEftp = wattPer("Ride", dataLong);
+  let runEftp = wattPer("Run", dataLong);
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <Text style={styles.title}>Status</Text>
@@ -164,84 +145,8 @@ export default function TabOneScreen() {
       />
       {wRap.sleep.getComponent()}
       {wRap.sleepScore.getComponent()}
-      <ChartComponent
-        title={"Form"}
-        progress={-form}
-        zones={[
-          {
-            text: "Transition",
-            startVal: -30,
-            endVal: -20,
-            color: "#FFCB0E80",
-          },
-          {
-            text: "Fresh",
-            startVal: -20,
-            endVal: -5,
-            color: "#1F77B44D",
-          },
-          {
-            text: "Gray zone",
-            startVal: -5,
-            endVal: 10,
-            color: "rgba(196,196,196,0.66)",
-          },
-          {
-            text: "Optimal",
-            startVal: 10,
-            endVal: 30,
-            color: "#009E0066",
-          },
-          {
-            text: "High Risk",
-            startVal: 30,
-            endVal: 60,
-            color: "#D627284D",
-          },
-        ]}
-        transform={(n) => (n + 30) / 90}
-        indicatorTextTransform={(n) => -n}
-      ></ChartComponent>
-      <ChartComponent
-        title={"Form %"}
-        progress={-formPer}
-        zones={[
-          {
-            text: "Transition",
-            startVal: -30,
-            endVal: -20,
-            color: "#FFCB0E80",
-          },
-          {
-            text: "Fresh",
-            startVal: -20,
-            endVal: -5,
-            color: "#1F77B44D",
-          },
-          {
-            text: "Gray zone",
-            startVal: -5,
-            endVal: 10,
-            color: "rgba(196,196,196,0.66)",
-          },
-          {
-            text: "Optimal",
-            startVal: 10,
-            endVal: 30,
-            color: "#009E0066",
-          },
-          {
-            text: "High Risk",
-            startVal: 30,
-            endVal: 60,
-            color: "#D627284D",
-          },
-        ]}
-        transform={(n) => (n + 30) / 90}
-        indicatorTextTransform={(n) =>
-          n != null ? -n.toPrecision(3).toString() + "%" : ""
-        }
-      ></ChartComponent>
+      {wRap.form.getComponent()}
+      {wRap.formPer.getComponent()}
       <ChartComponent
         title={"Vo2max (25-29 years)"}
         progress={vo2max}

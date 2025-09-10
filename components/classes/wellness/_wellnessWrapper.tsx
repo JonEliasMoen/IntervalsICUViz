@@ -13,6 +13,8 @@ import { WEIGHT } from "@/components/classes/wellness/attributes/WEIGHT";
 import { BODYFAT } from "@/components/classes/wellness/attributes/BODYFAT";
 import { SOLVE } from "./attributes/solve";
 import { HRVRATIO } from "@/components/classes/wellness/attributes/HRVRATIO";
+import { FORM } from "@/components/classes/wellness/attributes/FORM";
+import { FORMPER } from "@/components/classes/wellness/attributes/FORMPER";
 
 export class wellnessWrapper {
   wellness: wellness[];
@@ -27,6 +29,8 @@ export class wellnessWrapper {
   acwrs: ACRS;
   weight: WEIGHT;
   fat: BODYFAT;
+  form: FORM;
+  formPer: FORMPER;
   solve: SOLVE;
 
   constructor(data: wellness[]) {
@@ -43,6 +47,8 @@ export class wellnessWrapper {
     this.readiness = new READINESS(this, [this.hrv, this.rhr]);
     this.weight = new WEIGHT(this);
     this.fat = new BODYFAT(this);
+    this.form = new FORM(this);
+    this.formPer = new FORMPER(this);
   }
 
   getComposite(d: Attribute[]) {

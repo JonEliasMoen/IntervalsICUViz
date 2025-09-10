@@ -30,7 +30,7 @@ export interface wellness {
   [key: string]: any; // This allows for any other unknown properties
 }
 
-export interface newEx {
+export interface exercise {
   start_date_local: string; // "2025-05-04T00:00:00"
   type: "Run";
   athlete_id: string;
@@ -40,7 +40,7 @@ export interface newEx {
 }
 
 export function newExMutation(settings: UserSettings) {
-  return useMutation(async (ex: newEx): Promise<any> => {
+  return useMutation(async (ex: exercise): Promise<any> => {
     const response = await fetch(
       `https://intervals.icu/api/v1/athlete/${ex.athlete_id}/events`,
       {

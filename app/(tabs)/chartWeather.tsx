@@ -5,6 +5,7 @@ import React from "react";
 import LineChartComp from "@/components/components/_lineChartComp";
 import { getWeather } from "@/components/utils/_weatherModel";
 import { weatherWrapper } from "@/components/classes/WeatherFeature/weatherWrapper";
+import { useSettings } from "@/components/utils/_keyContext";
 
 function getComponent(wRap: weatherWrapper, title: string): React.JSX.Element {
   let x = wRap.getDates();
@@ -57,7 +58,11 @@ function getComponent(wRap: weatherWrapper, title: string): React.JSX.Element {
 }
 
 export default function ChartWeather() {
-  const weather = getWeather(63.4394093, 10.5039971);
+  const { settings } = useSettings();
+  const weather = getWeather(
+    settings.lat ?? 63.4394093,
+    settings.long ?? 10.5039971,
+  );
   if (!weather) {
     return <Text>Loading...</Text>;
   }

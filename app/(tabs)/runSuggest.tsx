@@ -1,20 +1,18 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Text } from "@/components/Themed";
 import { Button, ScrollView, StyleSheet, View } from "react-native";
-import { hourToString, sLong } from "@/components/utils/_utils";
+import { hourToString } from "@/components/utils/_utils";
 import {
+  exercise,
   getSettings,
-  getWellnessRange,
-  newEx,
   newExMutation,
   SportSettings,
 } from "@/components/utils/_fitnessModel";
-import { useSettings } from "@/components/utils/_keyContext";
+import { UserSettings } from "@/components/utils/_keyContext";
 import DropDown from "@/components/components/_dropDown";
-import Slider from "@react-native-community/slider";
-import { wellnessWrapper } from "@/components/classes/wellness/_wellnessWrapper";
 import { Boundaries } from "@/components/utils/_otherModel";
 import { findDoable } from "@/components/classes/wellness/attributes/ACR";
+import { useWellness } from "@/components/utils/_wrapContext";
 
 type finalRes = {
   time: Boundaries;
@@ -126,36 +124,56 @@ export interface zone {
   value: number;
 }
 
+export function normalRandom(mean = 0, stdDev = 1): number {
+  const u = 1 - Math.random();
+  const v = Math.random();
+
+  const z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+  return z * stdDev + mean;
+}
+
+function newEx(
+  zone: number,
+  distance: number,
+  settings: UserSettings,
+): exercise {
+  const todayMidnight = new Date();
+  todayMidnight.setHours(0, 0, 0, 0);
+
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0"); // Months are 0-based
+  const day = String(today.getDate()).padStart(2, "0");
+  const date = `${year}-${month}-${day}`;
+  const localMidnightString = `${date}T00:00:00`;
+
+  const d = Math.round(distance);
+  const ex: string = `-${d}km Z${zone} Pace`;
+  const nex: exercise = {
+    start_date_local: localMidnightString,
+    athlete_id: settings.aid!!,
+    name: `${d}km Z${zone} ${date}`,
+    description: ex,
+    type: "Run",
+    category: "WORKOUT",
+  };
+  return nex;
+}
+
 export default function RunSuggestScreen() {
-  const { settings } = useSettings();
+  const { wRap: wR, dataLong, settings, opt } = useWellness();
 
   const [value, setValue] = useState<zone>({ label: "Zone 1", value: 1 }); // Initialize state for selected value
-  const [range, setRange] = useState<number>(1.1);
+  const [range, setRange] = useState<number>(0.9);
+
+  useEffect(() => {
+    if (opt) {
+      console.log(opt);
+      setRange(normalRandom(opt.mean, opt.std));
+    }
+  }, [opt]);
 
   const { mutate, isLoading, error } = newExMutation(settings);
-  const newEx = (zone: number, distance: number) => {
-    const todayMidnight = new Date();
-    todayMidnight.setHours(0, 0, 0, 0);
-
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, "0"); // Months are 0-based
-    const day = String(today.getDate()).padStart(2, "0");
-    const date = `${year}-${month}-${day}`;
-    const localMidnightString = `${date}T00:00:00`;
-
-    const d = Math.round(distance);
-    const ex: string = `-${d}km Z${zone} Pace`;
-    const nex: newEx = {
-      start_date_local: localMidnightString,
-      athlete_id: settings.aid!!,
-      name: `${d}km Z${zone} ${date}`,
-      description: ex,
-      type: "Run",
-      category: "WORKOUT",
-    };
-    mutate(nex);
-  };
   const items: zone[] = [
     { label: "Zone 1", value: 0 },
     { label: "Zone 2", value: 1 },
@@ -171,9 +189,13 @@ export default function RunSuggestScreen() {
       </Text>
     );
   }
-  const dataLong = getWellnessRange(0, sLong, settings) ?? [];
   const isettings = getSettings(settings);
-  if (dataLong == undefined || isettings == undefined || dataLong.length == 0) {
+  if (
+    dataLong == undefined ||
+    isettings == undefined ||
+    dataLong.length == 0 ||
+    !wR
+  ) {
     return (
       <Text>
         {settings.apiKey}
@@ -196,12 +218,9 @@ export default function RunSuggestScreen() {
       </Text>
     );
   }
-  console.log(value);
   let zoneNr = value.value ?? 0;
-  console.log(value.value, zoneNr);
   let zone = specZone(runsetting, zoneNr);
-  let wR = new wellnessWrapper(dataLong);
-  let lrange = wR.solve.common;
+  let lrange = wR.acwr.needed;
 
   let tol = dataLong.map((s) => s.ctl);
   let load = dataLong.map((s) => s.atl);
@@ -252,26 +271,19 @@ export default function RunSuggestScreen() {
       <View style={styles.dcontainerLow}>
         <Text>
           Current acwr:{" "}
-          {(load[load.length - 1] / tol[tol.length - 1]).toFixed(2)} - ({1}-
-          {MAXACWR})
+          {(load[load.length - 1] / tol[tol.length - 1]).toFixed(2)}
         </Text>
 
         <Text>Acwr: {range.toFixed(2)}</Text>
         <Text>Load: {sload.toFixed(2)}</Text>
         <Text>Time: {hourToString(time)}</Text>
         <Text>Distance: {dist(middlePace, time * 3600)}</Text>
-        <Slider
-          style={{ width: 400, height: 40 }}
-          minimumValue={1}
-          maximumValue={MAXACWR}
-          value={1.1}
-          minimumTrackTintColor="#000000"
-          maximumTrackTintColor="#FFFFFF"
-          onValueChange={(value) => setRange(value)}
-        />
+
         <Button
           title={"Post workout"}
-          onPress={() => newEx(zoneNr + 1, distN(middlePace, time * 3600))}
+          onPress={() =>
+            mutate(newEx(zoneNr + 1, distN(middlePace, time * 3600), settings))
+          }
         />
       </View>
     </ScrollView>

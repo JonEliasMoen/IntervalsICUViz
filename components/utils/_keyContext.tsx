@@ -4,6 +4,19 @@ import base64 from "react-native-base64";
 import { tokenResponse } from "@/components/utils/_fitnessModel";
 import { useMutation } from "@tanstack/react-query";
 
+interface opt {
+  mean: number;
+  std: number;
+  val: number;
+  hrv_err: number;
+}
+
+interface optInput {
+  hrv: number[];
+  ctl: number[];
+  acwr: number[];
+}
+
 export interface UserSettings {
   stravaToken?: tokenResponse;
   aid?: string;

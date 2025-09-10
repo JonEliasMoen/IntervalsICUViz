@@ -2,29 +2,22 @@
 import { ScrollView, Text } from "react-native";
 
 import React from "react";
-import { getWellnessRange } from "@/components/utils/_fitnessModel";
-import { useSettings } from "@/components/utils/_keyContext";
 import LineChartComp from "@/components/components/_lineChartComp";
-import { wellnessWrapper } from "@/components/classes/wellness/_wellnessWrapper";
 import { dateOffset } from "@/components/utils/_utils";
+import { useWellness } from "@/components/utils/_wrapContext";
 
 export default function Chart() {
-  const { settings } = useSettings();
-  const dataLong = getWellnessRange(0, 42, settings) ?? [];
-  if (dataLong.length == 0 && dataLong != undefined) {
+  const { wRap } = useWellness();
+  if (!wRap) {
     return <Text>Loading</Text>;
   }
-  let wRap = new wellnessWrapper(dataLong);
-  let a = dataLong.map((t) => t.atl);
-  let b = dataLong.map((t) => t.ctl);
-  let max = Math.max(...a, ...b);
-  a = a.map((t) => t / max);
-  b = b.map((t) => t / max);
+  const fitPlot = wRap.acwr.getPlot();
 
   const simpleRange = (a: number, b: number): number[] =>
     Array.from({ length: Math.max(0, b - a) }, (_, i) => a + i);
 
-  const dt = simpleRange(-a.length + 1, 1).map((t) => dateOffset(-t));
+  const dt = simpleRange(-fitPlot.ctl + 1, 1).map((t) => dateOffset(-t));
+
   // @ts-ignore
   return (
     <ScrollView>
@@ -51,8 +44,8 @@ export default function Chart() {
       <LineChartComp
         lineData={{
           lines: [
-            { y: a, color: "red", label: "ATL", isScaled: true },
-            { y: b, color: "blue", label: "CTL", isScaled: true },
+            { y: fitPlot.atl, color: "red", label: "ATL", isScaled: true },
+            { y: fitPlot.ctl, color: "blue", label: "CTL", isScaled: true },
           ],
           title: "Acute chronic",
           labels: dt,
