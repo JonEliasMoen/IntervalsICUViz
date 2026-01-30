@@ -22,9 +22,14 @@ export function DewPointLocation(props: {
   const max = Math.max(...dewpoints);
   const min = Math.min(...dewpoints);
 
-  const colors = generateGradient(["#02c7fc", "#ff0404"], 6);
+  const colors = generateGradient(["#02c7fc", "#ff0404"], 11);
 
   const zText = [
+    "Mummified",
+    "Excessive Extreme dry",
+    "Very Extreme dry",
+    "Extreme dry",
+    "Very Very dry",
     "Very Dry",
     "Dry",
     "Comfortable",
@@ -32,7 +37,7 @@ export function DewPointLocation(props: {
     "Muggy",
     "Oppressive",
   ];
-  const zones: zone[] = [0, 5, 10, 15, 20, 25].map((v, i) => {
+  const zones: zone[] = [-25, -20, -15-10,-5,0, 5, 10, 15, 20, 25].map((v, i) => {
     return {
       startVal: v,
       endVal: v + 5,
@@ -40,6 +45,7 @@ export function DewPointLocation(props: {
       color: colors[i],
     };
   });
+  console.log(zones);
 
   return (
     <ChartComponentRange
@@ -49,7 +55,7 @@ export function DewPointLocation(props: {
       progressValue={dewpoints[0]}
       progressTo={max}
       zones={zones}
-      transform={(n) => n / 30}
+      transform={(n) => (n+25) / 50}
       indicatorTextTransform={(n) => n.toFixed(2) + "°C"}
     ></ChartComponentRange>
   );

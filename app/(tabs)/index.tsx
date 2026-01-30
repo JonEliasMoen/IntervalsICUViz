@@ -69,8 +69,6 @@ export default function TabOneScreen() {
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <Text style={styles.title}>Status</Text>
       {wRap.readiness.getComponent()}
-      {wRap.weight.getComponent()}
-      {wRap.fat.getComponent()}
       {wRap.hrvr.getComponent()}
       <ChartComponent
         title={"Weekly running distance"}

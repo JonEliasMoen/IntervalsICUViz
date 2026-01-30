@@ -9,8 +9,6 @@ import { RHR } from "@/components/classes/wellness/attributes/RHR";
 import { ACR } from "@/components/classes/wellness/attributes/ACR";
 import { RAMP } from "@/components/classes/wellness/attributes/RAMP";
 import { ACRS } from "@/components/classes/wellness/attributes/ACRS";
-import { WEIGHT } from "@/components/classes/wellness/attributes/WEIGHT";
-import { BODYFAT } from "@/components/classes/wellness/attributes/BODYFAT";
 import { SOLVE } from "./attributes/solve";
 import { HRVRATIO } from "@/components/classes/wellness/attributes/HRVRATIO";
 import { FORM } from "@/components/classes/wellness/attributes/FORM";
@@ -27,8 +25,6 @@ export class wellnessWrapper {
   sleepScore: SLEEPSCORE;
   readiness: READINESS;
   acwrs: ACRS;
-  weight: WEIGHT;
-  fat: BODYFAT;
   form: FORM;
   formPer: FORMPER;
   solve: SOLVE;
@@ -45,8 +41,6 @@ export class wellnessWrapper {
     this.sleep = new SLEEP(this);
     this.sleepScore = new SLEEPSCORE(this);
     this.readiness = new READINESS(this, [this.hrv, this.rhr]);
-    this.weight = new WEIGHT(this);
-    this.fat = new BODYFAT(this);
     this.form = new FORM(this);
     this.formPer = new FORMPER(this);
   }

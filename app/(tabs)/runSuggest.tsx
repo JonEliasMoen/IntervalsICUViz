@@ -13,6 +13,7 @@ import DropDown from "@/components/components/_dropDown";
 import { Boundaries } from "@/components/utils/_otherModel";
 import { findDoable } from "@/components/classes/wellness/attributes/ACR";
 import { useWellness } from "@/components/utils/_wrapContext";
+import Slider from "@react-native-community/slider";
 
 type finalRes = {
   time: Boundaries;
@@ -166,13 +167,6 @@ export default function RunSuggestScreen() {
   const [value, setValue] = useState<zone>({ label: "Zone 1", value: 1 }); // Initialize state for selected value
   const [range, setRange] = useState<number>(0.9);
 
-  useEffect(() => {
-    if (opt) {
-      console.log(opt);
-      setRange(normalRandom(opt.mean, opt.std));
-    }
-  }, [opt]);
-
   const { mutate, isLoading, error } = newExMutation(settings);
   const items: zone[] = [
     { label: "Zone 1", value: 0 },
@@ -220,7 +214,7 @@ export default function RunSuggestScreen() {
   }
   let zoneNr = value.value ?? 0;
   let zone = specZone(runsetting, zoneNr);
-  let lrange = wR.acwr.needed;
+  let lrange = wR.acwrs.needed;
 
   let tol = dataLong.map((s) => s.ctl);
   let load = dataLong.map((s) => s.atl);
@@ -278,7 +272,15 @@ export default function RunSuggestScreen() {
         <Text>Load: {sload.toFixed(2)}</Text>
         <Text>Time: {hourToString(time)}</Text>
         <Text>Distance: {dist(middlePace, time * 3600)}</Text>
-
+        <Slider
+          style={{ width: 400, height: 40 }}
+          minimumValue={1}
+          maximumValue={MAXACWR}
+          value={1.1}
+          minimumTrackTintColor="#000000"
+          maximumTrackTintColor="#FFFFFF"
+          onValueChange={(value) => setRange(value)}
+        />
         <Button
           title={"Post workout"}
           onPress={() =>

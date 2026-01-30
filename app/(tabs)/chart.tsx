@@ -24,26 +24,6 @@ export default function Chart() {
       <LineChartComp
         lineData={{
           lines: [
-            {
-              y: wRap.weight.weight,
-              color: "red",
-              label: "Weight",
-              x: wRap.weight.getX(),
-            },
-            {
-              y: wRap.fat.fat,
-              color: "blue",
-              label: "Fat",
-              x: wRap.fat.getX(),
-            },
-          ],
-          labels: wRap.weight.getX(),
-          title: "Body composition",
-        }}
-      ></LineChartComp>
-      <LineChartComp
-        lineData={{
-          lines: [
             { y: fitPlot.atl, color: "red", label: "ATL", isScaled: true },
             { y: fitPlot.ctl, color: "blue", label: "CTL", isScaled: true },
           ],
