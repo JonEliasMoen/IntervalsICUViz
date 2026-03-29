@@ -125,14 +125,6 @@ export interface zone {
   value: number;
 }
 
-export function normalRandom(mean = 0, stdDev = 1): number {
-  const u = 1 - Math.random();
-  const v = Math.random();
-
-  const z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
-  return z * stdDev + mean;
-}
-
 function newEx(
   zone: number,
   distance: number,
@@ -216,10 +208,9 @@ export default function RunSuggestScreen() {
   let zone = specZone(runsetting, zoneNr);
   let lrange = wR.acwrs.needed;
 
-  let tol = dataLong.map((s) => s.ctl);
-  let load = dataLong.map((s) => s.atl);
   let res = fitNPred(runsetting, zone, lrange);
-  let sload = findDoable(0, load, tol, 1, range).max;
+  let sload = wR.acwrs.getLoad(range);//findDoable(0, load, tol, 1, range).max;
+  console.log(sload);
   let middlePace = (zone.min + zone.max) / 2;
   let time =
     estimateRunningTime(runsetting.threshold_pace, middlePace, sload) / 60 / 60;
@@ -232,7 +223,7 @@ export default function RunSuggestScreen() {
         text={"Select a zone"}
       ></DropDown>
       <View style={styles.container}>
-        {res.length == 0 && <Text>Dont Run</Text>}
+        {(res.length == 0) || (lrange.max <= 0) && <Text>Dont Run</Text>}
         {res.map((t, i) => {
           return (
             <>
@@ -265,7 +256,7 @@ export default function RunSuggestScreen() {
       <View style={styles.dcontainerLow}>
         <Text>
           Current acwr:{" "}
-          {(load[load.length - 1] / tol[tol.length - 1]).toFixed(2)}
+          {wR.acwrs.last.toFixed(2)}
         </Text>
 
         <Text>Acwr: {range.toFixed(2)}</Text>

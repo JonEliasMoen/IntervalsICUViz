@@ -13,7 +13,6 @@ import { Boundaries } from "@/components/utils/_otherModel";
 export function strainMonotonyEwm(tdata: wellness[]): number[] {
   const varianceL = tdata.map((t) => Math.pow(t.ctlLoad - t.ctl, 2));
   const varianceS = tdata.map((t) => Math.pow(t.atlLoad - t.atl, 2));
-  console.log("variance", varianceS);
   const stdS = ewm(varianceS, 28).map((t) => Math.sqrt(t));
   const stdL = ewm(varianceL, 42).map((t) => Math.sqrt(t));
 
@@ -28,7 +27,6 @@ export function strainMonotonyEwmList(tdata: wellness[], k: number): number {
   let n = (y: number, load: number, f: number) => {
     return y + f * (load - y);
   };
-  console.log(k, tdata[tdata.length - 1].atl);
   tdata[tdata.length - 1].atl = n(
     tdata[tdata.length - 2].atl,
     tdata[tdata.length - 1].atlLoad + k,
@@ -39,7 +37,6 @@ export function strainMonotonyEwmList(tdata: wellness[], k: number): number {
     tdata[tdata.length - 1].ctlLoad + k,
     1 / 42,
   );
-  console.log(k, tdata[tdata.length - 1].atl);
 
   const diff = (load: number, mean: number, t: number, i: number) => {
     if (i == tdata.length - 1) {
@@ -68,14 +65,17 @@ interface goal {
   x: number;
   y: number;
 }
-
-function neededLoad(data: wellnessWrapper, c: number): Boundaries {
+interface fitres {
+  x: number[];
+  y: number[];
+}
+export function neededLoad(data: wellnessWrapper, c: number): Boundaries {
   const goals: goal[] = [
     { goal: 1, x: 0, y: 1000 },
     { goal: 1.2, x: 0, y: 1000 },
   ];
   if (c > Math.max(...goals.map((t) => t.goal))) {
-    return { min: -1, max: -2 };
+    return { min: 0, max: 0 };
   }
   for (let i = 0; i < 100; i++) {
     const value = strainMonotonyEwmList(data.wellness, i);
@@ -90,12 +90,27 @@ function neededLoad(data: wellnessWrapper, c: number): Boundaries {
   return { min: goals[0].x, max: goals[1].x };
 }
 
+
+export function neededLoad2(data: wellnessWrapper): fitres {
+  let x: number[] = [];
+  let y: number[] = [];
+  
+  for (let i = 0; i < 130; i++) {
+    const value = strainMonotonyEwmList(data.wellness, i);
+    x = [...x, i];
+    y = [...y, value];
+  }
+  return { x: x, y: y };
+}
+
+
 export class ACRS implements Attribute {
   wellness: wellness[];
   acrs: number[];
   acrsT: number[];
   last: number;
   needed: Boundaries;
+  fit: fitres;
 
   constructor(data: wellnessWrapper) {
     this.wellness = data.wellness;
@@ -103,6 +118,8 @@ export class ACRS implements Attribute {
     this.acrsT = transformed(this.acrs, this);
     this.last = getLast(this.acrs);
     this.needed = neededLoad(data, this.last);
+    this.fit = neededLoad2(data);
+    console.log("HERE");
   }
 
   getTransformed(): number[] {
@@ -111,6 +128,17 @@ export class ACRS implements Attribute {
 
   transform(n: number): number {
     return n / 2.0;
+  }
+
+  getLoad(target: number)  {
+    let fit = this.fit;
+    if (target < Math.min(...fit.y)) {
+      return 0;
+    }
+    let ih = fit.y.findIndex((t) => t > target);
+    let il = ih -1;
+    let ay = (fit.x[ih]-fit.x[il])/(fit.y[ih]-fit.y[il]);
+    return fit.x[ih] + ay*(target - fit.y[il]);
   }
 
   getZones(): zone[] {
