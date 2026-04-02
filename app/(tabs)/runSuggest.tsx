@@ -127,6 +127,7 @@ export interface zone {
 
 function newEx(
   zone: number,
+  zoneType: string,
   distance: number,
   settings: UserSettings,
 ): exercise {
@@ -141,11 +142,11 @@ function newEx(
   const localMidnightString = `${date}T00:00:00`;
 
   const d = Math.round(distance);
-  const ex: string = `-${d}km Z${zone} Pace`;
+  const ex: string = `-${d}km Z${zone} ${zoneType}`;
   const nex: exercise = {
     start_date_local: localMidnightString,
     athlete_id: settings.aid!!,
-    name: `${d}km Z${zone} ${date}`,
+    name: `${d}km Z${zone} ${zoneType} ${date}`,
     description: ex,
     type: "Run",
     category: "WORKOUT",
@@ -156,16 +157,22 @@ function newEx(
 export default function RunSuggestScreen() {
   const { wRap: wR, dataLong, settings, opt } = useWellness();
 
-  const [value, setValue] = useState<zone>({ label: "Zone 1", value: 1 }); // Initialize state for selected value
+  const [value, setValue] = useState<zone>({ label: "Zone 1", value: 0 }); // Initialize state for selected value
+  const [zoneType, setZoneType] = useState<zone>({ label: "Pace", value: 0 }); // Initialize state for selected value
+
   const [range, setRange] = useState<number>(0.9);
 
   const { mutate, isLoading, error } = newExMutation(settings);
-  const items: zone[] = [
+  const zoneItems: zone[] = [
     { label: "Zone 1", value: 0 },
     { label: "Zone 2", value: 1 },
     { label: "Zone 3", value: 2 },
     { label: "Zone 4", value: 3 },
     { label: "Zone 5", value: 4 },
+  ];
+  const zoneTypeItems: zone[] = [
+    { label: "Pace", value: 0 },
+    { label: "HR", value: 1 },
   ];
   if (settings.aid == undefined || settings.apiKey == undefined) {
     return (
@@ -218,9 +225,18 @@ export default function RunSuggestScreen() {
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent}>
       <DropDown
-        items={items}
+        items={zoneItems}
         setItem={setValue}
         text={"Select a zone"}
+        zIndex={2000}
+        zIndexInverse={1000}
+      ></DropDown>
+      <DropDown
+        items={zoneTypeItems}
+        setItem={setZoneType}
+        text={"Select a zone type"}
+        zIndex={1000}
+        zIndexInverse={2000}
       ></DropDown>
       <View style={styles.container}>
         {(res.length == 0) || (lrange.max <= 0) && <Text>Dont Run</Text>}
@@ -275,8 +291,9 @@ export default function RunSuggestScreen() {
         <Button
           title={"Post workout"}
           onPress={() =>
-            mutate(newEx(zoneNr + 1, distN(middlePace, time * 3600), settings))
+            mutate(newEx(zoneNr + 1, zoneType.label, distN(middlePace, time * 3600), settings))
           }
+          disabled={!(distN(middlePace, time * 3600) > 0)}
         />
       </View>
     </ScrollView>

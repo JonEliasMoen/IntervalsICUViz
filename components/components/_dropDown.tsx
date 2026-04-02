@@ -3,6 +3,8 @@ import { StyleSheet, View } from "react-native";
 import React, { useEffect, useState } from "react";
 
 export function DropDown(props: {
+  zIndex?: number;
+  zIndexInverse?: number;
   items: any[];
   text: string;
   setItem: (item: any) => void;
@@ -15,12 +17,16 @@ export function DropDown(props: {
     }
   }, [value]);
   return (
-    <View style={[styles.dcontainer]}>
+    <View style={[styles.dcontainer,  {
+          zIndex: props.zIndex,
+        }]}>
       <DropDownPicker
         open={open}
         value={value}
         items={props.items}
         setOpen={setOpen}
+        zIndex={props.zIndex}
+        zIndexInverse={props.zIndexInverse}
         setValue={setValue}
         placeholder={props.text}
         dropDownContainerStyle={{
