@@ -16,6 +16,7 @@ function getComponent(wRap: weatherWrapper, title: string): React.JSX.Element {
         lines: [
           {
             y: wRap.temp.getTransformed(),
+            y2: wRap.temp.getValue(),
             x: x,
             isScaled: true,
             color: "red",
@@ -23,6 +24,7 @@ function getComponent(wRap: weatherWrapper, title: string): React.JSX.Element {
           },
           {
             y: wRap.wind.getTransformed(),
+            y2: wRap.wind.getValue(),
             x: x,
             isScaled: true,
             color: "blue",
@@ -30,6 +32,7 @@ function getComponent(wRap: weatherWrapper, title: string): React.JSX.Element {
           },
           {
             y: wRap.cover.getTransformed(),
+            y2: wRap.cover.getValue(),
             isScaled: true,
             x: x,
             color: "orange",
@@ -37,6 +40,7 @@ function getComponent(wRap: weatherWrapper, title: string): React.JSX.Element {
           },
           {
             y: wRap.rain.getTransformed(),
+            y2: wRap.rain.getValue(),
             isScaled: true,
             x: x,
             color: "green",
@@ -44,6 +48,7 @@ function getComponent(wRap: weatherWrapper, title: string): React.JSX.Element {
           },
           {
             y: wRap.uv.getTransformed(),
+            y2: wRap.uv.getValue(),
             isScaled: true,
             x: x,
             color: "pink",
@@ -56,6 +61,29 @@ function getComponent(wRap: weatherWrapper, title: string): React.JSX.Element {
     ></LineChartComp>
   );
 }
+
+function getComponentScore(wRap: weatherWrapper, title: string): React.JSX.Element {
+  let x = wRap.getDates();
+  return (
+    <LineChartComp
+      lineData={{
+        lines: [
+          {
+            y: wRap.score.getTransformed(),
+            y2: wRap.score.getValue(),
+            isScaled: true,
+            x: x,
+            color: "red",
+            label: "Score",
+          },
+        ],
+        title: title,
+        labels: x,
+      }}
+    ></LineChartComp>
+  );
+}
+
 
 export default function ChartWeather() {
   const { settings } = useSettings();
@@ -74,6 +102,7 @@ export default function ChartWeather() {
     <ScrollView>
       {getComponent(wRap, "Forecast short")}
       {getComponent(wRapFull, "Forecast long")}
+      {getComponentScore(wRapFull, "Weather score")}
     </ScrollView>
   );
 }

@@ -3,6 +3,7 @@ import { mean } from "simple-statistics";
 
 export interface Attribute {
   transform: (n: number) => number;
+  getValue(): number[];
 
   getTransformed(): number[];
 

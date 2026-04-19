@@ -21,6 +21,9 @@ export class FORMPER implements Attribute {
     this.formpT = transformed(this.formp, this);
     this.last = getLast(this.formp);
   }
+  getValue(): number[] {
+    return this.formp;
+  }
 
   getTransformed(): number[] {
     return this.formpT;

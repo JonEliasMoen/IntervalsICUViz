@@ -30,7 +30,7 @@ export function PressureLocation(props: { lat: number; long: number }) {
   let deltaP: number[] = airPressure
     .map((t, i, a) => {
       if (i >= start) {
-        return (t - a[i - start] + (t - a[i - 2])) * 0.5;
+        return ((t - a[i - start]) + (t - a[i - 2])) * 0.5;
       }
     })
     .filter((t) => t != null);

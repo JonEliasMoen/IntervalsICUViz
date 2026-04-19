@@ -21,6 +21,9 @@ export class RAMP implements Attribute {
     this.rampT = transformed(this.ramp, this);
     this.last = getLast(this.ramp);
   }
+  getValue() {
+    return this.ramp;
+  }
 
   getTransformed(): number[] {
     return this.rampT;

@@ -21,6 +21,9 @@ export class COVER implements Attribute {
     this.range = getRange(this.cover);
     this.now = this.coverT[0];
   }
+  getValue() {
+    return this.cover;
+  }
 
   transform(n: number): number {
     return n / 100;

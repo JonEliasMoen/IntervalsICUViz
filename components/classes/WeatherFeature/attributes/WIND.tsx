@@ -29,6 +29,9 @@ export class WIND implements Attribute {
     this.range = getRange(this.wind);
     this.now = this.wind[0];
   }
+  getValue() {
+    return this.wind;
+  }
 
   transform(n: number): number {
     return n / 24;

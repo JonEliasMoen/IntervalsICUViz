@@ -18,6 +18,9 @@ export class SLEEP implements Attribute {
     this.sleepT = transformed(this.sleep, this);
     this.last = getLast(this.sleep);
   }
+  getValue() {
+    return this.sleep;
+  }
 
   getTransformed(): number[] {
     return this.sleepT;

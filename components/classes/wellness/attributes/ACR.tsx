@@ -62,11 +62,16 @@ export class ACR implements Attribute {
     this.needed = findDoable(0, this.atl, this.ctl, 1, 1.3);
   }
 
-  getPlot(): { atl: number[]; ctl: number[] } {
+  getValue() {
+    return this.acwr;
+  }
+  getPlot(): { atl: number[]; atl2: number[]; ctl: number[], ctl2: number[]; } {
     let max = Math.max(...this.ctl, ...this.atl);
     return {
       atl: this.atl.map((t) => t / max),
+      atl2: this.atl,
       ctl: this.ctl.map((t) => t / max),
+      ctl2: this.ctl
     };
   }
 

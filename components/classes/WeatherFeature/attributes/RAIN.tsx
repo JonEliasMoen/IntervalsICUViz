@@ -32,6 +32,9 @@ export class RAIN implements Attribute {
     this.range = getRange(this.rain);
     this.now = this.rain[0];
   }
+  getValue() {
+    return this.rain;
+  }
 
   probTrans(values: number[]) {
     return (

@@ -1,6 +1,5 @@
 import { Button, ScrollView, StyleSheet } from "react-native";
 import { SnowDepthLocation } from "@/components/weatherComps/_SnowDepthLocation";
-import { HayfeverLocation } from "@/components/weatherComps/_HayfeverLocation";
 import { SeaWaterTempLocation } from "@/components/weatherComps/_SeaWaterTempLocation";
 import { AirTempLocation } from "@/components/weatherComps/_AirTempLocation";
 import {
@@ -185,6 +184,8 @@ export default function WeatherScreen() {
         items={locationMap}
         setItem={setLocation}
         text={"Select a location"}
+        zIndex={1000}
+        zIndexInverse={1000}
       ></DropDown>
       <Text style={[{ textAlign: "center" }]}>
         Lat: {loc.lat.toFixed(4)} Long: {loc.long.toFixed(4)}
@@ -225,7 +226,6 @@ export default function WeatherScreen() {
         long={loc.long}
         dayOffset={offset}
       ></KayakLocation>
-      <HayfeverLocation lat={loc.lat} long={loc.long}></HayfeverLocation>
     </ScrollView>
   );
 }

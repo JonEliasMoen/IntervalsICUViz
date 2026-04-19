@@ -9,7 +9,6 @@ import { RHR } from "@/components/classes/wellness/attributes/RHR";
 import { ACR } from "@/components/classes/wellness/attributes/ACR";
 import { RAMP } from "@/components/classes/wellness/attributes/RAMP";
 import { ACRS } from "@/components/classes/wellness/attributes/ACRS";
-import { SOLVE } from "./attributes/solve";
 import { HRVRATIO } from "@/components/classes/wellness/attributes/HRVRATIO";
 import { FORM } from "@/components/classes/wellness/attributes/FORM";
 import { FORMPER } from "@/components/classes/wellness/attributes/FORMPER";
@@ -27,13 +26,11 @@ export class wellnessWrapper {
   acwrs: ACRS;
   form: FORM;
   formPer: FORMPER;
-  solve: SOLVE;
 
   constructor(data: wellness[]) {
     this.wellness = data;
     this.acwr = new ACR(this);
     this.acwrs = new ACRS(this);
-    this.solve = new SOLVE(this, [this.acwr, this.acwrs]);
     this.rampRate = new RAMP(this);
     this.rhr = new RHR(this);
     this.hrv = new HRV(this);

@@ -20,6 +20,7 @@ export function AirTempLocation(props: {
   const wRap = new weatherWrapper(data, props.dayOffset);
   return (
     <>
+      {wRap.score.getComponent()}
       {wRap.cover.getComponent()}
       {wRap.uv.getComponent()}
       {wRap.temp.getComponent()}

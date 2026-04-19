@@ -21,6 +21,9 @@ export class HRV implements Attribute {
     this.hrvT = transformed(this.hrv, this);
     this.last = getLast(this.hrv);
   }
+  getValue() {
+    return this.hrv;
+  }
 
   getTransformed(): number[] {
     return this.hrvT;

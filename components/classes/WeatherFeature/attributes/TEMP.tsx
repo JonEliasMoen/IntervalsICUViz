@@ -23,6 +23,9 @@ export class TEMP implements Attribute {
     this.range = getRange(this.temp);
     this.now = this.temp[0];
   }
+  getValue() {
+    return this.temp;
+  }
 
   transform(n: number): number {
     return normalizeBasedOnRangeSingle(n, -50, 50);

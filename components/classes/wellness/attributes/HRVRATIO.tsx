@@ -15,6 +15,9 @@ export class HRVRATIO implements Attribute {
     this.hrvT = long.map((t, i) => short[i] / t);
     this.last = getLast(this.hrvT);
   }
+  getValue() {
+    return this.hrvT;
+  }
 
   getTransformed(): number[] {
     return this.hrvT;

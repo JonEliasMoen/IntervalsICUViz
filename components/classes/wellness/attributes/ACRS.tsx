@@ -119,7 +119,9 @@ export class ACRS implements Attribute {
     this.last = getLast(this.acrs);
     this.needed = neededLoad(data, this.last);
     this.fit = neededLoad2(data);
-    console.log("HERE");
+  }
+  getValue() {
+    return this.acrs;
   }
 
   getTransformed(): number[] {

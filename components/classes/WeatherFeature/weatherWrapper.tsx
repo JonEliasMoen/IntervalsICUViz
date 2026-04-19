@@ -12,6 +12,7 @@ import { TEMP } from "@/components/classes/WeatherFeature/attributes/TEMP";
 import { COVER } from "@/components/classes/WeatherFeature/attributes/COVER";
 import { WIND } from "@/components/classes/WeatherFeature/attributes/WIND";
 import { RAIN } from "@/components/classes/WeatherFeature/attributes/RAIN";
+import { WEATHERSCORE } from "@/components/classes/WeatherFeature/attributes/WEATHERSCORE";
 
 export class weatherWrapper {
   weather: WeatherFeature;
@@ -22,6 +23,7 @@ export class weatherWrapper {
   wind: WIND;
   windgust: WIND;
   rain: RAIN;
+  score: WEATHERSCORE;
 
   constructor(data: WeatherFeature, dayOffset: number) {
     this.weather = data;
@@ -36,6 +38,7 @@ export class weatherWrapper {
     this.wind = new WIND(this, false);
     this.windgust = new WIND(this, true);
     this.rain = new RAIN(this);
+    this.score = new WEATHERSCORE(this, [this.temp, this.wind, this.windgust, this.cover], [1,0,0,0]);
   }
 
   setTimeseries(timeseries: TimeSeriesEntry[]) {
@@ -50,8 +53,8 @@ export class weatherWrapper {
     return this;
   }
 
-  getComposite(d: Attribute[]) {
-    let data = d.map((t) => t.getTransformed());
+  getComposite(d: Attribute[], max: number[]) {
+    let data = d.map((t, i) => t.getTransformed().map((k) => max[i] == 1 ? k : 1-k));
     let start: number[] = Array(data[0].length).fill(0);
     return start.map((i, a) => arrayIndexSumNormal(data, a) / data.length);
   }

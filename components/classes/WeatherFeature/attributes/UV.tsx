@@ -21,7 +21,9 @@ export class UV implements Attribute {
     this.range = getRange(this.uv);
     this.now = this.uv[0];
   }
-
+  getValue() {
+    return this.uv;
+  }
   transform(n: number): number {
     return n / 14;
   }

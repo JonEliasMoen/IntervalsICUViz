@@ -21,6 +21,9 @@ export class RHR implements Attribute {
     this.rhrT = transformed(this.rhr, this);
     this.last = getLast(this.rhr);
   }
+  getValue() {
+    return this.rhr;
+  }
 
   getTransformed(): number[] {
     return this.rhrT.map((t) => 1 - t);

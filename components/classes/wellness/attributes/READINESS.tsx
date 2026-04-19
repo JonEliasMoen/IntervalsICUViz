@@ -11,6 +11,9 @@ export class READINESS implements Attribute {
     this.value = wr.getComposite(data);
     this.last = getLast(this.value);
   }
+  getValue() {
+    return this.value;
+  }
 
   transform(n: number) {
     return n;

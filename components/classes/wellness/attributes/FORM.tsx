@@ -21,6 +21,9 @@ export class FORM implements Attribute {
     this.formT = transformed(this.form, this);
     this.last = getLast(this.form);
   }
+  getValue() {
+    return this.form;
+  }
 
   getTransformed(): number[] {
     return this.formT;

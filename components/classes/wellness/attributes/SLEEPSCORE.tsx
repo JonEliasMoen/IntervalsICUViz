@@ -17,6 +17,9 @@ export class SLEEPSCORE implements Attribute {
     this.sleepScoreT = transformed(this.sleepScore, this);
     this.last = getLast(this.sleepScore);
   }
+  getValue() {
+    return this.sleepScore;
+  }
 
   getTransformed(): number[] {
     return this.sleepScoreT;
