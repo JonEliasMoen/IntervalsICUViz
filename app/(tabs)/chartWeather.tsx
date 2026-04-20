@@ -94,15 +94,19 @@ export default function ChartWeather() {
   if (!weather) {
     return <Text>Loading...</Text>;
   }
+  const index = weather.properties.timeseries.findIndex((n) => n.data.instant.details.ultraviolet_index_clear_sky == undefined);
   const wRap = new weatherWrapper(weather, -1).setTimeseries(
-    weather.properties.timeseries.slice(0, 55),
+    weather.properties.timeseries.slice(0, index-1),
   );
-  const wRapFull = new weatherWrapper(weather, -1);
+  const wRapFull = new weatherWrapper(weather, -1).setTimeseries(
+    weather.properties.timeseries.slice(index-1, weather.properties.timeseries.length),
+  );
+  console.log(weather.properties.timeseries.slice(index-1, weather.properties.timeseries.length));
   return (
     <ScrollView>
       {getComponent(wRap, "Forecast short")}
       {getComponent(wRapFull, "Forecast long")}
-      {getComponentScore(wRapFull, "Weather score")}
+      {getComponentScore(wRap, "Weather score")}
     </ScrollView>
   );
 }

@@ -16,7 +16,7 @@ export default function Chart() {
   const simpleRange = (a: number, b: number): number[] =>
     Array.from({ length: Math.max(0, b - a) }, (_, i) => a + i);
 
-  const dt = simpleRange(-fitPlot.ctl + 1, 1).map((t) => dateOffset(-t));
+  const dt = simpleRange(-fitPlot.ctl+1, 1).map((t) => dateOffset(-t));
 
   // @ts-ignore
   return (
@@ -40,7 +40,6 @@ export default function Chart() {
             },
           ],
           title: "Acute chronic",
-          labels: dt,
         }}
       ></LineChartComp>
       <LineChartComp

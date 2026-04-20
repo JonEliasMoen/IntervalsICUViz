@@ -262,6 +262,10 @@ export function LineChartComp(props: { lineData: data; attr?: Attribute }) {
       }),
     [filteredLines, chartWidth],
   );
+  const xDate = isPressing && pressedIndex !== null && props.lineData.lines[0].x != undefined && props.lineData.lines[0].x[pressedIndex] !== undefined
+      ? props.lineData.lines[0].x[pressedIndex]
+      : null;
+
 
   return (
     <View
@@ -273,7 +277,7 @@ export function LineChartComp(props: { lineData: data; attr?: Attribute }) {
       }}
     >
       <DefaultText style={{ fontSize: 18, fontWeight: "600", marginBottom: 8 }}>
-        {props.lineData.title}
+        {(!isPressing && xDate == null) ? props.lineData.title : props.lineData.title+": "+xDate?.toString().slice(0, 18)} 
       </DefaultText>
 
       <View style={{ flexDirection: "row", marginBottom: 8, flexWrap: "wrap" }}>
