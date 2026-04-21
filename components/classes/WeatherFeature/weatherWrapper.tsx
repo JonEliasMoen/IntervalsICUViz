@@ -49,6 +49,7 @@ export class weatherWrapper {
     this.wind = new WIND(this, false);
     this.windgust = new WIND(this, true);
     this.rain = new RAIN(this);
+    this.score = new WEATHERSCORE(this, [this.temp, this.wind, this.windgust, this.cover], [1,0,0,0]);
 
     return this;
   }
