@@ -43,29 +43,15 @@ export function SnowDepthLocation(props: { loc: snowPlace }) {
   let x = props.loc.x;
   let y = props.loc.y;
   const colors = generateGradient(["#00FFF3", "#0200B9"], 7);
-  const prepData = getSkiSporet(
-    props.loc.name,
-    props.loc.lat,
-    props.loc.long,
-    0.2,
-  );
-  if (prepData == undefined) {
-    return <></>;
-  }
-  const aPret = averagePrep(prepData, props.loc.lat, props.loc.long);
 
   return (
     <>
-      {depth > 0 && aPret[1] != 0 && <Text></Text>}
+      {depth > 0 && <Text></Text>}
       <ChartComponent
         progress={depth}
         display={() => depth > 10}
         title={name}
-        subtitle={
-          aPret[0] != null
-            ? `Last Prep: ${aPret[0]}/${aPret[1]}/${aPret[2]}`
-            : null
-        }
+        subtitle={"Nice"}
         indicatorTextTransform={(n) => n.toString() + " cm"}
         zones={[
           {

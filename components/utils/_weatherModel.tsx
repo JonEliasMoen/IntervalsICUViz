@@ -74,19 +74,6 @@ interface SnowResp {
   [key: string]: any;
 }
 
-type PropertiesSnow = {
-  parent: number;
-  level: number;
-  type: "TRACK_SEGMENT"; // If this can vary, change to string
-  scooter: boolean;
-  floodLit: boolean;
-  skating: boolean;
-  classic: boolean;
-  newest_prep_days: number;
-  newest_prep_hours: number;
-  length: number;
-};
-
 export function getSnowDepth(x: String, y: String): SnowResp | undefined {
   const date = isoDateOffset(0);
   const url =
@@ -104,45 +91,6 @@ export function getSnowDepth(x: String, y: String): SnowResp | undefined {
       retry: false,
       cacheTime: 30 * 60 * 1000,
       staleTime: 30 * 60 * 1000,
-    },
-  );
-  return data;
-}
-
-export type FeatureCollection = {
-  type: "FeatureCollection";
-  features: Feature[];
-};
-
-export type Feature = {
-  type: "Feature";
-  properties: PropertiesSnow;
-  geometry: Geometry;
-};
-
-export function getSkiSporet(
-  name: string,
-  lat: number,
-  long: number,
-  s: number,
-): FeatureCollection | undefined {
-  console.log(
-    name,
-    `https://yrweatherbackend.vercel.app/map/${lat + s}/${long + s}/${long - s}/${long - s}/12?showSimulatedData=false`,
-  );
-  const { data: data } = useQuery(
-    ["skisporet", lat, long, s],
-    () =>
-      fetchToJson<FeatureCollection>(
-        `https://yrweatherbackend.vercel.app/map/${lat + s}/${long + s}/${long - s}/${long - s}/12?showSimulatedData=false`,
-        {
-          method: "GET",
-        },
-      ),
-    {
-      cacheTime: 30 * 60 * 1000,
-      staleTime: 30 * 60 * 1000,
-      retry: false,
     },
   );
   return data;
@@ -340,58 +288,32 @@ export function getWeather(
   );
   return data;
 }
-
-interface PollenApiResponse {
-  message: string;
-  lat: number;
-  lng: number;
-  data: PollenDataPoint[];
+export interface WeatherForecast {
+  dayIntervals: DayInterval[];
 }
 
-interface PollenDataPoint {
-  time: number;
-  Species: SpeciesData;
-  Risk: PollenRisk;
-  Count: PollenCount;
-  updatedAt: string;
+export interface DayInterval {
+  start: string;
+  end: string;
+  temperature: {
+    min: number;
+    max: number;
+  };
+  precipitation: {
+    value: number;
+  }
 }
 
-interface SpeciesData {
-  Grass: Record<string, number>;
-  Others: number;
-  Tree: Record<string, number>;
-  Weed: Record<string, number>;
-}
-
-interface PollenRisk {
-  grass_pollen: PollenLevel;
-  tree_pollen: PollenLevel;
-  weed_pollen: PollenLevel;
-}
-
-interface PollenCount {
-  grass_pollen: number;
-  tree_pollen: number;
-  weed_pollen: number;
-}
-
-type PollenLevel = "Low" | "Moderate" | "High" | "Very High";
-
-export function getHayFever(
+export function getWeatherLong(
   lat: number,
   long: number,
-): PollenApiResponse | undefined {
+): WeatherForecast | undefined {
   const date = isoDateOffset(0);
-  const { data: data } = useQuery(["hayfevr", date, lat, long], () =>
-    fetchToJson<PollenApiResponse>(
-      `https://api.tadata.no/forecast/pollen/by-lat-lng?lat=${lat}&lng=${long}`,
+  const { data: data } = useQuery(["weather", "long", date, lat, long], () =>
+    fetchToJson<WeatherForecast>(
+      `https://yrweatherbackend.vercel.app/longforecast?lat=${lat}&long=${long}`,
       {
         method: "GET",
-        headers: {
-          "Tadata-Forward-To": "ambee",
-          "Tadata-Client-Id": "jon39334@gmail.com",
-          "Tadata-Api-Key": "38c60675-db2f-4d45-9c6e-f0d9d83aa7c2",
-        },
       },
     ),
   );
