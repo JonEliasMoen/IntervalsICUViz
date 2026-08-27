@@ -43,7 +43,6 @@ export function SnowDepthLocation(props: { loc: snowPlace }) {
   let x = props.loc.x;
   let y = props.loc.y;
   const colors = generateGradient(["#00FFF3", "#0200B9"], 7);
-
   return (
     <>
       {depth > 0 && <Text></Text>}

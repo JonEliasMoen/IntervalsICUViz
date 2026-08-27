@@ -37,7 +37,7 @@ export function DewPointLocation(props: {
     "Muggy",
     "Oppressive",
   ];
-  const zones: zone[] = [-25, -20, -15, -10,-5,0, 5, 10, 15, 20, 25].map((v, i) => {
+  const zones: zone[] = [-25, -20, -15, -10, -5,0, 5, 10, 15, 20, 25].map((v, i) => {
     return {
       startVal: v,
       endVal: v + 5,

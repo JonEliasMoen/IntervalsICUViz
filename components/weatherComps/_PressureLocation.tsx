@@ -2,11 +2,7 @@ import {
   normalizeBasedOnRangeSingle,
   secondsFrom,
 } from "@/components/utils/_utils";
-
-import { ChartComponent, zone } from "@/components/components/_chatComp";
-
 import { getWeather } from "@/components/utils/_weatherModel";
-import { mean } from "simple-statistics";
 import { ChartComponentRange } from "@/components/components/_chatCompRange";
 export function PressureLocation(props: { lat: number; long: number }) {
   const data = getWeather(props.lat, props.long);
