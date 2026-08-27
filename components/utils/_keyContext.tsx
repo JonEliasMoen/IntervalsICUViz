@@ -52,8 +52,8 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({
     await AsyncStorage.setItem("@settings", JSON.stringify(merged));
   };
 
-  const { mutate } = useMutation(
-    async (token: tokenResponse): Promise<tokenResponse> => {
+  const { mutate } = useMutation({
+    mutationFn: async (token: tokenResponse): Promise<tokenResponse> => {
       const response = await fetch(
         `https://yrweatherbackend.vercel.app/strava/exchange?refresh_token=${token.refresh_token}`,
         { method: "GET" },
@@ -61,12 +61,10 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({
       if (!response.ok) throw new Error("Failed to refresh token");
       return response.json();
     },
-    {
       onSuccess: (data) => {
         saveSettings({ stravaToken: data });
       },
-    },
-  );
+  });
 
   useEffect(() => {
     const load = async () => {

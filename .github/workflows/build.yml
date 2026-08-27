@@ -1,4 +1,5 @@
 name: Build App
+
 on:
   workflow_dispatch:
   push:
@@ -6,45 +7,61 @@ on:
       - master
     paths:
       - "**/*.tsx"
+      - "**/*.ts"
+      - "app.json"
+      - "babel.config.js"
+      - "eas.json"
       - "package.json"
       - "package-lock.json"
+      - ".github/workflows/build.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-android-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node: [ 20.x ]
+    timeout-minutes: 60
+
     steps:
-      - name: 🏗 Setup repo
-        uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v6
 
-      - name: 🏗 Setup Node
-        uses: actions/setup-node@v2
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
         with:
-          node-version: ${{ matrix.node }}
+          node-version: 24
+          cache: npm
 
-      - name: 🏗 Setup Expo and EAS
-        uses: expo/expo-github-action@v7
+      - name: Set up EAS
+        uses: expo/expo-github-action@v8
         with:
           token: ${{ secrets.EXPO_TOKEN }}
-          expo-version: latest
           eas-version: latest
+          packager: npm
 
-      - name: 📦 Install dependencies
-        run: npm install
+      - name: Install dependencies
+        run: npm ci
 
-      - name: 👷 Build app
+      - name: Build Android APK
         run: |
           eas build --local \
             --non-interactive \
             --output=app-release.apk \
             --platform=android \
             --profile=preview
-      - name: ⬆ Upload APK artifact
-        uses: actions/upload-artifact@v4
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v7
         with:
           name: app-release.apk
           path: app-release.apk
+          if-no-files-found: error
+
       - name: Upload APK to GitHub Release
         uses: ncipollo/release-action@v1
         with:
@@ -52,4 +69,4 @@ jobs:
           tag: latest
           name: "Latest Build"
           allowUpdates: true
-          token: ${{ secrets.TOKEN }}
+          token: ${{ github.token }}

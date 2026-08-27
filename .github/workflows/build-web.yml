@@ -1,4 +1,5 @@
 name: Build App Web
+
 on:
   workflow_dispatch:
   push:
@@ -6,35 +7,48 @@ on:
       - master
     paths:
       - "**/*.tsx"
+      - "**/*.ts"
+      - "app.json"
+      - "babel.config.js"
       - "package.json"
       - "package-lock.json"
+      - ".github/workflows/build-web.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-web-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node: [ 20.x ]
+    timeout-minutes: 20
+
     steps:
-      - name: 🏗 Setup repo
-        uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v6
 
-      - name: 🏗 Setup Node
-        uses: actions/setup-node@v2
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
         with:
-          node-version: ${{ matrix.node }}
+          node-version: 24
+          cache: npm
 
-      - name: 🏗 Setup Expo and EAS
-        uses: expo/expo-github-action@v7
+      - name: Set up EAS
+        uses: expo/expo-github-action@v8
         with:
           token: ${{ secrets.EXPO_TOKEN }}
-          expo-version: latest
           eas-version: latest
+          packager: npm
 
-      - name: 📦 Install dependencies
-        run: npm install
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Make web static build
+      - name: Build static web app
         run: npx expo export --platform web
+
       - name: Deploy
-        run: eas deploy --prod
+        run: eas deploy --prod --non-interactive
 

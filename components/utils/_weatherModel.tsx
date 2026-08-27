@@ -57,14 +57,15 @@ interface SolarMidnight {
 
 export function getSunData(lat: number, long: number) {
   const date = isoDateOffset(0);
-  const { data: data } = useQuery(["sun", date, lat, long], () =>
-    fetchToJson<WeatherData>(
+  const { data: data } = useQuery({
+    queryKey: ["sun", date, lat, long],
+    queryFn: () => fetchToJson<WeatherData>(
       `https://yrweatherbackend.vercel.app/sunrise/3.0/sun?lat=${lat}&lon=${long}&date=${date}&offset=+02:00`,
       {
         method: "GET",
       },
     ),
-  );
+  });
   return data;
 }
 
@@ -81,18 +82,16 @@ export function getSnowDepth(x: String, y: String): SnowResp | undefined {
     encodeURIComponent(
       `https://gts.nve.no/api/GridTimeSeries/${x}/${y}/${date}/${date}/sd.json`,
     );
-  const { data: data } = useQuery(
-    ["snow", date, x, y],
-    () =>
+  const { data: data } = useQuery({
+    queryKey: ["snow", date, x, y],
+    queryFn: () =>
       fetchToJson<SnowResp>(url, {
         method: "GET",
       }),
-    {
-      retry: false,
-      cacheTime: 30 * 60 * 1000,
-      staleTime: 30 * 60 * 1000,
-    },
-  );
+    retry: false,
+    gcTime: 30 * 60 * 1000,
+    staleTime: 30 * 60 * 1000,
+  });
   return data;
 }
 
@@ -151,14 +150,15 @@ export function getSeaInfo(
   long: number,
 ): FeatureWaterTempLocation | undefined {
   const date = isoDateOffset(0);
-  const { data: data } = useQuery(["watertemp", date, lat, long], () =>
-    fetchToJson<FeatureWaterTempLocation>(
+  const { data: data } = useQuery({
+    queryKey: ["watertemp", date, lat, long],
+    queryFn: () => fetchToJson<FeatureWaterTempLocation>(
       `https://yrweatherbackend.vercel.app/oceanforecast/2.0/complete?lat=${lat}&lon=${long}`,
       {
         method: "GET",
       },
     ),
-  );
+  });
   return data;
 }
 
@@ -278,14 +278,15 @@ export function getWeather(
   long: number,
 ): WeatherFeature | undefined {
   const date = isoDateOffset(0);
-  const { data: data } = useQuery(["weather", date, lat, long], () =>
-    fetchToJson<WeatherFeature>(
+  const { data: data } = useQuery({
+    queryKey: ["weather", date, lat, long],
+    queryFn: () => fetchToJson<WeatherFeature>(
       `https://yrweatherbackend.vercel.app/locationforecast/2.0/complete?lat=${lat}&lon=${long}`,
       {
         method: "GET",
       },
     ),
-  );
+  });
   return data;
 }
 export interface WeatherForecast {
@@ -309,13 +310,14 @@ export function getWeatherLong(
   long: number,
 ): WeatherForecast | undefined {
   const date = isoDateOffset(0);
-  const { data: data } = useQuery(["weather", "long", date, lat, long], () =>
-    fetchToJson<WeatherForecast>(
+  const { data: data } = useQuery({
+    queryKey: ["weather", "long", date, lat, long],
+    queryFn: () => fetchToJson<WeatherForecast>(
       `https://yrweatherbackend.vercel.app/longforecast?lat=${lat}&long=${long}`,
       {
         method: "GET",
       },
     ),
-  );
+  });
   return data;
 }

@@ -46,21 +46,19 @@ export function getTide2(lat: number, long: number) {
   let start = isoDateOffset(0);
   let end = isoDateOffset(-1);
   console.log(start, end);
-  const { data: data } = useQuery(
-    ["tide2", lat.toFixed(0), long.toFixed(0)],
-    () =>
+  const { data: data } = useQuery({
+    queryKey: ["tide2", lat.toFixed(0), long.toFixed(0)],
+    queryFn: () =>
       fetchToJson<TideData>(
         `https://yrweatherbackend.vercel.app/stormglass/v2/tide/extremes/point?start=${start}&end=${end}&lat=${lat}&lng=${long}`,
         {
           method: "GET",
         },
       ),
-    {
-      cacheTime: 30 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
       staleTime: 30 * 60 * 1000,
       retry: false,
-    },
-  );
+  });
   return data;
 }
 

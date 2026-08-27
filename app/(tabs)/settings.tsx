@@ -11,8 +11,8 @@ export default function TabTwoScreen() {
   const { settings, setSettings } = useSettings();
   const [authenticated, setAuthenticated] = useState(false);
   const router = useRouter();
-  const { mutate, isLoading, error } = useMutation(
-    async (code: string): Promise<tokenResponse> => {
+  const { mutate, isPending, error } = useMutation({
+    mutationFn: async (code: string): Promise<tokenResponse> => {
       const response = await fetch(
         `https://yrweatherbackend.vercel.app/strava/refresh?code=${code}`,
         { method: "GET" },
@@ -20,7 +20,6 @@ export default function TabTwoScreen() {
       if (!response.ok) throw new Error("Failed to fetch refresh token");
       return response.json();
     },
-    {
       onSuccess: (data) => {
         setSettings({ stravaToken: data });
         setAuthenticated(true);
@@ -29,8 +28,7 @@ export default function TabTwoScreen() {
       onError: (error) => {
         router.push("/settings");
       },
-    },
-  );
+  });
 
   useEffect(() => {
     const checkInitialDeepLink = async () => {

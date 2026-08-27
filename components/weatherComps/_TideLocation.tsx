@@ -96,14 +96,15 @@ type WaterLevelForecast = {
 };
 
 export function getTide(harbor: string) {
-  const { data: data } = useQuery(["tide", harbor], () =>
-    fetchToTxt(
+  const { data: data } = useQuery({
+    queryKey: ["tide", harbor],
+    queryFn: () => fetchToTxt(
       `https://yrweatherbackend.vercel.app/tidalwater/1.1/?harbor=${harbor}`,
       {
         method: "GET",
       },
     ),
-  );
+  });
   return data;
 }
 

@@ -162,7 +162,7 @@ export default function RunSuggestScreen() {
 
   const [range, setRange] = useState<number>(0.9);
 
-  const { mutate, isLoading, error } = newExMutation(settings);
+  const { mutate, isPending: isLoading, error } = newExMutation(settings);
   const zoneItems: zone[] = [
     { label: "Zone 1", value: 0 },
     { label: "Zone 2", value: 1 },

@@ -40,7 +40,7 @@ export interface exercise {
 }
 
 export function newExMutation(settings: UserSettings) {
-  return useMutation(async (ex: exercise): Promise<any> => {
+  return useMutation({ mutationFn: async (ex: exercise): Promise<any> => {
     const response = await fetch(
       `https://intervals.icu/api/v1/athlete/${ex.athlete_id}/events`,
       {
@@ -53,7 +53,7 @@ export function newExMutation(settings: UserSettings) {
       },
     );
     if (!response.ok) throw new Error("Failed to fetch refresh token");
-  });
+  }});
 }
 
 export interface settings {
@@ -76,19 +76,17 @@ export interface SportSettings {
 }
 
 export function getSettings(set: UserSettings): settings | undefined {
-  const { data: data } = useQuery(
-    ["intervals", "settings"],
-    () =>
+  const { data: data } = useQuery({
+    queryKey: ["intervals", "settings"],
+    queryFn: () =>
       fetchToJson<settings>(`https://intervals.icu/api/v1/athlete/${set.aid}`, {
         method: "GET",
         headers: {
           Authorization: `Basic ${set.apiKey}`,
         },
       }),
-    {
-      enabled: !!set.apiKey && !!set.aid,
-    },
-  );
+    enabled: !!set.apiKey && !!set.aid,
+  });
   return data;
 }
 
@@ -100,9 +98,9 @@ export function getWellnessRange(
   let isodate1 = isoDateOffset(n);
   let isodate2 = isoDateOffset(n2);
 
-  const { data: data } = useQuery(
-    ["intervals", "wellness", isodate2, isodate1],
-    () =>
+  const { data: data } = useQuery({
+    queryKey: ["intervals", "wellness", isodate2, isodate1],
+    queryFn: () =>
       fetchToJson<wellness[]>(
         `https://intervals.icu/api/v1/athlete/${settings.aid}/wellness?oldest=${isodate2}&newest=${isodate1}`,
         {
@@ -112,10 +110,8 @@ export function getWellnessRange(
           },
         },
       ),
-    {
-      enabled: !!settings.apiKey && !!settings.apiKey,
-    },
-  );
+    enabled: !!settings.apiKey && !!settings.apiKey,
+  });
   return data;
 }
 
@@ -172,9 +168,9 @@ export function groupByWeek(data: activity[]): activity[][] {
 export function getActivities(n: number, n2: number, settings: UserSettings) {
   let isodate1 = isoDateOffset(n);
   let isodate2 = isoDateOffset(n2);
-  const { data: data } = useQuery(
-    ["intervals", "activities", isodate1, isodate2],
-    () =>
+  const { data: data } = useQuery({
+    queryKey: ["intervals", "activities", isodate1, isodate2],
+    queryFn: () =>
       fetchToJson<activity[]>(
         `https://intervals.icu/api/v1/athlete/${settings.aid}/activities?oldest=${isodate2}&newest=${isodate1}`,
         {
@@ -184,10 +180,8 @@ export function getActivities(n: number, n2: number, settings: UserSettings) {
           },
         },
       ),
-    {
-      enabled: !!settings.apiKey && !!settings.aid,
-    },
-  );
+    enabled: !!settings.apiKey && !!settings.aid,
+  });
   return data;
 }
 
